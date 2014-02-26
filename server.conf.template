@@ -1,0 +1,17 @@
+# Server configuration template. Copy this to 'server.conf' and edit it for the specific
+# instance you are configuring.
+
+# The client key and secret.
+# See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for
+# more information about how to register your application.
+client_key=
+client_secret=
+
+# The authentication and encryption keys for the cookie store. If not defined random
+# keys will be used. The auth key should be 32 or 64 bytes while the encryption key
+# must be 16, 24, or 32 bytes. 
+#cookie_auth_key=
+#cookie_encryption_key=
+
+# Additional command line arguments
+server_args="-log_dir=log -v=1"

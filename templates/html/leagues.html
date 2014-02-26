@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Your Leagues</title>
+        {{template "header" .}}
+    </head>
+    <body>
+        {{template "nav" .}}
+        {{$config := .SiteConfig}}
+        <div class="container">
+            {{if .LoggedIn}}
+                <h2>Your Leagues</h2>
+                {{with .AllYears}}
+                    {{range $index, $leagues := .}}
+                    {{if .Leagues}}
+                    <div class="league-list league-list-{{.Year}}">
+                        <h3>{{getTitleFromYear .Year}}</h3>
+                        <ul>
+                        {{range $index, $league := .Leagues}}
+                            <li>
+                                <a href="{{$config.BaseContext}}/league?key={{.LeagueKey}}">{{.Name}}</a>
+                            </li>
+                        {{end}}
+                        </ul>
+                    </div>
+                    {{end}}
+                {{end}}
+            {{end}}
+            {{else}}
+            <p class="lead">
+                In order to view your rankings, you must sign in and authorize access with your Yahoo account.
+            </p>
+            <p>
+                <a href="{{.SiteConfig.BaseContext}}/login"><img src="{{.SiteConfig.StaticContext}}images/y-open-id-button.png" alt="Sign in with Yahoo"/></a>
+            </p>
+            {{end}}
+        </div>
+        {{template "footer" .}}
+        <script type="text/javascript">
+            $('#year-select').change(function(){
+                var url = '{{.SiteConfig.BaseContext}}?year=' + this.value;
+                window.location.href = url;
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{{.League.Name}} Power Rankings</title>
+        {{template "header" .}}
+    </head>
+    <body>
+        {{template "nav" .}}
+        <div class="container">
+        {{if .}}
+            <div class="overall overall-table">
+                <h2>{{.League.Name}}</h2>
+                <h3>Overall through {{.Weeks}} Weeks</h3>
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team</th>
+                            <th>Total Power Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {{with .LeaguePowerData}}
+                        {{with .OverallRankings}}
+                            {{range $index, $teamRanking := .}}
+                                {{if .Team.IsOwnedByCurrentLogin}}
+                                <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-selected">
+                                {{else}}
+                                <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}}">
+                                {{end}}
+                                    <td>{{.Rank}}</td>
+                                    <td>{{.Team.Name}}</td>
+                                    <td>{{.TotalPowerScore}}</td>
+                                </tr>
+                            {{end}}
+                        {{end}}
+                    {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{with .LeaguePowerData}}
+                {{$allPowerData := .}}
+                {{with .ByWeek}}
+                    {{range $index, $ranking := .}}
+                        {{$week := .Week}}
+                        <div class="weekly week-{{$week}}">
+                            <h3>Week {{$week}}</h3>
+                            <table class="table table-bordered table-striped table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Fantasy</th>
+                                        <th>Power</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {{with .Rankings}}
+                                    {{$rankings := .}}
+                                    {{range $index, $score := .}}
+                                        {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
+                                        {{if .Team.IsOwnedByCurrentLogin}}
+                                        <tr class="team-row team-{{.Team.TeamID}} team-selected">
+                                        {{else}}
+                                        <tr class="team-row team-{{.Team.TeamID}}">
+                                        {{end}}
+                                            <td>{{.Team.Name}}</td>
+                                            <td>{{.Score}}</td>
+                                            <td>{{getPowerScore $week $teamPowerData.AllScores}}</td>
+                                        </tr>
+                                    {{end}}     
+                                {{end}} 
+                                </tbody>
+                            </table>
+                        </div>
+                    {{end}}
+                {{end}}
+            {{end}}
+        {{else}}
+            <p class="Lead">There was an error generating the rankings.</p>
+        {{end}}
+        </div>
+        {{template "footer" .}}
+        <script src="{{.SiteConfig.StaticContext}}js/highlight.js"></script>
+    </body>
+</html>

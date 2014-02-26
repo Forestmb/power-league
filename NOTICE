@@ -1,0 +1,57 @@
+Copyright (c) 2014 Forestmb
+
+This product includes software released under the New BSD License. See
+LICENSE for more information.
+
+The purpose of this NOTICE file is to contain notices that are required
+by the copyright owner and their license. Some of the accompanying products
+have an attribution requirement, so see below. Other accompanying products do
+not require attribution, so are not listed. 
+
+-------------------------------------------------------------------------------
+
+This product contains a dependency on Go, an open source programming language.
+
+    * LICENSE: BSD
+    * HOMEPAGE: http://golang.org/
+
+This product contains a dependency on Yahoo Fantasy Sports APIs, webservices
+that provide access to fantasy sports data.
+
+    * LICENSE: https://info.yahoo.com/legal/us/yahoo/fantasysports/
+    * HOMEPAGE: http://developer.yahoo.com/fantasysports/guide/
+
+This product contains a dependency on goff, a library for communicating with
+the Yahoo Fantasy Sports APIs.
+
+    * LICENSE: New BSD
+    * HOMEPAGE: https://github.com/Forestmb/goff
+
+This product contains a dependency on gorilla, a web toolkit for the Go
+programming language.
+
+    * LICENSE: New BSD
+    * HOMEPAGE: http://www.gorillatoolkit.org/
+
+This product contains a dependency on oauth, an OAuth 1.0 library for the Go
+programming language.
+
+    * LICENSE: MIT
+    * HOMEPAGE: https://github.com/mrjones/oauth
+
+This product contains a dependency on glog, a library for leveled execution
+logs for the Go programming language.
+
+    * LICENSE: Apache 2.0
+    * HOMEPAGE: https://github.com/golang/glog
+
+This product contains a dependency on bootstrap, a front-end web framework.
+
+    * LICENSE: MIT
+    * HOMEPAGE: http://getbootstrap.com/
+
+This product contains a dependency on jquery, a cross-platform JavaScript
+library designed to simplify the client-side scripting of HTML.
+
+    * LICENSE: MIT
+    * HOMEPAGE: https://jquery.com/

@@ -1,0 +1,76 @@
+
+html,
+body {
+    height: 100%;
+}
+
+.container {
+    width: 95%; margin: auto;
+}
+
+.navbar {
+    border-radius: 0px;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+}
+
+.weekly {
+    float: left;
+    width: 24%;
+    min-width: 320px;
+    margin: 5px;
+}
+
+.weekly h2 {
+    font-size: 25px;
+}
+
+.overall-table .team-row {
+    cursor: pointer;
+}
+
+.team-hover td {
+    background: #DEFFD2 !important;
+}
+
+.team-selected td {
+    background: #AEE499 !important;
+    font-weight: bold;
+}
+
+.league-list {
+    display: inline-block;
+    vertical-align: top;
+    width: 19%;
+    min-width: 200px;
+    margin: 5px;
+}
+
+.league-list h3 {
+    margin: 0.25em 0;
+    border-bottom: 1px solid #DDD;
+}
+
+.league-list ul {
+    padding-left: 20px;
+}
+
+#wrap {
+    min-height: 100%;
+    height: auto;
+    /* Negative indent footer by its height */
+    margin: 0 auto -60px;
+    /* Pad bottom by footer height */
+    padding: 0 0 60px;
+}
+
+#footer {
+    height: 60px;
+    background-color: #DDD;
+    border-top: 1px solid #CCC;
+    color: #666;
+}
+
+#footer p {
+    margin: 18px 0;
+}
