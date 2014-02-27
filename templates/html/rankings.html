@@ -30,7 +30,7 @@
                                 {{end}}
                                     <td>{{.Rank}}</td>
                                     <td>{{.Team.Name}}</td>
-                                    <td>{{.TotalPowerScore}}</td>
+                                    <td>{{printf "%.0f" .TotalPowerScore}}</td>
                                 </tr>
                             {{end}}
                         {{end}}
@@ -64,7 +64,7 @@
                                         <tr class="team-row team-{{.Team.TeamID}}">
                                         {{end}}
                                             <td>{{.Team.Name}}</td>
-                                            <td>{{.Score}}</td>
+                                            <td>{{printf "%.2f" .Score}}</td>
                                             <td>{{getPowerScore $week $teamPowerData.AllScores}}</td>
                                         </tr>
                                     {{end}}     
