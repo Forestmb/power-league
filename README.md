@@ -9,7 +9,7 @@ https://github.com/Forestmb/power-league/blob/master/LICENSE).
 
 ## Building ##
 
-    $ go get https://github.com/Forestmb/power-league
+    $ go get github.com/Forestmb/power-league
     $ cd $GOPATH/src/github.com/Forestmb/power-league
     $ ./build.sh
 
