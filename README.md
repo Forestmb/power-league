@@ -1,4 +1,4 @@
-# Power League #
+# Power League [![GoDoc](https://godoc.org/github.com/Forestmb/power-league?status.png)](https://godoc.org/github.com/Forestmb/power-league) #
 
 Power League is a web application that calculates alternative rankings for
 Yahoo Fantasy Sports leagues.
@@ -12,6 +12,10 @@ https://github.com/Forestmb/power-league/blob/master/LICENSE).
     $ go get github.com/Forestmb/power-league
     $ cd $GOPATH/src/github.com/Forestmb/power-league
     $ ./build.sh
+
+To make sure this build runs before every commit, use:
+
+    $ ln -s "$(pwd)/build.sh" .git/hooks/pre-commit
 
 ## Running ##
 
