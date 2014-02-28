@@ -39,6 +39,15 @@ function start()
         error "PID file '${pid}' already exists. Server may already be running"
         exit 1
     fi
+
+    if [ ! -f "${conf}" ]
+    then
+        echo "Error: Server configuration file '${conf}' does not exist." 1>&2
+        echo "       Make sure the template file has been copied and edited for this " 1>&2
+        echo "       instance of the server." 1>&2
+        exit 1
+    fi
+
     mkdir -p "${log_dir}"
     if [ -f "${log_dir}/${stdout_file}" ]
     then
