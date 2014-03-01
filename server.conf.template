@@ -13,5 +13,8 @@ client_secret=
 #cookie_auth_key=
 #cookie_encryption_key=
 
+# The level of verbosity in logs. The higher the number, the more verbose
+log_level=1
+
 # Additional command line arguments
-server_args="-log_dir=log -v=1"
+#server_args=""

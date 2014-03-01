@@ -42,9 +42,9 @@ function start()
 
     if [ ! -f "${conf}" ]
     then
-        echo "Error: Server configuration file '${conf}' does not exist." 1>&2
-        echo "       Make sure the template file has been copied and edited for this " 1>&2
-        echo "       instance of the server." 1>&2
+        error "Error: Server configuration file '${conf}' does not exist."
+        error "       Make sure the template file has been copied and edited for this "
+        error "       instance of the server."
         exit 1
     fi
 
@@ -61,6 +61,8 @@ function start()
     # Configure this instance of the application
     . "${conf}"
     args="${args} ${server_args}"
+    args="${args} -log_dir=${log_dir}"
+    args="${args} -v=${log_level}"
     args="${args} --clientKey ${client_key}"
     args="${args} --clientSecret ${client_secret}"
     if [ ! -z "${cookie_auth_key}" ]
@@ -101,7 +103,7 @@ function status()
         if [ ! -d "/proc/${process}/" ]
         then
             error "PID file '${pid}' exists but process with id '${process}' could not be found."
-            error "Check '${log_dir}/${log_file}' for more information."
+            error "Check '${log_dir}/' for more information."
             exit 1
         else
             echo "Server is running. PID=${process}"
