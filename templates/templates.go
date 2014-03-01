@@ -1,3 +1,5 @@
+// Package templates centralizes access to template functions that render the
+// power-league content as HTML.
 package templates
 
 import (

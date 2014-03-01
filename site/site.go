@@ -1,3 +1,5 @@
+// Package site publishes endpoints and handles web requests for a
+// power-league site.
 package site
 
 import (
@@ -36,7 +38,7 @@ type ContextHandler struct {
 	Func SiteHandlerFunc
 }
 
-// ContextHandler adds a new handLer for this site, and optionally adds it to the
+// ContextHandler adds a new handler for this site, and optionally adds it to the
 // navigation if `navText` has any content
 func (s *Site) ContextHandler(id string, context string, f SiteHandlerFunc, navText string) {
 	fullContext := fmt.Sprintf("%s%s", s.config.BaseContext, context)

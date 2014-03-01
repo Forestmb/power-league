@@ -1,3 +1,5 @@
+// Package session defines the opertions for supporting user sessions within
+// a power-league application.
 package session
 
 import (

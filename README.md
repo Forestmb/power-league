@@ -42,8 +42,8 @@ to the `server_args` variable in `server.conf`.
       -address=":8080": Address to listen for incoming connections.
       -alsologtostderr=false: log to standard error as well as files
       -baseContext="/power-rankings": Root context of the server.
-      -clientKey="": Client OAuth key. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
-      -clientSecret="": Client OAuth secret. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
+      -clientKey="": Required client OAuth key. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
+      -clientSecret="": Required client OAuth secret. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
       -cookieAuthKey="": Authentication key for cookie store. By default uses a randomly generated key.
       -cookieEncryptionKey="": Encryption key for cookie store. By default uses a randomly generated key.
       -log_backtrace_at=:0: when logging hits line file:N, emit a stack trace

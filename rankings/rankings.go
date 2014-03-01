@@ -1,3 +1,5 @@
+// Package rankings calculates the alternative rankings of a league based on
+// data obtained from a fantasy sports provider.
 package rankings
 
 import (

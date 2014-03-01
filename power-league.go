@@ -1,8 +1,23 @@
+// Command power-league starts a web server that display alternative rankings
+// for fantasy sports leagues.
+//
+// Users grant authentication from the fantasy sports provider (Yahoo) and
+// are presented with a list of their current and past leagues. Each league
+// contains a table and week-by-week breakdown of how their scors translate
+// into the alternative rankings.
+//
+// To run, this command requires a client key and secret to be passed in at
+// runtime. More information about the registration process can be found here:
+// http://developer.yahoo.com/fantasysports/guide/GettingStarted.html
+//
+// Additional configuration options are available. See usage for details.
 package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/Forestmb/goff"
 	"github.com/Forestmb/power-league/session"
@@ -29,13 +44,13 @@ func main() {
 	clientKey := flag.String(
 		"clientKey",
 		"",
-		"Client OAuth key. "+
+		"Required client OAuth key. "+
 			"See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html"+
 			" for more information")
 	clientSecret := flag.String(
 		"clientSecret",
 		"",
-		"Client OAuth secret. "+
+		"Required client OAuth secret. "+
 			"See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html"+
 			" for more information")
 	cookieAuthKey := flag.String(
@@ -50,6 +65,19 @@ func main() {
 			"By default uses a randomly generated key.")
 	flag.Parse()
 	defer glog.Flush()
+
+	invalidInputParameters := false
+	if *clientKey == "" {
+		fmt.Fprintln(os.Stderr, "power-league: clientKey must be provided")
+		invalidInputParameters = true
+	}
+	if *clientSecret == "" {
+		fmt.Fprintln(os.Stderr, "power-league: clientSecret must be provided")
+		invalidInputParameters = true
+	}
+	if invalidInputParameters {
+		os.Exit(1)
+	}
 
 	// Remove trailing slashes
 	baseContext := *baseContextFlag
