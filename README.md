@@ -31,7 +31,10 @@ Then, run the application
 
     $ ./server.sh start
 
-The application can then be accessed at `http://localhost:8080/power-rankings`
+The application can then be accessed at `http://localhost:8080/power-rankings`.
+Once signed in, you can view the rankings for any of your current or past leagues:
+
+![Example Screenshot](https://raw.github.com/Forestmb/power-league/master/doc/screenshots/rankings.png)
 
 ## Options ##
 
