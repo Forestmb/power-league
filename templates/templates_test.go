@@ -164,7 +164,63 @@ func mockWriter() io.Writer {
 }
 
 func mockLeaguePowerData() *rankings.LeaguePowerData {
-	return &rankings.LeaguePowerData{}
+	return &rankings.LeaguePowerData{
+		OverallRankings: rankings.PowerRankings{
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            1,
+			},
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            2,
+			},
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            3,
+			},
+		},
+	}
+}
+
+func mockTeam() *goff.Team {
+	return &goff.Team{
+		TeamKey: "321",
+		TeamID:  321,
+		TeamLogos: []goff.TeamLogo{
+			goff.TeamLogo{
+				Size: "medium",
+				URL:  "http://example.com/image.png",
+			},
+		},
+		Name: "TestTeam02",
+	}
 }
 
 func mockAllLeagues() []*YearlyLeagues {
@@ -183,10 +239,11 @@ func mockAllLeagues() []*YearlyLeagues {
 func mockLeagues() []goff.League {
 	return []goff.League{
 		goff.League{
-			LeagueKey: "123",
-			LeagueID:  1,
-			Name:      "TestLeague",
-			Teams:     mockTeams(),
+			LeagueKey:  "123",
+			LeagueID:   1,
+			Name:       "TestLeague",
+			Teams:      mockTeams(),
+			IsFinished: true,
 		},
 	}
 }
@@ -210,12 +267,24 @@ func mockTeams() goff.Teams {
 			goff.Team{
 				TeamKey: "123",
 				TeamID:  123,
-				Name:    "TestTeam01",
+				TeamLogos: []goff.TeamLogo{
+					goff.TeamLogo{
+						Size: "medium",
+						URL:  "http://example.com/image.png",
+					},
+				},
+				Name: "TestTeam01",
 			},
 			goff.Team{
 				TeamKey: "321",
 				TeamID:  321,
-				Name:    "TestTeam02",
+				TeamLogos: []goff.TeamLogo{
+					goff.TeamLogo{
+						Size: "medium",
+						URL:  "http://example.com/image.png",
+					},
+				},
+				Name: "TestTeam02",
 			},
 		},
 	}

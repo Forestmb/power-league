@@ -3,7 +3,7 @@
 //
 // Users grant authentication from the fantasy sports provider (Yahoo) and
 // are presented with a list of their current and past leagues. Each league
-// contains a table and week-by-week breakdown of how their scors translate
+// contains a table and week-by-week breakdown of how their scores translate
 // into the alternative rankings.
 //
 // To run, this command requires a client key and secret to be passed in at

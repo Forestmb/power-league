@@ -29,6 +29,68 @@ body {
     cursor: pointer;
 }
 
+.overall-table {
+    width: 50%;
+    float: left;
+}
+
+.overall-table h3 {
+    padding: 0.25em 0;
+    margin: 0;
+}
+
+.standings {
+    margin-left: 15px;
+    float: left;
+}
+
+.standings h3 {
+    border-bottom: 1px solid #CCC;
+    padding: 0.25em 0;
+    margin: 0;
+}
+
+.standing {
+    width: 100%;
+    border-bottom: 1px solid #EAEAEA;
+    padding: 0.75em 0.25em;
+}
+
+.standing div {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.standing img {
+    height: 55px;
+    border: 1px solid #CCC;
+    border-radius: 60px;
+}
+
+.standing .place {
+    width: 60px;
+    padding: 10px;
+    text-align: center;
+    font-size: 28px;
+}
+
+.first-place {
+    color: #444;
+}
+
+.second-place {
+    color: #6A6A6A;
+}
+
+.third-place {
+    color: #999;
+}
+
+.standing .team {
+    font-size: 22px;
+    padding: 10px;
+}
+
 .team-hover td {
     background: #DEFFD2 !important;
 }

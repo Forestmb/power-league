@@ -8,8 +8,8 @@
         {{template "nav" .}}
         <div class="container">
         {{if .}}
+            <h2>{{.League.Name}}</h2>
             <div class="overall overall-table">
-                <h2>{{.League.Name}}</h2>
                 <h3>Overall through {{.Weeks}} Weeks</h3>
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -38,6 +38,53 @@
                     </tbody>
                 </table>
             </div>
+                {{if .League.IsFinished}}
+                    {{if .LeaguePowerData}}
+                        <div class="standings">
+                            <h3>Final Standings</h3>
+                            {{$firstPlace := index .LeaguePowerData.OverallRankings 0}}
+                            {{$firstPlaceLogo := index $firstPlace.Team.TeamLogos 0}}
+                            {{$secondPlace := index .LeaguePowerData.OverallRankings 1}}
+                            {{$secondPlaceLogo := index $secondPlace.Team.TeamLogos 0}}
+                            {{$thirdPlace := index .LeaguePowerData.OverallRankings 2}}
+                            {{$thirdPlaceLogo := index $thirdPlace.Team.TeamLogos 0}}
+                            <div class="first-place standing">
+                                <div class="place">
+                                    1<sup>st</sup>
+                                </div>
+                                <div class="logo">
+                                    <img src="{{$firstPlaceLogo.URL}}"/>
+                                </div>
+                                <div class="team">
+                                    {{$firstPlace.Team.Name}}
+                                </div>
+                            </div>
+                            <div class="second-place standing">
+                                <div class="place">
+                                    2<sup>nd</sup>
+                                </div>
+                                <div class="logo">
+                                    <img src="{{$secondPlaceLogo.URL}}"/>
+                                </div>
+                                <div class="team">
+                                    {{$secondPlace.Team.Name}}
+                                </div>
+                            </div>
+                            <div class="third-place standing">
+                                <div class="place">
+                                    3<sup>rd</sup>
+                                </div>
+                                <div class="logo">
+                                    <img src="{{$thirdPlaceLogo.URL}}"/>
+                                </div>
+                                <div class="team">
+                                    {{$thirdPlace.Team.Name}}
+                                </div>
+                            </div>
+                        </div>
+                    {{end}}
+                {{end}}
+                <div style="clear:both;"></div>
             {{with .LeaguePowerData}}
                 {{$allPowerData := .}}
                 {{with .ByWeek}}

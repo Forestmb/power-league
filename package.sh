@@ -59,7 +59,7 @@ if [ -z "${appname}" ]
 then
     appname="${binary}-$(date +%Y-%m-%d_%H%M%S)"
 fi
-resources=("LICENSE" "NOTICE" "static" "server.sh" "${binary}")
+resources=("LICENSE" "NOTICE" "CHANGELOG.md" "static" "server.sh" "${binary}")
 
 if [ ! -f "${conf}" ]
 then
