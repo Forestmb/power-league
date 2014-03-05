@@ -261,31 +261,29 @@ func mockSiteConfig() *SiteConfig {
 	}
 }
 
-func mockTeams() goff.Teams {
-	return goff.Teams{
-		List: []goff.Team{
-			goff.Team{
-				TeamKey: "123",
-				TeamID:  123,
-				TeamLogos: []goff.TeamLogo{
-					goff.TeamLogo{
-						Size: "medium",
-						URL:  "http://example.com/image.png",
-					},
+func mockTeams() []goff.Team {
+	return []goff.Team{
+		goff.Team{
+			TeamKey: "123",
+			TeamID:  123,
+			TeamLogos: []goff.TeamLogo{
+				goff.TeamLogo{
+					Size: "medium",
+					URL:  "http://example.com/image.png",
 				},
-				Name: "TestTeam01",
 			},
-			goff.Team{
-				TeamKey: "321",
-				TeamID:  321,
-				TeamLogos: []goff.TeamLogo{
-					goff.TeamLogo{
-						Size: "medium",
-						URL:  "http://example.com/image.png",
-					},
+			Name: "TestTeam01",
+		},
+		goff.Team{
+			TeamKey: "321",
+			TeamID:  321,
+			TeamLogos: []goff.TeamLogo{
+				goff.TeamLogo{
+					Size: "medium",
+					URL:  "http://example.com/image.png",
 				},
-				Name: "TestTeam02",
 			},
+			Name: "TestTeam02",
 		},
 	}
 }
