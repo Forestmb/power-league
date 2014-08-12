@@ -206,6 +206,47 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				Rank:            3,
 			},
 		},
+		ProjectedRankings: rankings.ProjectedPowerRankings{
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            1,
+			},
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            2,
+			},
+			&rankings.TeamPowerData{
+				AllScores: []*rankings.TeamScoreData{
+					&rankings.TeamScoreData{
+						Team:       mockTeam(),
+						Score:      12.0,
+						Rank:       1,
+						PowerScore: 36.0,
+					},
+				},
+				Team:            mockTeam(),
+				TotalPowerScore: 12.0,
+				Rank:            3,
+			},
+		},
 	}
 }
 

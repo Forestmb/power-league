@@ -38,15 +38,19 @@
                     </tbody>
                 </table>
             </div>
-                {{if .League.IsFinished}}
                     {{if .LeaguePowerData}}
                         <div class="standings">
-                            <h3>Final Standings</h3>
-                            {{$firstPlace := index .LeaguePowerData.OverallRankings 0}}
+                            {{$rankings := getRankings .LeaguePowerData .League.IsFinished}}
+                            {{if .League.IsFinished}}
+                                <h3>Final Standings</h3>
+                            {{else}}
+                                <h3>Projected Final Standings</h3>
+                            {{end}}
+                            {{$firstPlace := index $rankings 0}}
                             {{$firstPlaceLogo := index $firstPlace.Team.TeamLogos 0}}
-                            {{$secondPlace := index .LeaguePowerData.OverallRankings 1}}
+                            {{$secondPlace := index $rankings 1}}
                             {{$secondPlaceLogo := index $secondPlace.Team.TeamLogos 0}}
-                            {{$thirdPlace := index .LeaguePowerData.OverallRankings 2}}
+                            {{$thirdPlace := index $rankings 2}}
                             {{$thirdPlaceLogo := index $thirdPlace.Team.TeamLogos 0}}
                             <div class="first-place standing">
                                 <div class="place">
@@ -83,14 +87,17 @@
                             </div>
                         </div>
                     {{end}}
-                {{end}}
                 <div style="clear:both;"></div>
             {{with .LeaguePowerData}}
                 {{$allPowerData := .}}
                 {{with .ByWeek}}
                     {{range $index, $ranking := .}}
                         {{$week := .Week}}
-                        <div class="weekly week-{{$week}}">
+                        {{if .Projected}}
+                            <div class="weekly week-{{$week}} projection">
+                        {{else}}
+                            <div class="weekly week-{{$week}}">
+                        {{end}}
                             <h3>Week {{$week}}</h3>
                             <table class="table table-bordered table-striped table-condensed">
                                 <thead>

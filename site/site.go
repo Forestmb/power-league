@@ -207,10 +207,13 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 
 func getUserLeauges(client *goff.Client, year int, results chan *templates.YearlyLeagues) {
 	yearStr := fmt.Sprintf("%d", year)
+	glog.V(2).Infof("getting user leagues -- year=%d", year)
 	leagues, err := client.GetUserLeagues(yearStr)
 	if err != nil {
+		glog.Warningf("unable to get leagues for year '%d': %s", year, err)
 		leagues = nil
 	}
+	glog.V(2).Infof("got user leagues -- year=%d, leagues=%v", year, leagues)
 	yearlyLeagues := &templates.YearlyLeagues{
 		Year:    yearStr,
 		Leagues: leagues,
@@ -222,7 +225,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	glog.V(5).Infoln("in handlePowerRankings")
 
 	// Determine the current week
-	numWeeks := -1
+	currentWeek := -1
 	loggedIn := false
 	client, err := s.sessionManager.GetClient(w, req)
 
@@ -236,9 +239,9 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		if err == nil {
 			if league.IsFinished {
 				glog.V(3).Infoln("league is finished")
-				numWeeks = league.CurrentWeek
+				currentWeek = league.CurrentWeek
 			} else {
-				numWeeks = league.CurrentWeek - 1
+				currentWeek = league.CurrentWeek - 1
 			}
 			loggedIn = true
 		} else {
@@ -248,14 +251,15 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		glog.Warningf("unable to create client: %s", err)
 	}
 
-	glog.V(3).Infof("calculating rankings -- week=%d", numWeeks)
+	glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 
 	var rankingsContent *templates.RankingsPageContent
-	if numWeeks != -1 {
+	if currentWeek != -1 {
 		leaguePowerData, err := rankings.GetPowerData(
 			&YahooClient{Client: client},
 			leagueKey,
-			numWeeks)
+			currentWeek,
+			league.EndWeek)
 		if err != nil {
 			glog.Warningf("error generating power rankings page: %s", err)
 			http.Error(w, "Error occurred when calculating rankings",
@@ -264,7 +268,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		}
 
 		rankingsContent = &templates.RankingsPageContent{
-			Weeks:           numWeeks,
+			Weeks:           currentWeek,
 			LeaguePowerData: leaguePowerData,
 			League:          league,
 			LoggedIn:        loggedIn,
@@ -302,7 +306,7 @@ type yahooGoffClient interface {
 
 // GetAllTeamStats gets teams stats for a given week from the Yahoo fantasy
 // football API
-func (y *YahooClient) GetAllTeamStats(leagueKey string, week int) ([]goff.Team, error) {
+func (y *YahooClient) GetAllTeamStats(leagueKey string, week int, projection bool) ([]goff.Team, error) {
 	teams, err := y.Client.GetAllTeamStats(leagueKey, week)
 	if err != nil {
 		return nil, err
@@ -315,7 +319,7 @@ func (y *YahooClient) GetAllTeamStats(leagueKey string, week int) ([]goff.Team, 
 	calculateErrors := make(chan error)
 	for index, team := range teams {
 		score := team.TeamPoints.Total
-		if score == 0.0 {
+		if score == 0.0 && !projection {
 			glog.Warningf("yahoo returned team with zero points -- "+
 				"league=%s, week=%d, team=%s",
 				leagueKey,

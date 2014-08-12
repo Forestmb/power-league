@@ -98,6 +98,7 @@ type SiteLink struct {
 func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
 		"getPowerScore": templateGetPowerScore,
+		"getRankings":   templateGetRankings,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -152,6 +153,13 @@ func templateGetPowerScore(week int, teamScores []*rankings.TeamScoreData) strin
 		totalScore += teamScores[i-1].PowerScore
 	}
 	return fmt.Sprintf("%.0f", totalScore)
+}
+
+func templateGetRankings(powerData rankings.LeaguePowerData, finished bool) []*rankings.TeamPowerData {
+	if finished {
+		return powerData.OverallRankings
+	}
+	return powerData.ProjectedRankings
 }
 
 //

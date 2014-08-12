@@ -25,6 +25,10 @@ body {
     font-size: 25px;
 }
 
+.projection {
+    opacity: 0.5;
+}
+
 .overall-table .team-row {
     cursor: pointer;
 }

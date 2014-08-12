@@ -40,7 +40,7 @@ func TestYahooClientNoZeroPoints(t *testing.T) {
 	}
 	client := &YahooClient{Client: goffClient}
 
-	_, err := client.GetAllTeamStats("123", 12)
+	_, err := client.GetAllTeamStats("123", 12, false)
 	if err != nil {
 		t.Fatalf("error returned getting team stats: %s", err)
 	}
@@ -52,7 +52,7 @@ func TestYahooClientAllTeamStatsError(t *testing.T) {
 	}
 	client := &YahooClient{Client: goffClient}
 
-	_, err := client.GetAllTeamStats("123", 12)
+	_, err := client.GetAllTeamStats("123", 12, false)
 	if err == nil {
 		t.Fatalf("error was not returned after getting all team stats failed")
 	}
@@ -71,7 +71,7 @@ func TestYahooClientZeroPointsRosterError(t *testing.T) {
 	}
 	client := &YahooClient{Client: goffClient}
 
-	_, err := client.GetAllTeamStats("123", 12)
+	_, err := client.GetAllTeamStats("123", 12, false)
 	if err == nil {
 		t.Fatalf("no error getting all team stats when team had 0 points " +
 			"and getting the roster failed: %s")
@@ -113,7 +113,7 @@ func TestYahooClientZeroPointsPlayerStatsError(t *testing.T) {
 	}
 	client := &YahooClient{Client: goffClient}
 
-	_, err := client.GetAllTeamStats("123", 12)
+	_, err := client.GetAllTeamStats("123", 12, false)
 	if err == nil {
 		t.Fatalf("no error getting all team stats when team had 0 points " +
 			"and getting player stats failed: %s")
@@ -181,7 +181,7 @@ func TestYahooClientAllTeamStatsZeroPoints(t *testing.T) {
 	}
 	client := &YahooClient{Client: goffClient}
 
-	teams, err := client.GetAllTeamStats("123", 12)
+	teams, err := client.GetAllTeamStats("123", 12, false)
 	if err != nil {
 		t.Fatalf("unexpected error getting all team stats: %s", err)
 	}
