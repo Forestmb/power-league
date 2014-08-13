@@ -172,7 +172,7 @@ func GetWeeklyRanking(
 			PowerScore: powerScore,
 			Rank:       rank,
 		}
-		glog.V(4).Infof("weekly %s -- league=%s, week=%d, rank=%d, team=%s, "+
+		glog.V(4).Infof("%s -- league=%s, week=%d, rank=%d, team=%s, "+
 			"fantasyScore=%f, powerScore=%f",
 			scoreType,
 			leagueKey,
@@ -210,8 +210,8 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 				err)
 			return nil, err
 		case weeklyRanking := <-resultsChan:
-			glog.V(2).Infof(
-				"Received weekly ranking -- week=%d",
+			glog.V(4).Infof(
+				"received weekly ranking -- week=%d",
 				weeklyRanking.Week)
 			weekIndex := weeklyRanking.Week - 1
 			weeklyRankings[weekIndex] = weeklyRanking
@@ -232,7 +232,7 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 				}
 				powerData.ProjectedPowerScore += teamScoreData.PowerScore
 				glog.V(4).Infof(
-					"Adding team score data -- team=%s, projection=%t, "+
+					"adding team score data -- team=%s, projection=%t, "+
 						"powerScore=%f, totalPowerScore=%f, projectedPowerScore=%f",
 					teamScoreData.Team.Name,
 					weeklyRanking.Projected,
@@ -243,7 +243,7 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 		}
 	}
 
-	glog.V(1).Infof("Ranking teams -- league=%s", leagueKey)
+	glog.V(2).Infof("ranking teams -- league=%s", leagueKey)
 	// Calculate the actual power rankings
 	sortedPowerData := make([]*TeamPowerData, len(powerDataByTeamKey))
 	index := 0
@@ -267,7 +267,7 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 			powerData.TotalPowerScore)
 	}
 
-	glog.V(1).Infof("Projecting rankings -- league=%s", leagueKey)
+	glog.V(2).Infof("projecting rankings -- league=%s", leagueKey)
 	sortedProjectionData := make([]*TeamPowerData, len(powerDataByTeamKey))
 	index = 0
 	for _, powerData := range powerDataByTeamKey {
