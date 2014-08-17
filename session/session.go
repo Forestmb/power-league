@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/Forestmb/goff"
 	"github.com/golang/glog"
 	"github.com/gorilla/sessions"
 	"github.com/mrjones/oauth"
+	lru "github.com/youtube/vitess/go/cache"
 )
 
 const (
@@ -21,12 +24,22 @@ const (
 	// AccessTokenKey updates the access token for the current session
 	AccessTokenKey = "access-token"
 
+	// SessionIDKey sets the ID for each session
+	SessionIDKey = "session-id"
+
+	// LastRefreshTime updates the last time the access token was refreshed
+	LastRefreshTime = "last-refresh-time"
+
 	// RequestTokenKey updates the request token for the current session
 	RequestTokenKey = "request-token"
 
 	// oauthVerifierKey acceses  the verification code after oauth
 	// authentication
 	oauthVerifierKey = "oauth_verifier"
+
+	// cacheSize sets the maximum size of the fantasy content cache for all
+	// sessions
+	cacheSize = 100000
 )
 
 //
@@ -45,19 +58,40 @@ type SessionManager interface {
 
 // defaultManager is the default implementation of SessionManager
 type defaultManager struct {
-	consumer Consumer
-	store    sessions.Store
+	consumer                 Consumer
+	store                    sessions.Store
+	cache                    *lru.LRUCache
+	userCacheDurationSeconds int
 }
 
 // NewSessionManager creates a new SessionManager that uses the given
 // consumer for OAuth authentication and store to persist the sessions across
-// requests
+// requests. Each session client returned by `SessionManager.GetClient` will
+// cache responses for up to 6 hours.
+//
+// See NewSessionManagerWithCache
 func NewSessionManager(c Consumer, s sessions.Store) SessionManager {
+	return NewSessionManagerWithCache(c, s, 6*60*60)
+}
+
+// NewSessionManagerWithCache creates a new SessionManager that uses the given
+// consumer for OAuth authentication and store to persist the sessions across
+// requests. Each session client returned by `SessionManager.GetClient` will
+// cache responses for up to `userCacheDurationSeconds` seconds.
+func NewSessionManagerWithCache(
+	c Consumer,
+	s sessions.Store,
+	userCacheDurationSeconds int) SessionManager {
+
 	gob.Register(&oauth.RequestToken{})
 	gob.Register(&oauth.AccessToken{})
+	gob.Register(&time.Time{})
+	cache := lru.NewLRUCache(cacheSize)
 	return &defaultManager{
 		consumer: c,
 		store:    s,
+		cache:    cache,
+		userCacheDurationSeconds: userCacheDurationSeconds,
 	}
 }
 
@@ -169,8 +203,11 @@ func (d *defaultManager) Authenticate(w http.ResponseWriter, req *http.Request) 
 		oauth.SESSION_HANDLE_PARAM: sessionParam,
 	}
 
+	currentTime := time.Now()
 	session.Values = map[interface{}]interface{}{
-		AccessTokenKey: accessToken,
+		AccessTokenKey:  accessToken,
+		SessionIDKey:    uuid.New(),
+		LastRefreshTime: &currentTime,
 	}
 	err = session.Save(req, w)
 	if err != nil {
@@ -198,14 +235,39 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 		return nil, errors.New("no access token in client session")
 	}
 
-	accessToken, err = d.consumer.RefreshToken(accessToken)
-	if err != nil {
-		glog.Warningf("error refreshing token: %s", err)
-		return nil, errors.New("unable to create goff client for request, " +
-			"failure when refreshing acces token")
+	id, ok := session.Values[SessionIDKey].(string)
+	if !ok {
+		id = uuid.New()
+		glog.Warningf("generating new ID, no '%s' in session -- id=%s",
+			SessionIDKey,
+			id)
 	}
 
-	glog.V(2).Infoln("client token refreshed")
+	refreshToken := false
+	currentTime := time.Now()
+	lastRefresh, ok := session.Values[LastRefreshTime].(*time.Time)
+	if !ok {
+		glog.Warningf("refreshing token, no '%s' in session", LastRefreshTime)
+		refreshToken = true
+	} else {
+		timeSinceLastRefresh := currentTime.Sub(*lastRefresh)
+		refreshToken = timeSinceLastRefresh >= 30*time.Minute
+		glog.V(2).Infof("determining if token should be refreshed -- "+
+			"timeSinceLastRefresh=%+v, refreshToken=%t",
+			timeSinceLastRefresh,
+			refreshToken)
+	}
+
+	if refreshToken {
+		accessToken, err = d.consumer.RefreshToken(accessToken)
+		if err != nil {
+			glog.Warningf("error refreshing token: %s", err)
+			return nil, errors.New("unable to create goff client for request, " +
+				"failure when refreshing acces token")
+		}
+		lastRefresh = &currentTime
+		glog.V(2).Infoln("client token refreshed")
+	}
 
 	// Only save SESSION_HANDLE_PARAM to reduce cookie size
 	sessionParam := accessToken.AdditionalData[oauth.SESSION_HANDLE_PARAM]
@@ -214,7 +276,9 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 	}
 
 	session.Values = map[interface{}]interface{}{
-		AccessTokenKey: accessToken,
+		AccessTokenKey:  accessToken,
+		SessionIDKey:    id,
+		LastRefreshTime: lastRefresh,
 	}
 	err = session.Save(req, w)
 	if err != nil {
@@ -222,7 +286,13 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 		return nil, err
 	}
 
-	client := goff.NewOAuthClient(d.consumer, accessToken)
+	client := goff.NewCachedOAuthClient(
+		goff.NewLRUCache(
+			id,
+			time.Duration(d.userCacheDurationSeconds)*time.Second,
+			d.cache),
+		d.consumer,
+		accessToken)
 	glog.V(3).Infoln("client created successfully")
 	return client, nil
 }

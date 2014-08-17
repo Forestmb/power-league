@@ -54,5 +54,6 @@ to the `server_args` variable in `server.conf`.
       -logtostderr=false: log to standard error instead of files
       -static="static": Directory to access static files
       -stderrthreshold=0: logs at or above this threshold go to stderr
+      -userCacheDurationSeconds=21600: Maximum duration user data will be cached, in seconds. Defaults to six hours
       -v=0: log level for V logs
       -vmodule=: comma-separated list of pattern=N settings for file-filtered logging

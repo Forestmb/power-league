@@ -45,6 +45,18 @@ logs for the Go programming language.
     * LICENSE: Apache 2.0
     * HOMEPAGE: https://github.com/golang/glog
 
+This product contains a dependency on go-uuid, a UUID package for the Go
+programming language.
+
+    * LICENSE: New BSD
+    * HOMEPAGE: https://code.google.com/p/go-uuid
+
+This product contains a dependency on Vitess, a set of servers and tools which
+facilitate scaling of MySQL databases for large scale web services.
+
+    * LICENSE: BSD-style
+    * HOMEPAGE: https://github.com/youtube/vitess
+
 This product contains a dependency on bootstrap, a front-end web framework.
 
     * LICENSE: MIT

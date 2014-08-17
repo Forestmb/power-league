@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/mrjones/oauth"
@@ -13,6 +14,13 @@ import (
 
 func TestNewSessionManager(t *testing.T) {
 	manager := NewSessionManager(&MockConsumer{}, mockStore())
+	if manager == nil {
+		t.Fatal("no manager returned")
+	}
+}
+
+func TestNewSessionManagerWithCache(t *testing.T) {
+	manager := NewSessionManagerWithCache(&MockConsumer{}, mockStore(), 30)
 	if manager == nil {
 		t.Fatal("no manager returned")
 	}
@@ -289,6 +297,9 @@ func TestGetClientStoreGetError(t *testing.T) {
 	store := mockStore()
 	store.GetError = errors.New("error")
 	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	currentTime := time.Now()
+	store.Values[LastRefreshTime] = &currentTime
 
 	manager := NewSessionManager(consumer, store)
 	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
@@ -308,6 +319,9 @@ func TestGetClientAccessTokenExists(t *testing.T) {
 	}
 	store := mockStore()
 	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	currentTime := time.Now()
+	store.Values[LastRefreshTime] = &currentTime
 
 	manager := NewSessionManager(consumer, store)
 	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
@@ -327,6 +341,9 @@ func TestGetClientAccessTokenExistsTokenSaved(t *testing.T) {
 	}
 	store := mockStore()
 	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	currentTime := time.Now()
+	store.Values[LastRefreshTime] = &currentTime
 
 	manager := NewSessionManager(consumer, store)
 	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
@@ -338,6 +355,30 @@ func TestGetClientAccessTokenExistsTokenSaved(t *testing.T) {
 	token, ok := store.Values[AccessTokenKey].(*oauth.AccessToken)
 	if !ok || token == nil {
 		t.Fatal("no token saved in session")
+	}
+}
+
+func TestGetClientLastRefreshTimeOldRefreshesToken(t *testing.T) {
+	consumer := &MockConsumer{
+		AccessToken: &oauth.AccessToken{},
+	}
+
+	store := mockStore()
+	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	refreshTime := time.Now().Add(-61 * time.Minute)
+	store.Values[LastRefreshTime] = &refreshTime
+
+	manager := NewSessionManager(consumer, store)
+	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
+
+	if err != nil {
+		t.Fatalf("error creating client when access token needed to be"+
+			"refreshed: %s", err)
+	}
+
+	if client == nil {
+		t.Fatalf("no client created when access token needed to be refresehd")
 	}
 }
 
@@ -362,6 +403,9 @@ func TestGetClientAccessStoreSaveError(t *testing.T) {
 	}
 	store := mockStore()
 	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	currentTime := time.Now()
+	store.Values[LastRefreshTime] = &currentTime
 	store.SaveError = errors.New("error")
 
 	manager := NewSessionManager(consumer, store)

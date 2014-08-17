@@ -41,6 +41,11 @@ func main() {
 		"static",
 		"static",
 		"Directory to access static files")
+	userCacheDurationSeconds := flag.Int(
+		"userCacheDurationSeconds",
+		6*60*60,
+		"Maximum duration user data will be cached, in seconds. Defaults to"+
+			" six hours")
 	clientKey := flag.String(
 		"clientKey",
 		"",
@@ -107,9 +112,10 @@ func main() {
 		cookieStoreEncryptionKey = []byte(*cookieEncryptionKey)
 	}
 
-	sessionManager := session.NewSessionManager(
+	sessionManager := session.NewSessionManagerWithCache(
 		goff.GetConsumer(*clientKey, *clientSecret),
-		sessions.NewCookieStore(cookieStoreAuthKey, cookieStoreEncryptionKey))
+		sessions.NewCookieStore(cookieStoreAuthKey, cookieStoreEncryptionKey),
+		*userCacheDurationSeconds)
 
 	site := site.NewSite(
 		baseContext, *staticFilesLocation, "templates/html/", sessionManager)

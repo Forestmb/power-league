@@ -15,6 +15,11 @@ import (
 	"github.com/golang/glog"
 )
 
+const (
+	// EarliestSupportedYear that fantasy leagues will be displayed for
+	EarliestSupportedYear = 2001
+)
+
 // Site consists of the information needed to run a power rankings site
 type Site struct {
 	// ServeMux for this site
@@ -175,11 +180,10 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		firstYear := 2001
 		currentYear := time.Now().Year()
-		numberOfYears := (currentYear - firstYear) + 1
+		numberOfYears := (currentYear - EarliestSupportedYear) + 1
 		results := make(chan *templates.YearlyLeagues)
-		for ; currentYear >= firstYear; currentYear-- {
+		for ; currentYear >= EarliestSupportedYear; currentYear-- {
 			go getUserLeauges(client, currentYear, results)
 		}
 
@@ -227,12 +231,12 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	// Determine the current week
 	currentWeek := -1
 	loggedIn := false
-	client, err := s.sessionManager.GetClient(w, req)
 
 	values := req.URL.Query()
 	leagueKey := values.Get("key")
-	var league *goff.League
 
+	var league *goff.League
+	client, err := s.sessionManager.GetClient(w, req)
 	if err == nil {
 		glog.V(3).Infof("getting metadata -- league=%s", leagueKey)
 		league, err = client.GetLeagueMetadata(leagueKey)
@@ -254,7 +258,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 
 	var rankingsContent *templates.RankingsPageContent
-	if currentWeek != -1 {
+	if err == nil {
 		leaguePowerData, err := rankings.GetPowerData(
 			&YahooClient{Client: client},
 			leagueKey,
@@ -284,7 +288,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	}
 
 	if client != nil {
-		glog.V(2).Infof("API Request Count: %d", client.RequestCount)
+		glog.V(2).Infof("API Request Count: %d", client.RequestCount())
 	}
 }
 
