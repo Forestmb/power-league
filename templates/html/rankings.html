@@ -9,125 +9,129 @@
         <div class="container">
         {{if .}}
             <h2>{{.League.Name}}</h2>
-            <div class="overall overall-table">
-                <h3>Overall through {{.Weeks}} Weeks</h3>
-                <table class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Team</th>
-                            <th>Total Power Points</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {{with .LeaguePowerData}}
-                        {{with .OverallRankings}}
-                            {{range $index, $teamRanking := .}}
-                                {{if .Team.IsOwnedByCurrentLogin}}
-                                <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-selected">
-                                {{else}}
-                                <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}}">
-                                {{end}}
-                                    <td>{{.Rank}}</td>
-                                    <td>{{.Team.Name}}</td>
-                                    <td>{{printf "%.0f" .TotalPowerScore}}</td>
-                                </tr>
-                            {{end}}
-                        {{end}}
-                    {{end}}
-                    </tbody>
-                </table>
-            </div>
-                    {{if .LeaguePowerData}}
-                        <div class="standings">
-                            {{$rankings := getRankings .LeaguePowerData .League.IsFinished}}
-                            {{if .League.IsFinished}}
-                                <h3>Final Standings</h3>
-                            {{else}}
-                                <h3>Projected Final Standings</h3>
-                            {{end}}
-                            {{$firstPlace := index $rankings 0}}
-                            {{$firstPlaceLogo := index $firstPlace.Team.TeamLogos 0}}
-                            {{$secondPlace := index $rankings 1}}
-                            {{$secondPlaceLogo := index $secondPlace.Team.TeamLogos 0}}
-                            {{$thirdPlace := index $rankings 2}}
-                            {{$thirdPlaceLogo := index $thirdPlace.Team.TeamLogos 0}}
-                            <div class="first-place standing">
-                                <div class="place">
-                                    1<sup>st</sup>
-                                </div>
-                                <div class="logo">
-                                    <img src="{{$firstPlaceLogo.URL}}"/>
-                                </div>
-                                <div class="team">
-                                    {{$firstPlace.Team.Name}}
-                                </div>
-                            </div>
-                            <div class="second-place standing">
-                                <div class="place">
-                                    2<sup>nd</sup>
-                                </div>
-                                <div class="logo">
-                                    <img src="{{$secondPlaceLogo.URL}}"/>
-                                </div>
-                                <div class="team">
-                                    {{$secondPlace.Team.Name}}
-                                </div>
-                            </div>
-                            <div class="third-place standing">
-                                <div class="place">
-                                    3<sup>rd</sup>
-                                </div>
-                                <div class="logo">
-                                    <img src="{{$thirdPlaceLogo.URL}}"/>
-                                </div>
-                                <div class="team">
-                                    {{$thirdPlace.Team.Name}}
-                                </div>
-                            </div>
-                        </div>
-                    {{end}}
-                <div style="clear:both;"></div>
-            {{with .LeaguePowerData}}
-                {{$allPowerData := .}}
-                {{with .ByWeek}}
-                    {{range $index, $ranking := .}}
-                        {{$week := .Week}}
-                        {{if .Projected}}
-                            <div class="weekly week-{{$week}} projection">
-                        {{else}}
-                            <div class="weekly week-{{$week}}">
-                        {{end}}
-                            <h3>Week {{$week}}</h3>
-                            <table class="table table-bordered table-striped table-condensed">
-                                <thead>
-                                    <tr>
-                                        <th>Team</th>
-                                        <th>Fantasy</th>
-                                        <th>Power</th>
+            {{if .LeagueStarted}}
+                <div class="overall overall-table">
+                    <h3>Overall through {{.Weeks}} Weeks</h3>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Team</th>
+                                <th>Total Power Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {{with .LeaguePowerData}}
+                            {{with .OverallRankings}}
+                                {{range $index, $teamRanking := .}}
+                                    {{if .Team.IsOwnedByCurrentLogin}}
+                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-selected">
+                                    {{else}}
+                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}}">
+                                    {{end}}
+                                        <td>{{.Rank}}</td>
+                                        <td>{{.Team.Name}}</td>
+                                        <td>{{printf "%.0f" .TotalPowerScore}}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                {{with .Rankings}}
-                                    {{$rankings := .}}
-                                    {{range $index, $score := .}}
-                                        {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
-                                        {{if .Team.IsOwnedByCurrentLogin}}
-                                        <tr class="team-row team-{{.Team.TeamID}} team-selected">
-                                        {{else}}
-                                        <tr class="team-row team-{{.Team.TeamID}}">
-                                        {{end}}
-                                            <td>{{.Team.Name}}</td>
-                                            <td>{{printf "%.2f" .Score}}</td>
-                                            <td>{{getPowerScore $week $teamPowerData.AllScores}}</td>
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+                        {{if .LeaguePowerData}}
+                            <div class="standings">
+                                {{$rankings := getRankings .LeaguePowerData .League.IsFinished}}
+                                {{if .League.IsFinished}}
+                                    <h3>Final Standings</h3>
+                                {{else}}
+                                    <h3>Projected Final Standings</h3>
+                                {{end}}
+                                {{$firstPlace := index $rankings 0}}
+                                {{$firstPlaceLogo := index $firstPlace.Team.TeamLogos 0}}
+                                {{$secondPlace := index $rankings 1}}
+                                {{$secondPlaceLogo := index $secondPlace.Team.TeamLogos 0}}
+                                {{$thirdPlace := index $rankings 2}}
+                                {{$thirdPlaceLogo := index $thirdPlace.Team.TeamLogos 0}}
+                                <div class="first-place standing">
+                                    <div class="place">
+                                        1<sup>st</sup>
+                                    </div>
+                                    <div class="logo">
+                                        <img src="{{$firstPlaceLogo.URL}}"/>
+                                    </div>
+                                    <div class="team">
+                                        {{$firstPlace.Team.Name}}
+                                    </div>
+                                </div>
+                                <div class="second-place standing">
+                                    <div class="place">
+                                        2<sup>nd</sup>
+                                    </div>
+                                    <div class="logo">
+                                        <img src="{{$secondPlaceLogo.URL}}"/>
+                                    </div>
+                                    <div class="team">
+                                        {{$secondPlace.Team.Name}}
+                                    </div>
+                                </div>
+                                <div class="third-place standing">
+                                    <div class="place">
+                                        3<sup>rd</sup>
+                                    </div>
+                                    <div class="logo">
+                                        <img src="{{$thirdPlaceLogo.URL}}"/>
+                                    </div>
+                                    <div class="team">
+                                        {{$thirdPlace.Team.Name}}
+                                    </div>
+                                </div>
+                            </div>
+                        {{end}}
+                    <div style="clear:both;"></div>
+                {{with .LeaguePowerData}}
+                    {{$allPowerData := .}}
+                    {{with .ByWeek}}
+                        {{range $index, $ranking := .}}
+                            {{$week := .Week}}
+                            {{if .Projected}}
+                                <div class="weekly week-{{$week}} projection">
+                            {{else}}
+                                <div class="weekly week-{{$week}}">
+                            {{end}}
+                                <h3>Week {{$week}}</h3>
+                                <table class="table table-bordered table-striped table-condensed">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Fantasy</th>
+                                            <th>Power</th>
                                         </tr>
-                                    {{end}}     
-                                {{end}} 
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                    {{with .Rankings}}
+                                        {{$rankings := .}}
+                                        {{range $index, $score := .}}
+                                            {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
+                                            {{if .Team.IsOwnedByCurrentLogin}}
+                                            <tr class="team-row team-{{.Team.TeamID}} team-selected">
+                                            {{else}}
+                                            <tr class="team-row team-{{.Team.TeamID}}">
+                                            {{end}}
+                                                <td>{{.Team.Name}}</td>
+                                                <td>{{printf "%.2f" .Score}}</td>
+                                                <td>{{getPowerScore $week $teamPowerData.AllScores}}</td>
+                                            </tr>
+                                        {{end}}     
+                                    {{end}} 
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{end}}
                     {{end}}
                 {{end}}
+            {{else}}
+                <p class="Lead">League has not yet started</p>
             {{end}}
         {{else}}
             <p class="Lead">There was an error generating the rankings.</p>

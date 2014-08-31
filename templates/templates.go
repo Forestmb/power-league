@@ -52,6 +52,7 @@ func NewTemplatesFromDir(dir string) *Templates {
 type RankingsPageContent struct {
 	Weeks           int
 	League          *goff.League
+	LeagueStarted   bool
 	LeaguePowerData *rankings.LeaguePowerData
 	LoggedIn        bool
 	SiteConfig      *SiteConfig

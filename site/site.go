@@ -230,6 +230,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	// Determine the current week
 	currentWeek := -1
+	leagueStarted := true
 	loggedIn := false
 
 	values := req.URL.Query()
@@ -247,6 +248,8 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 			} else {
 				currentWeek = league.CurrentWeek - 1
 			}
+
+			leagueStarted = league.DraftStatus == "postdraft"
 			loggedIn = true
 		} else {
 			glog.Warningf("unable to get current week from league metadata: %s", err)
@@ -259,22 +262,27 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	var rankingsContent *templates.RankingsPageContent
 	if err == nil {
-		leaguePowerData, err := rankings.GetPowerData(
-			&YahooClient{Client: client},
-			leagueKey,
-			currentWeek,
-			league.EndWeek)
-		if err != nil {
-			glog.Warningf("error generating power rankings page: %s", err)
-			http.Error(w, "Error occurred when calculating rankings",
-				http.StatusInternalServerError)
-			return
+		var leaguePowerData *rankings.LeaguePowerData
+		if leagueStarted {
+			leaguePowerData, err = rankings.GetPowerData(
+				&YahooClient{Client: client},
+				leagueKey,
+				currentWeek,
+				league.EndWeek)
+
+			if err != nil {
+				glog.Warningf("error generating power rankings page: %s", err)
+				http.Error(w, "Error occurred when calculating rankings",
+					http.StatusInternalServerError)
+				return
+			}
 		}
 
 		rankingsContent = &templates.RankingsPageContent{
 			Weeks:           currentWeek,
-			LeaguePowerData: leaguePowerData,
 			League:          league,
+			LeagueStarted:   leagueStarted,
+			LeaguePowerData: leaguePowerData,
 			LoggedIn:        loggedIn,
 			SiteConfig:      s.config,
 		}
