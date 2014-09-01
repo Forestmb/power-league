@@ -5,13 +5,33 @@ body {
 }
 
 .container {
-    width: 95%; margin: auto;
+    width: 95%;
+    margin: auto;
 }
 
 .navbar {
     border-radius: 0px;
     -webkit-border-radius: 0px;
     -moz-border-radius: 0px;
+    min-height: 55px;
+}
+
+.navbar-brand {
+    padding: 2px;
+}
+
+.navbar-nav > li > a {
+    padding-top: 17px;
+    padding-bottom: 17px;
+}
+
+.logo {
+    width: 85px;
+    opacity: 0.85
+}
+
+.logo:hover {
+    opacity: 1.0
 }
 
 .weekly {
