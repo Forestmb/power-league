@@ -231,7 +231,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	// Determine the current week
 	currentWeek := -1
 	leagueStarted := true
-	loggedIn := false
+	loggedIn := s.sessionManager.IsLoggedIn(req)
 
 	values := req.URL.Query()
 	leagueKey := values.Get("key")
@@ -250,12 +250,13 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 			}
 
 			leagueStarted = league.DraftStatus == "postdraft"
-			loggedIn = true
 		} else {
 			glog.Warningf("unable to get current week from league metadata: %s", err)
+			loggedIn = false
 		}
 	} else {
 		glog.Warningf("unable to create client: %s", err)
+		loggedIn = false
 	}
 
 	glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
@@ -272,8 +273,21 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 			if err != nil {
 				glog.Warningf("error generating power rankings page: %s", err)
-				http.Error(w, "Error occurred when calculating rankings",
-					http.StatusInternalServerError)
+				err = s.templates.WriteErrorTemplate(
+					w,
+					&templates.ErrorPageContent{
+						Message: "Error occurred while generating the rankings. " +
+							"Try refreshing the page.",
+						LoggedIn:   loggedIn,
+						SiteConfig: s.config,
+					})
+
+				if err != nil {
+					http.Error(
+						w,
+						"Error occurred when calculating rankings",
+						http.StatusInternalServerError)
+				}
 				return
 			}
 		}

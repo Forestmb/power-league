@@ -20,6 +20,7 @@ const (
 
 	baseTemplate     = "base.html"
 	aboutTemplate    = "about.html"
+	errorTemplate    = "error.html"
 	leaguesTemplate  = "leagues.html"
 	rankingsTemplate = "rankings.html"
 )
@@ -81,6 +82,13 @@ type AboutPageContent struct {
 	SiteConfig *SiteConfig
 }
 
+// ErrorPageContent describes an error that has occurred in the application.
+type ErrorPageContent struct {
+	Message    string
+	LoggedIn   bool
+	SiteConfig *SiteConfig
+}
+
 // SiteConfig provides configuration info about the site that can be used on
 // all pages.
 type SiteConfig struct {
@@ -134,6 +142,17 @@ func (t *Templates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPageConten
 		return err
 	}
 
+	return template.Execute(w, content)
+}
+
+// WriteErrorTemplate writes the error page template to the given writer
+func (t *Templates) WriteErrorTemplate(w io.Writer, content *ErrorPageContent) error {
+	template, err := template.New(errorTemplate).ParseFiles(
+		t.BaseDir+baseTemplate,
+		t.BaseDir+errorTemplate)
+	if err != nil {
+		return err
+	}
 	return template.Execute(w, content)
 }
 

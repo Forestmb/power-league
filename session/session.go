@@ -33,7 +33,7 @@ const (
 	// RequestTokenKey updates the request token for the current session
 	RequestTokenKey = "request-token"
 
-	// oauthVerifierKey acceses  the verification code after oauth
+	// oauthVerifierKey acceses the verification code after oauth
 	// authentication
 	oauthVerifierKey = "oauth_verifier"
 

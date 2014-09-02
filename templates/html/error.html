@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Error has occurred</title>
+        {{template "header" .}}
+    </head>
+    <body>
+        {{template "nav" .}}
+        {{$config := .SiteConfig}}
+        <div class="container">
+            <p class="lead">
+                {{.Message}}
+            </p>
+        </div>
+        {{template "footer" .}}
+    </body>
+</html>

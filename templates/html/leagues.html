@@ -36,11 +36,5 @@
             {{end}}
         </div>
         {{template "footer" .}}
-        <script type="text/javascript">
-            $('#year-select').change(function(){
-                var url = '{{.SiteConfig.BaseContext}}?year=' + this.value;
-                window.location.href = url;
-            });
-        </script>
     </body>
 </html>

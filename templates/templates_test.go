@@ -1,7 +1,6 @@
 package templates
 
 import (
-	"io"
 	"strings"
 	"testing"
 
@@ -108,6 +107,43 @@ func TestWriteAboutTemplateError(t *testing.T) {
 	}
 }
 
+func TestWriteErrorTemplate(t *testing.T) {
+	message := "This is the message"
+	content := &ErrorPageContent{
+		Message:    message,
+		LoggedIn:   true,
+		SiteConfig: mockSiteConfig(),
+	}
+
+	templates := NewTemplates()
+	writer := mockWriter()
+	err := templates.WriteErrorTemplate(writer, content)
+	if err != nil {
+		t.Fatalf("Writing error template failed with err='%s'", err.Error())
+	}
+
+	if !strings.Contains(writer.content, message) {
+		t.Fatalf("Error page content did not contain expected message.\n\t"+
+			"expected: %s\n\tactual: %s\n",
+			message,
+			writer.content)
+	}
+}
+
+func TestWriteErrorTemplateError(t *testing.T) {
+	content := &ErrorPageContent{
+		Message:    "message",
+		LoggedIn:   true,
+		SiteConfig: mockSiteConfig(),
+	}
+
+	templates := NewTemplatesFromDir("dir-does-not-exist/")
+	err := templates.WriteErrorTemplate(mockWriter(), content)
+	if err == nil {
+		t.Fatalf("Writing error template did not fail with non-existent dir")
+	}
+}
+
 func TestTemplateGetTitleFromYear(t *testing.T) {
 	year := "2011"
 	out := templateGetTitleFromYear(year)
@@ -155,12 +191,12 @@ type MockResponseWriter struct {
 }
 
 func (m *MockResponseWriter) Write(b []byte) (n int, err error) {
-	m.content = string(b)
+	m.content += string(b)
 	return 0, nil
 }
 
-func mockWriter() io.Writer {
-	return &MockResponseWriter{}
+func mockWriter() *MockResponseWriter {
+	return &MockResponseWriter{content: ""}
 }
 
 func mockLeaguePowerData() *rankings.LeaguePowerData {
