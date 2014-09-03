@@ -106,8 +106,11 @@ type SiteLink struct {
 // WriteRankingsTemplate writes the raknings template to the given writer
 func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
-		"getPowerScore": templateGetPowerScore,
-		"getRankings":   templateGetRankings,
+		"getPowerScore":    templateGetPowerScore,
+		"getRankings":      templateGetRankings,
+		"getActualRank":    templateGetActualRank,
+		"getPlacingTeams":  templateGetPlacingTeams,
+		"getPlaceFromRank": templateGetPlaceFromRank,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -165,6 +168,27 @@ func templateGetTitleFromYear(year string) string {
 		return "Current Leagues"
 	}
 	return year
+}
+
+func templateGetActualRank(teamData *rankings.TeamPowerData) int {
+	if teamData.HasProjections {
+		return teamData.ProjectedRank
+	}
+	return teamData.Rank
+}
+
+func templateGetPlaceFromRank(rank int, places ...string) string {
+	return places[rank-1]
+}
+
+func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.TeamPowerData {
+	placingTeams := make([]*rankings.TeamPowerData, 0)
+	for _, teamData := range powerData {
+		if templateGetActualRank(teamData) <= 3 {
+			placingTeams = append(placingTeams, teamData)
+		}
+	}
+	return placingTeams
 }
 
 func templateGetPowerScore(week int, teamScores []*rankings.TeamScoreData) string {

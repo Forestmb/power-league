@@ -10,6 +10,7 @@
         {{if .}}
             <h2>{{.League.Name}}</h2>
             {{if .LeagueStarted}}
+                {{$finished := .League.IsFinished}}
                 <div class="overall overall-table">
                     <h3>Overall through {{.Weeks}} Weeks</h3>
                     <table class="table table-striped table-bordered">
@@ -17,7 +18,10 @@
                             <tr>
                                 <th>Rank</th>
                                 <th>Team</th>
-                                <th>Total Power Points</th>
+                                <th>Power Points</th>
+                                {{if not $finished}} 
+                                    <th>Projected Power Points</th>
+                                {{end}}
                             </tr>
                         </thead>
                         <tbody>
@@ -32,6 +36,9 @@
                                         <td>{{.Rank}}</td>
                                         <td>{{.Team.Name}}</td>
                                         <td>{{printf "%.0f" .TotalPowerScore}}</td>
+                                        {{if not $finished}} 
+                                            <td>{{printf "%.0f" .ProjectedPowerScore}}</td>
+                                        {{end}}
                                     </tr>
                                 {{end}}
                             {{end}}
@@ -47,45 +54,9 @@
                                 {{else}}
                                     <h3>Projected Final Standings</h3>
                                 {{end}}
-                                {{$firstPlace := index $rankings 0}}
-                                {{$firstPlaceLogo := index $firstPlace.Team.TeamLogos 0}}
-                                {{$secondPlace := index $rankings 1}}
-                                {{$secondPlaceLogo := index $secondPlace.Team.TeamLogos 0}}
-                                {{$thirdPlace := index $rankings 2}}
-                                {{$thirdPlaceLogo := index $thirdPlace.Team.TeamLogos 0}}
-                                <div class="first-place standing">
-                                    <div class="place">
-                                        1<sup>st</sup>
-                                    </div>
-                                    <div class="logo">
-                                        <img src="{{$firstPlaceLogo.URL}}"/>
-                                    </div>
-                                    <div class="team">
-                                        {{$firstPlace.Team.Name}}
-                                    </div>
-                                </div>
-                                <div class="second-place standing">
-                                    <div class="place">
-                                        2<sup>nd</sup>
-                                    </div>
-                                    <div class="logo">
-                                        <img src="{{$secondPlaceLogo.URL}}"/>
-                                    </div>
-                                    <div class="team">
-                                        {{$secondPlace.Team.Name}}
-                                    </div>
-                                </div>
-                                <div class="third-place standing">
-                                    <div class="place">
-                                        3<sup>rd</sup>
-                                    </div>
-                                    <div class="logo">
-                                        <img src="{{$thirdPlaceLogo.URL}}"/>
-                                    </div>
-                                    <div class="team">
-                                        {{$thirdPlace.Team.Name}}
-                                    </div>
-                                </div>
+                                {{range $i, $teamData := getPlacingTeams $rankings}}
+                                    {{template "final_standing" $teamData}}
+                                {{end}}
                             </div>
                         {{end}}
                     <div style="clear:both;"></div>
@@ -141,3 +112,20 @@
         <script src="{{.SiteConfig.StaticContext}}js/highlight.js"></script>
     </body>
 </html>
+
+{{define "final_standing"}}
+{{$rank := getActualRank .}}
+<div class="place-{{$rank}} standing">
+    <div class="place">
+        {{$sup := getPlaceFromRank $rank "st" "nd" "rd"}}
+        {{$rank}}<sup>{{$sup}}</sup>
+    </div>
+    <div class="logo">
+        {{$logo := index .Team.TeamLogos 0}}
+        <img src="{{$logo.URL}}"/>
+    </div>
+    <div class="team">
+        {{.Team.Name}}
+    </div>
+</div>
+{{end}}

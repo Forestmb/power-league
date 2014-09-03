@@ -186,6 +186,213 @@ func TestTemplateGetPowerScore(t *testing.T) {
 	}
 }
 
+func TestTemplateGetActualRankWithProjections(t *testing.T) {
+	expected := 2
+	teamPowerData := &rankings.TeamPowerData{
+		Rank:           1,
+		ProjectedRank:  expected,
+		HasProjections: true,
+	}
+	rank := templateGetActualRank(teamPowerData)
+
+	if rank != expected {
+		t.Fatalf("Assertion error. Incorrect actual rank returned for team"+
+			"power data.\n\tExpected: %d\n\tActual: %d",
+			expected,
+			rank)
+	}
+}
+
+func TestTemplateGetActualRankWithoutProjections(t *testing.T) {
+	expected := 2
+	teamPowerData := &rankings.TeamPowerData{
+		Rank:           expected,
+		ProjectedRank:  1,
+		HasProjections: false,
+	}
+	rank := templateGetActualRank(teamPowerData)
+
+	if rank != expected {
+		t.Fatalf("Assertion error. Incorrect actual rank returned for team"+
+			"power data.\n\tExpected: %d\n\tActual: %d",
+			expected,
+			rank)
+	}
+}
+
+func TestTemplateGetPlacingTeamsProjected(t *testing.T) {
+	first := &rankings.TeamPowerData{
+		Rank:           0,
+		ProjectedRank:  1,
+		HasProjections: true,
+	}
+	third := &rankings.TeamPowerData{
+		Rank:           0,
+		ProjectedRank:  0,
+		HasProjections: false,
+	}
+	allTeamPowerData := []*rankings.TeamPowerData{
+		first,
+		first,
+		third,
+		third,
+		third,
+		&rankings.TeamPowerData{
+			Rank:           4,
+			ProjectedRank:  0,
+			HasProjections: false,
+		},
+	}
+
+	placed := templateGetPlacingTeams(allTeamPowerData)
+	if len(placed) != 5 {
+		t.Fatalf("Unexpected number of placed teams returned:\n\t"+
+			"Expected: %d\n\tActual: %d",
+			5,
+			len(placed))
+	}
+
+	if placed[0] != first {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			first,
+			placed[0])
+	}
+	if placed[1] != first {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			first,
+			placed[1])
+	}
+	if placed[2] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[2])
+	}
+	if placed[3] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[3])
+	}
+	if placed[4] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[4])
+	}
+}
+
+func TestTemplateGetPlacingTeamsNotProjected(t *testing.T) {
+	first := &rankings.TeamPowerData{
+		Rank:           1,
+		ProjectedRank:  0,
+		HasProjections: false,
+	}
+	third := &rankings.TeamPowerData{
+		Rank:           3,
+		ProjectedRank:  0,
+		HasProjections: false,
+	}
+	allTeamPowerData := []*rankings.TeamPowerData{
+		first,
+		first,
+		third,
+		third,
+		third,
+		&rankings.TeamPowerData{
+			Rank:           4,
+			ProjectedRank:  0,
+			HasProjections: false,
+		},
+	}
+
+	placed := templateGetPlacingTeams(allTeamPowerData)
+	if len(placed) != 5 {
+		t.Fatalf("Unexpected number of placed teams returned:\n\t"+
+			"Expected: %d\n\tActual: %d",
+			5,
+			len(placed))
+	}
+
+	if placed[0] != first {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			first,
+			placed[0])
+	}
+	if placed[1] != first {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			first,
+			placed[1])
+	}
+	if placed[2] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[2])
+	}
+	if placed[3] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[3])
+	}
+	if placed[4] != third {
+		t.Fatalf("Unexpected team returned.\n\tExpected: %+v\n\tActual: %+v",
+			third,
+			placed[4])
+	}
+}
+
+func TestGetPlaceFromRank(t *testing.T) {
+	expected := "expected"
+	actual := templateGetPlaceFromRank(1, expected, "other", "another")
+	if expected != actual {
+		t.Fatalf("Unexpected place returned from rank.\n\tExpected: %s"+
+			"\n\tActual: %s",
+			expected,
+			actual)
+	}
+
+	actual = templateGetPlaceFromRank(2, "other", expected, "another")
+	if expected != actual {
+		t.Fatalf("Unexpected place returned from rank.\n\tExpected: %s"+
+			"\n\tActual: %s",
+			expected,
+			actual)
+	}
+
+	actual = templateGetPlaceFromRank(3, "other", "another", expected)
+	if expected != actual {
+		t.Fatalf("Unexpected place returned from rank.\n\tExpected: %s"+
+			"\n\tActual: %s",
+			expected,
+			actual)
+	}
+}
+
+func TestTemplateGetRankingsProjected(t *testing.T) {
+	expected := []*rankings.TeamPowerData{}
+	actual := templateGetRankings(
+		rankings.LeaguePowerData{
+			OverallRankings:   nil,
+			ProjectedRankings: expected,
+		},
+		false)
+
+	if actual == nil {
+		t.Fatal("Projected rankings were not returned")
+	}
+}
+
+func TestTemplateGetRankingsNotProjected(t *testing.T) {
+	expected := []*rankings.TeamPowerData{}
+	actual := templateGetRankings(
+		rankings.LeaguePowerData{
+			OverallRankings:   expected,
+			ProjectedRankings: nil,
+		},
+		true)
+
+	if actual == nil {
+		t.Fatal("Actual rankings were not returned")
+	}
+}
+
 type MockResponseWriter struct {
 	content string
 }

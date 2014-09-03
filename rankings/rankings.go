@@ -44,6 +44,7 @@ type TeamPowerData struct {
 	ProjectedPowerScore float64
 	Rank                int
 	ProjectedRank       int
+	HasProjections      bool
 }
 
 // PowerRankings ranks teams based on their performance over multiple weeks
@@ -54,6 +55,9 @@ func (p PowerRankings) Len() int {
 }
 
 func (p PowerRankings) Less(i, j int) bool {
+	if p[i].TotalPowerScore == p[j].TotalPowerScore {
+		return p[i].ProjectedPowerScore > p[j].ProjectedPowerScore
+	}
 	return p[i].TotalPowerScore > p[j].TotalPowerScore
 }
 
@@ -223,12 +227,15 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 						Team:                teamScoreData.Team,
 						TotalPowerScore:     0.0,
 						ProjectedPowerScore: 0.0,
+						HasProjections:      weeklyRanking.Projected,
 					}
 					powerDataByTeamKey[teamScoreData.Team.TeamKey] = powerData
 				}
 				powerData.AllScores[weekIndex] = teamScoreData
 				if !weeklyRanking.Projected {
 					powerData.TotalPowerScore += teamScoreData.PowerScore
+				} else {
+					powerData.HasProjections = true
 				}
 				powerData.ProjectedPowerScore += teamScoreData.PowerScore
 				glog.V(4).Infof(

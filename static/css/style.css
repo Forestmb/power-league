@@ -25,12 +25,12 @@ body {
     padding-bottom: 17px;
 }
 
-.logo {
+.site-logo {
     width: 85px;
     opacity: 0.85
 }
 
-.logo:hover {
+.site-logo:hover {
     opacity: 1.0
 }
 
@@ -98,15 +98,15 @@ body {
     font-size: 28px;
 }
 
-.first-place {
+.place-1 {
     color: #444;
 }
 
-.second-place {
+.place-2 {
     color: #6A6A6A;
 }
 
-.third-place {
+.place-3 {
     color: #999;
 }
 
