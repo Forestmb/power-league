@@ -1,6 +1,6 @@
 # Changelog #
 
-## 0.2.0 (????-??-??) ##
+## 0.2.0 (2014-09-05) ##
 
 - Power ranking projections for unfinished leagues.
 - Caches fantasy content for each user for up to 6 hours (configurable).
