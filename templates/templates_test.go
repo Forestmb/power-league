@@ -393,6 +393,69 @@ func TestTemplateGetRankingsNotProjected(t *testing.T) {
 	}
 }
 
+func TestTemplateGetTeamPosition(t *testing.T) {
+	teamID := uint64(123)
+	rankings := []*rankings.TeamPowerData{
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 1,
+			},
+		},
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 2,
+			},
+		},
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: teamID,
+			},
+		},
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 3,
+			},
+		},
+	}
+
+	position := templateGetTeamPosition(teamID, rankings)
+	if position != 3 {
+		t.Fatalf("Did not return expected position:\n\tExpected: %d\n\t"+
+			"Actual: %d",
+			3,
+			position)
+	}
+}
+
+func TestTemplateGetTeamPositionNotPresent(t *testing.T) {
+	teamID := uint64(123)
+	rankings := []*rankings.TeamPowerData{
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 1,
+			},
+		},
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 2,
+			},
+		},
+		&rankings.TeamPowerData{
+			Team: &goff.Team{
+				TeamID: 3,
+			},
+		},
+	}
+
+	position := templateGetTeamPosition(teamID, rankings)
+	if position != -1 {
+		t.Fatalf("Did not return expected position:\n\tExpected: %d\n\t"+
+			"Actual: %d",
+			-1,
+			position)
+	}
+}
+
 type MockResponseWriter struct {
 	content string
 }

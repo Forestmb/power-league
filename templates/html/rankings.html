@@ -27,11 +27,12 @@
                         <tbody>
                         {{with .LeaguePowerData}}
                             {{with .OverallRankings}}
+                                {{$overall := .}}
                                 {{range $index, $teamRanking := .}}
                                     {{if .Team.IsOwnedByCurrentLogin}}
-                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-selected">
+                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}} team-selected">
                                     {{else}}
-                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}}">
+                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}}">
                                     {{end}}
                                         <td>{{.Rank}}</td>
                                         <td>{{.Team.Name}}</td>
@@ -85,9 +86,9 @@
                                         {{range $index, $score := .}}
                                             {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
                                             {{if .Team.IsOwnedByCurrentLogin}}
-                                            <tr class="team-row team-{{.Team.TeamID}} team-selected">
+                                            <tr class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
                                             {{else}}
-                                            <tr class="team-row team-{{.Team.TeamID}}">
+                                            <tr class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
                                             {{end}}
                                                 <td>{{.Team.Name}}</td>
                                                 <td>{{printf "%.2f" .Score}}</td>

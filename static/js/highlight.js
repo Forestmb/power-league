@@ -7,16 +7,14 @@ $(document).ready(function(){
         $(getTeam(id)).removeClass('team-hover');
     });
 
-    var selectedId = null;
     $('.overall-table tbody tr').click(function() {
         var selectedClass = 'team-selected';
-        $('.' + selectedClass).removeClass(selectedClass);
         var id = $(this).attr("id");
-        if(selectedId !== id) {
+
+        if(!$(this).hasClass(selectedClass)) {
             $(getTeam(id)).addClass(selectedClass);
-            selectedId = id;
         } else {
-            selectedId = null;
+            $(getTeam(id)).removeClass(selectedClass);
         }
     });
 

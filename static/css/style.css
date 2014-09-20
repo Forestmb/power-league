@@ -46,7 +46,7 @@ body {
 }
 
 .projection {
-    opacity: 0.5;
+    opacity: 0.75;
 }
 
 .overall-table .team-row {
@@ -116,11 +116,10 @@ body {
 }
 
 .team-hover td {
-    background: #DEFFD2 !important;
+    background: #EEEEEE !important;
 }
 
 .team-selected td {
-    background: #AEE499 !important;
     font-weight: bold;
 }
 
@@ -160,4 +159,87 @@ body {
 
 #footer p {
     margin: 18px 0;
+}
+
+/**
+ * Visually distinct highlight colors for each team (up to 20)
+ */
+.team-selected.team-pos-1 td {
+    background: hsl(100, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-2 td {
+    background: hsl(130, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-3 td {
+    background: hsl(160, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-4 td {
+    background: hsl(190, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-5 td {
+    background: hsl(220, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-6 td {
+    background: hsl(250, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-7 td {
+    background: hsl(280, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-8 td {
+    background: hsl(310, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-9 td {
+    background: hsl(340, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-10 td {
+    background: hsl(10, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-11 td {
+    background: hsl(40, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-12 td {
+    background: hsl(70, 58%, 75%) !important;
+}
+
+.team-selected.team-pos-13 td {
+    background: hsl(100, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-14 td {
+    background: hsl(130, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-15 td {
+    background: hsl(160, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-16 td {
+    background: hsl(190, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-17 td {
+    background: hsl(220, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-18 td {
+    background: hsl(250, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-19 td {
+    background: hsl(280, 48%, 55%) !important;
+}
+
+.team-selected.team-pos-20 td {
+    background: hsl(310, 48%, 55%) !important;
 }

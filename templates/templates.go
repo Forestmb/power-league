@@ -111,6 +111,7 @@ func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageCont
 		"getActualRank":    templateGetActualRank,
 		"getPlacingTeams":  templateGetPlacingTeams,
 		"getPlaceFromRank": templateGetPlaceFromRank,
+		"getTeamPosition":  templateGetTeamPosition,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -204,6 +205,15 @@ func templateGetRankings(powerData rankings.LeaguePowerData, finished bool) []*r
 		return powerData.OverallRankings
 	}
 	return powerData.ProjectedRankings
+}
+
+func templateGetTeamPosition(teamID uint64, rankings []*rankings.TeamPowerData) int {
+	for index, scoreData := range rankings {
+		if scoreData.Team.TeamID == teamID {
+			return index + 1
+		}
+	}
+	return -1
 }
 
 //
