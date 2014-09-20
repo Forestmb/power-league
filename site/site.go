@@ -43,15 +43,13 @@ type ContextHandler struct {
 	Func SiteHandlerFunc
 }
 
-// ContextHandler adds a new handler for this site, and optionally adds it to the
-// navigation if `navText` has any content
-func (s *Site) ContextHandler(id string, context string, f SiteHandlerFunc, navText string) {
+// ContextHandler adds a new handler for this site
+func (s *Site) ContextHandler(id string, context string, f SiteHandlerFunc) {
 	fullContext := fmt.Sprintf("%s%s", s.config.BaseContext, context)
 	if fullContext != "" {
 		glog.V(3).Infof("adding context handler -- id=%s, context=%s, navText=%s",
 			id,
-			fullContext,
-			navText)
+			fullContext)
 		s.ServeMux.HandleFunc(
 			fullContext,
 			func(w http.ResponseWriter, r *http.Request) {
@@ -62,16 +60,6 @@ func (s *Site) ContextHandler(id string, context string, f SiteHandlerFunc, navT
 	s.handlers[id] = &ContextHandler{
 		Context: fullContext,
 		Func:    f,
-	}
-
-	if navText != "" {
-		glog.V(2).Infof("adding nav link -- navText=%s, context=%s",
-			navText,
-			fullContext)
-		s.config.NavLinks = append(s.config.NavLinks, templates.SiteLink{
-			Link: fullContext,
-			Name: navText,
-		})
 	}
 }
 
@@ -101,13 +89,13 @@ func NewSite(
 		},
 		templates: templates.NewTemplatesFromDir(templatesDir),
 	}
-	site.ContextHandler("base", "", handleShowLeagues, "")
-	site.ContextHandler("showLeagues", "/", handleShowLeagues, "Leagues")
-	site.ContextHandler("login", "/login", handleLogin, "")
-	site.ContextHandler("logout", "/logout", handleLogout, "")
-	site.ContextHandler("auth", "/auth", handleAuthentication, "")
-	site.ContextHandler("league", "/league", handlePowerRankings, "")
-	site.ContextHandler("about", "/about", handleAbout, "About")
+	site.ContextHandler("base", "", handleShowLeagues)
+	site.ContextHandler("showLeagues", "/", handleShowLeagues)
+	site.ContextHandler("login", "/login", handleLogin)
+	site.ContextHandler("logout", "/logout", handleLogout)
+	site.ContextHandler("auth", "/auth", handleAuthentication)
+	site.ContextHandler("league", "/league", handlePowerRankings)
+	site.ContextHandler("about", "/about", handleAbout)
 
 	return site
 }
@@ -118,8 +106,10 @@ func NewSite(
 
 func handleAbout(s *Site, w http.ResponseWriter, r *http.Request) {
 	glog.V(5).Infoln("in handleAbout")
+
+	loggedIn := s.sessionManager.IsLoggedIn(r)
 	aboutContent := &templates.AboutPageContent{
-		LoggedIn:   s.sessionManager.IsLoggedIn(r),
+		LoggedIn:   loggedIn,
 		SiteConfig: s.config,
 	}
 	err := s.templates.WriteAboutTemplate(w, aboutContent)
@@ -179,19 +169,7 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 				http.StatusInternalServerError)
 			return
 		}
-
-		currentYear := time.Now().Year()
-		numberOfYears := (currentYear - EarliestSupportedYear) + 1
-		results := make(chan *templates.YearlyLeagues)
-		for ; currentYear >= EarliestSupportedYear; currentYear-- {
-			go getUserLeauges(client, currentYear, results)
-		}
-
-		allYearlyLeagues = make([]*templates.YearlyLeagues, numberOfYears)
-		for i := 0; i < numberOfYears; i++ {
-			allYearlyLeagues[i] = <-results
-		}
-		sort.Sort(templates.AllYearlyLeagues(allYearlyLeagues))
+		allYearlyLeagues = getAllYearlyLeagues(client)
 	} else {
 		glog.V(2).Infoln("user not logged in, can't show leagues")
 	}
@@ -207,6 +185,22 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error occurred when retreiving league list",
 			http.StatusInternalServerError)
 	}
+}
+
+func getAllYearlyLeagues(client *goff.Client) templates.AllYearlyLeagues {
+	currentYear := time.Now().Year()
+	numberOfYears := (currentYear - EarliestSupportedYear) + 1
+	results := make(chan *templates.YearlyLeagues)
+	for ; currentYear >= EarliestSupportedYear; currentYear-- {
+		go getUserLeauges(client, currentYear, results)
+	}
+
+	allYearlyLeagues := make([]*templates.YearlyLeagues, numberOfYears)
+	for i := 0; i < numberOfYears; i++ {
+		allYearlyLeagues[i] = <-results
+	}
+	sort.Sort(templates.AllYearlyLeagues(allYearlyLeagues))
+	return allYearlyLeagues
 }
 
 func getUserLeauges(client *goff.Client, year int, results chan *templates.YearlyLeagues) {
