@@ -46,6 +46,10 @@ func main() {
 		6*60*60,
 		"Maximum duration user data will be cached, in seconds. Defaults to"+
 			" six hours")
+	trackingID := flag.String(
+		"trackingID",
+		"",
+		"Google Analytics tracking ID. If blank, tracking will not be activated")
 	clientKey := flag.String(
 		"clientKey",
 		"",
@@ -118,7 +122,7 @@ func main() {
 		*userCacheDurationSeconds)
 
 	site := site.NewSite(
-		baseContext, *staticFilesLocation, "templates/html/", sessionManager)
+		baseContext, *staticFilesLocation, "templates/html/", *trackingID, sessionManager)
 	http.ListenAndServe(*addr, handlers.LoggingHandler(logWriter{}, site.ServeMux))
 }
 

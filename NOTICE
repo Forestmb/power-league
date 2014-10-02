@@ -67,3 +67,9 @@ library designed to simplify the client-side scripting of HTML.
 
     * LICENSE: MIT
     * HOMEPAGE: https://jquery.com/
+
+This product contains a dependency on Google Analytics, a service that
+generates detailed statistics about a website's traffic and traffic sources.
+    
+    * LICENSE: Apache 2.0
+    * HOMEPAGE: https://developers.google.com/analytics/

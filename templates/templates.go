@@ -92,9 +92,9 @@ type ErrorPageContent struct {
 // SiteConfig provides configuration info about the site that can be used on
 // all pages.
 type SiteConfig struct {
-	BaseContext   string
-	NavLinks      []SiteLink
-	StaticContext string
+	BaseContext         string
+	StaticContext       string
+	AnalyticsTrackingID string
 }
 
 // SiteLink represents a link to a page in the site's navigation.

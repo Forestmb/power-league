@@ -68,6 +68,7 @@ func NewSite(
 	baseContext string,
 	staticFiles string,
 	templatesDir string,
+	trackingID string,
 	s session.SessionManager) *Site {
 
 	mux := http.DefaultServeMux
@@ -83,9 +84,9 @@ func NewSite(
 		handlers:       make(map[string]*ContextHandler),
 		sessionManager: s,
 		config: &templates.SiteConfig{
-			BaseContext:   baseContext,
-			StaticContext: staticContext,
-			NavLinks:      make([]templates.SiteLink, 0),
+			BaseContext:         baseContext,
+			StaticContext:       staticContext,
+			AnalyticsTrackingID: trackingID,
 		},
 		templates: templates.NewTemplatesFromDir(templatesDir),
 	}

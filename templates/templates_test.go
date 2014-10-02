@@ -597,14 +597,9 @@ func mockLeagues() []goff.League {
 
 func mockSiteConfig() *SiteConfig {
 	return &SiteConfig{
-		BaseContext: "/power-rankings",
-		NavLinks: []SiteLink{
-			SiteLink{
-				Link: "/example",
-				Name: "example",
-			},
-		},
-		StaticContext: "/static",
+		BaseContext:         "/power-rankings",
+		StaticContext:       "/static",
+		AnalyticsTrackingID: "",
 	}
 }
 

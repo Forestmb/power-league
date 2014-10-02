@@ -13,6 +13,9 @@ client_secret=
 #cookie_auth_key=
 #cookie_encryption_key=
 
+# Google Analytics tracking ID. If not defined no tracking will be performed.
+#tracking_id=
+
 # The level of verbosity in logs. The higher the number, the more verbose
 log_level=1
 

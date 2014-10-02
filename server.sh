@@ -73,6 +73,10 @@ function start()
     then
         args="${args} --cookieEncryptionKey ${cookie_encryption_key}"
     fi
+    if [ ! -z "${tracking_id}" ]
+    then
+        args="${args} --trackingID ${tracking_id}"
+    fi
 
     nohup "${dir}/${binary}" ${args} "$@" \
             > "${log_dir}/${stdout_file}" \

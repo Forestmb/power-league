@@ -1,5 +1,9 @@
 # Changelog #
 
+## 0.3.0 (TBD) ##
+
+- Traffic analysis through Google Analytics
+
 ## 0.2.0 (2014-09-05) ##
 
 - Power ranking projections for unfinished leagues.
