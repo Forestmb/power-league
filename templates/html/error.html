@@ -8,9 +8,10 @@
         {{template "nav" .}}
         {{$config := .SiteConfig}}
         <div class="container">
-            <p class="lead">
+            <div class="alert alert-warning">
+                <span class="glyphicon glyphicon-warning-sign"></span>
                 {{.Message}}
-            </p>
+            </div>
         </div>
         {{template "footer" .}}
     </body>
