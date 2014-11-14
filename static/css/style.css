@@ -2,6 +2,7 @@
 html,
 body {
     height: 100%;
+    background-color: #DDD;
 }
 
 .container {
@@ -35,10 +36,27 @@ body {
 }
 
 .weekly {
-    float: left;
-    width: 24%;
-    min-width: 320px;
-    margin: 5px;
+    display: inline-block;
+    width: 100%;
+    padding: 5px;
+}
+
+@media (min-width: 768px) {
+    .weekly {
+        width: 49.5%;
+    }
+}
+
+@media (min-width: 1000px) {
+    .weekly {
+        width: 32.5%;
+    }
+}
+
+@media (min-width: 1300px) {
+    .weekly {
+        width: 24.5%;
+    }
 }
 
 .weekly h2 {
@@ -54,8 +72,14 @@ body {
 }
 
 .overall-table {
-    width: 50%;
+    width: 100%;
     float: left;
+}
+
+@media (min-width: 1000px) {
+    .overall-table {
+        width: 49.5%;
+    }
 }
 
 .overall-table h3 {
@@ -64,8 +88,15 @@ body {
 }
 
 .standings {
-    margin-left: 15px;
     float: left;
+    width: 100%;
+}
+
+@media (min-width: 1000px) {
+    .standings {
+        width: 49.5%;
+        padding-left: 15px;
+    }
 }
 
 .standings h3 {
@@ -126,9 +157,21 @@ body {
 .league-list {
     display: inline-block;
     vertical-align: top;
-    width: 19%;
     min-width: 200px;
-    margin: 5px;
+    padding: 5px;
+    width: 100%
+}
+
+@media (min-width: 768px) {
+    .league-list {
+        width: 32.5%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .league-list {
+        width: 24.5%;
+    }
 }
 
 .league-list h3 {
@@ -144,6 +187,7 @@ body {
 #wrap {
     min-height: 100%;
     height: auto;
+    background: #FFF;
     /* Negative indent footer by its height */
     margin: 0 auto -60px;
     /* Pad bottom by footer height */
