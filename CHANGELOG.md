@@ -3,6 +3,7 @@
 ## 0.3.0 (TBD) ##
 
 - Traffic analysis through Google Analytics
+- Added user preference for displaying all-play records instead of power scores.
 
 ## 0.2.0 (2014-09-05) ##
 

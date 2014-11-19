@@ -28,23 +28,33 @@ type WeeklyRanking struct {
 	Projected bool
 }
 
+// Record tracking the amount of wins, losses, and ties a team has
+type Record struct {
+	Wins   int
+	Losses int
+	Ties   int
+}
+
 // TeamScoreData describes the score information for a single team
 type TeamScoreData struct {
 	Team       *goff.Team
 	Score      float64
 	Rank       int
 	PowerScore float64
+	Record     *Record
 }
 
 // TeamPowerData describes how a team performed in the power rankings
 type TeamPowerData struct {
-	AllScores           []*TeamScoreData
-	Team                *goff.Team
-	TotalPowerScore     float64
-	ProjectedPowerScore float64
-	Rank                int
-	ProjectedRank       int
-	HasProjections      bool
+	AllScores              []*TeamScoreData
+	Team                   *goff.Team
+	TotalPowerScore        float64
+	ProjectedPowerScore    float64
+	Rank                   int
+	ProjectedRank          int
+	OverallRecord          *Record
+	OverallProjectedRecord *Record
+	HasProjections         bool
 }
 
 // PowerRankings ranks teams based on their performance over multiple weeks
@@ -164,8 +174,15 @@ func GetWeeklyRanking(
 		var powerScore float64
 		var rank int
 		if index > 0 && score == rankings[index-1].Score {
-			powerScore = rankings[index-1].PowerScore
-			rank = rankings[index-1].Rank
+			previousTeam := rankings[index-1]
+			for i := index - 2; i > 0 && rankings[i].Rank == previousTeam.Rank; i-- {
+				rankings[i].PowerScore--
+				rankings[i].Rank++
+			}
+			previousTeam.PowerScore--
+			previousTeam.Rank++
+			powerScore = previousTeam.PowerScore
+			rank = previousTeam.Rank
 		} else {
 			powerScore = float64(numTeamns - index)
 			rank = index + 1
@@ -175,6 +192,7 @@ func GetWeeklyRanking(
 			Score:      score,
 			PowerScore: powerScore,
 			Rank:       rank,
+			Record:     &Record{},
 		}
 		glog.V(4).Infof("%s -- league=%s, week=%d, rank=%d, team=%s, "+
 			"fantasyScore=%f, powerScore=%f",
@@ -185,6 +203,21 @@ func GetWeeklyRanking(
 			team.Name,
 			score,
 			powerScore)
+	}
+
+	// Update records
+	for _, team := range rankings {
+		for _, otherTeam := range rankings {
+			if team != otherTeam {
+				if team.Score > otherTeam.Score {
+					team.Record.Wins++
+				} else if team.Score == otherTeam.Score {
+					team.Record.Ties++
+				} else {
+					team.Record.Losses++
+				}
+			}
+		}
 	}
 
 	results <- &WeeklyRanking{Week: week, Rankings: rankings, Projected: projection}
@@ -223,21 +256,29 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 				powerData, ok := powerDataByTeamKey[teamScoreData.Team.TeamKey]
 				if !ok {
 					powerData = &TeamPowerData{
-						AllScores:           make([]*TeamScoreData, numWeeks),
-						Team:                teamScoreData.Team,
-						TotalPowerScore:     0.0,
-						ProjectedPowerScore: 0.0,
-						HasProjections:      weeklyRanking.Projected,
+						AllScores:              make([]*TeamScoreData, numWeeks),
+						Team:                   teamScoreData.Team,
+						TotalPowerScore:        0.0,
+						ProjectedPowerScore:    0.0,
+						OverallRecord:          &Record{},
+						OverallProjectedRecord: &Record{},
+						HasProjections:         weeklyRanking.Projected,
 					}
 					powerDataByTeamKey[teamScoreData.Team.TeamKey] = powerData
 				}
 				powerData.AllScores[weekIndex] = teamScoreData
 				if !weeklyRanking.Projected {
 					powerData.TotalPowerScore += teamScoreData.PowerScore
+					powerData.OverallRecord.Wins += teamScoreData.Record.Wins
+					powerData.OverallRecord.Losses += teamScoreData.Record.Losses
+					powerData.OverallRecord.Ties += teamScoreData.Record.Ties
 				} else {
 					powerData.HasProjections = true
 				}
 				powerData.ProjectedPowerScore += teamScoreData.PowerScore
+				powerData.OverallProjectedRecord.Wins += teamScoreData.Record.Wins
+				powerData.OverallProjectedRecord.Losses += teamScoreData.Record.Losses
+				powerData.OverallProjectedRecord.Ties += teamScoreData.Record.Ties
 				glog.V(4).Infof(
 					"adding team score data -- team=%s, projection=%t, "+
 						"powerScore=%f, totalPowerScore=%f, projectedPowerScore=%f",
@@ -262,6 +303,10 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 	for i, powerData := range sortedPowerData {
 		// Handle ties
 		if i > 0 && powerData.TotalPowerScore == sortedPowerData[i-1].TotalPowerScore {
+			for index := i - 2; index > 0 && powerData.TotalPowerScore == sortedPowerData[index].TotalPowerScore; index-- {
+				sortedPowerData[index].Rank++
+			}
+			sortedPowerData[i-1].Rank++
 			powerData.Rank = sortedPowerData[i-1].Rank
 		} else {
 			powerData.Rank = i + 1
@@ -287,6 +332,10 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 		if i > 0 &&
 			powerData.ProjectedPowerScore ==
 				sortedProjectionData[i-1].ProjectedPowerScore {
+			for index := i - 2; index > 0 && powerData.ProjectedPowerScore == sortedProjectionData[index].ProjectedPowerScore; index-- {
+				sortedProjectionData[index].ProjectedRank++
+			}
+			sortedProjectionData[i-1].ProjectedRank++
 			powerData.ProjectedRank = sortedProjectionData[i-1].ProjectedRank
 		} else {
 			powerData.ProjectedRank = i + 1

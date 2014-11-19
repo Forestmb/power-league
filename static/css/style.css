@@ -35,6 +35,19 @@ body {
     opacity: 1.0
 }
 
+.toggle-display {
+    margin-top: 5px;
+    width: 100%;
+    float: right;
+}
+
+@media (min-width: 768px) {
+    .toggle-display {
+        margin-top: 0px;
+        width: 120px;
+    }
+}
+
 .weekly {
     display: inline-block;
     width: 100%;
@@ -53,7 +66,7 @@ body {
     }
 }
 
-@media (min-width: 1300px) {
+@media (min-width: 1400px) {
     .weekly {
         width: 24.5%;
     }

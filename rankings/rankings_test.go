@@ -505,8 +505,8 @@ func TestGetPowerDataTies(t *testing.T) {
 	}
 
 	rankings := data.OverallRankings
-	if rankings[0].Rank != 1 ||
-		rankings[1].Rank != 1 ||
+	if rankings[0].Rank != 2 ||
+		rankings[1].Rank != 2 ||
 		rankings[2].Rank != 3 ||
 		rankings[3].Rank != 4 {
 		t.Fatalf("GetPowerData did not correctly rank teams after a tie\n"+

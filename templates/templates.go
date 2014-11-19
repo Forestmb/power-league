@@ -107,6 +107,7 @@ type SiteLink struct {
 func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
 		"getPowerScore":    templateGetPowerScore,
+		"getRecord":        templateGetRecord,
 		"getRankings":      templateGetRankings,
 		"getActualRank":    templateGetActualRank,
 		"getPlacingTeams":  templateGetPlacingTeams,
@@ -190,6 +191,16 @@ func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.Te
 		}
 	}
 	return placingTeams
+}
+
+func templateGetRecord(week int, teamScores []*rankings.TeamScoreData) rankings.Record {
+	record := rankings.Record{}
+	for i := 1; i <= week; i++ {
+		record.Wins += teamScores[i-1].Record.Wins
+		record.Losses += teamScores[i-1].Record.Losses
+		record.Ties += teamScores[i-1].Record.Ties
+	}
+	return record
 }
 
 func templateGetPowerScore(week int, teamScores []*rankings.TeamScoreData) string {
