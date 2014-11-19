@@ -47,7 +47,7 @@ $(document).ready(function(){
         $('.power-visible').removeClass('hidden')
         $('.toggle-display').addClass('showing-power')
         $('.toggle-display').removeClass('showing-record')
-    } else {
+    } else if(preference === 'record') {
         $('.power-visible').addClass('hidden')
         $('.record-visible').removeClass('hidden')
         $('.toggle-display').addClass('showing-record')
