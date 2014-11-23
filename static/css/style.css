@@ -35,6 +35,15 @@ body {
     opacity: 1.0
 }
 
+.btn-primary {
+    background: #6e329d;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary.focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
+    background: #602b88;
+    border-color: #542678;
+}
+
 .toggle-display {
     margin-top: 5px;
     width: 100%;

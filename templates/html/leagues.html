@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        {{if .LoggedIn}}
         <title>Your Leagues</title>
+        {{else}}
+        <title>Power Rankings</title>
+        {{end}}
         {{template "header" .}}
     </head>
     <body>
         {{template "nav" .}}
         {{$config := .SiteConfig}}
-        <div class="container">
             {{if .LoggedIn}}
+            <div class="container">
                 <h2>Your Leagues</h2>
                 {{with .AllYears}}
                     {{range $index, $leagues := .}}
@@ -25,14 +29,23 @@
                     </div>
                     {{end}}
                 {{end}}
+            </div>
             {{end}}
             {{else}}
-            <p class="lead">
-                In order to view your rankings, you must sign in and authorize access with your Yahoo account.
-            </p>
-            <p>
-                <a href="{{.SiteConfig.BaseContext}}/login"><img src="{{.SiteConfig.StaticContext}}images/y-open-id-button.png" alt="Sign in with Yahoo"/></a>
-            </p>
+            <div class="jumbotron">
+                <div class="container">
+                    <h1>Power Rankings</h1>
+                    <p>
+                        Calculate "all-play" records for any Yahoo Fantasy Football league since 2001.
+                    </p>
+                    <p>
+                        Bragging rights are within your grasp.
+                    </p>
+                    <p>
+                        <a href="{{.SiteConfig.BaseContext}}/login"><img src="{{.SiteConfig.StaticContext}}images/y-open-id-button.png" alt="Sign in with Yahoo"/></a>
+                    </p>
+                </div>
+            </div>
             {{end}}
         </div>
         {{template "footer" .}}
