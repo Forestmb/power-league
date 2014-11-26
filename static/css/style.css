@@ -35,6 +35,14 @@ body {
     opacity: 1.0
 }
 
+.overview-jumbotron {
+    background-image: url("../images/power-podium.png");
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    border-bottom: 1px solid #DDD;
+    border-top: 1px solid #DDD;
+}
+
 .btn-primary {
     background: #6e329d;
 }
