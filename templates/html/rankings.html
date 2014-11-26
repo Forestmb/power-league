@@ -85,10 +85,11 @@
                             {{$week := .Week}}
                             {{if .Projected}}
                                 <div class="weekly week-{{$week}} projection">
+                                <h3>Week {{$week}}*</h3>
                             {{else}}
                                 <div class="weekly week-{{$week}}">
-                            {{end}}
                                 <h3>Week {{$week}}</h3>
+                            {{end}}
                                 <table class="table table-bordered table-striped table-condensed">
                                     <thead>
                                         <tr>
@@ -125,6 +126,11 @@
                             </div>
                         {{end}}
                     {{end}}
+                {{end}}
+                {{if not $finished}}
+                    <div class="projection-note projection">
+                        <p>* Projected scores</p>
+                    </div>
                 {{end}}
             {{else}}
                 <p class="Lead">League has not yet started</p>
