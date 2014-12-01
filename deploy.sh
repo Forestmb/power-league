@@ -19,8 +19,8 @@ then
 fi
 package="./package.sh"
 
-link="power-league"
-prev="power-league.prev"
+link="current"
+prev="previous"
 old="old"
 server="server.sh"
 binary="power-league"
