@@ -5,17 +5,22 @@ cd "$(dirname "$0")"
 prog="$(basename "$0")"
 function usage()
 {
-    echo "Usage: ${prog} host [ deploy-directory ]" 2>&1
+    echo "Usage: ${prog} host" 2>&1
     exit 1
 }
 
 host="$1"
-deploydir="${2:-~/power-league}"
 conf="server.conf"
 if [ -f "${conf}.${host}" ]
 then
     conf="${conf}.${host}"
     echo "Using conf: ${conf}"
+fi
+. "${conf}"
+
+if [ -z "${deploydir}" ]
+then
+    deploydir="~/power-league"
 fi
 package="./package.sh"
 

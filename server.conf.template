@@ -1,6 +1,10 @@
 # Server configuration template. Copy this to 'server.conf' and edit it for the specific
 # instance you are configuring.
 
+# The directory to install package contents when deploying an instance with the
+# 'deploy.sh' script.
+deploydir="~/power-league"
+
 # The client key and secret.
 # See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for
 # more information about how to register your application.
