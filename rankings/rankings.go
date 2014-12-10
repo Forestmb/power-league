@@ -152,57 +152,26 @@ func GetWeeklyRanking(
 		return
 	}
 
-	// Rank the teams by sorting then assign power scores
+	// Sort teams and convert them into TeamScoreData
 	if !projection {
 		sort.Sort(TeamRanking(teams))
 	} else {
 		sort.Sort(TeamProjectedRanking(teams))
 	}
 	rankings := make([]*TeamScoreData, len(teams))
-	numTeamns := len(teams)
 	for index, team := range teams {
 		var score float64
-		var scoreType string
 		if !projection {
 			score = team.TeamPoints.Total
-			scoreType = "weekly rankings"
 		} else {
 			score = team.TeamProjectedPoints.Total
-			scoreType = "weekly projections"
 		}
 
-		var powerScore float64
-		var rank int
-		if index > 0 && score == rankings[index-1].Score {
-			previousTeam := rankings[index-1]
-			for i := index - 2; i > 0 && rankings[i].Rank == previousTeam.Rank; i-- {
-				rankings[i].PowerScore--
-				rankings[i].Rank++
-			}
-			previousTeam.PowerScore--
-			previousTeam.Rank++
-			powerScore = previousTeam.PowerScore
-			rank = previousTeam.Rank
-		} else {
-			powerScore = float64(numTeamns - index)
-			rank = index + 1
-		}
 		rankings[index] = &TeamScoreData{
-			Team:       &teams[index],
-			Score:      score,
-			PowerScore: powerScore,
-			Rank:       rank,
-			Record:     &Record{},
+			Team:   &teams[index],
+			Score:  score,
+			Record: &Record{},
 		}
-		glog.V(4).Infof("%s -- league=%s, week=%d, rank=%d, team=%s, "+
-			"fantasyScore=%f, powerScore=%f",
-			scoreType,
-			leagueKey,
-			week,
-			rank,
-			team.Name,
-			score,
-			powerScore)
 	}
 
 	// Update records
@@ -218,6 +187,36 @@ func GetWeeklyRanking(
 				}
 			}
 		}
+		team.PowerScore = float64(team.Record.Wins)
+	}
+
+	// Update ranks
+	for i, team := range rankings {
+		if i > 0 && team.PowerScore == rankings[i-1].PowerScore {
+			team.Rank = rankings[i-1].Rank
+		} else {
+			team.Rank = i + 1
+		}
+
+		var scoreType string
+		if projection {
+			scoreType = "weekly projections"
+		} else {
+			scoreType = "weekly rankings"
+		}
+
+		glog.V(4).Infof("%s -- league=%s, week=%d, rank=%d, team=%s, "+
+			"fantasyScore=%f, powerScore=%f, wins=%d, losses=%d, ties=%d",
+			scoreType,
+			leagueKey,
+			week,
+			team.Rank,
+			team.Team.Name,
+			team.Score,
+			team.PowerScore,
+			team.Record.Wins,
+			team.Record.Losses,
+			team.Record.Ties)
 	}
 
 	results <- &WeeklyRanking{Week: week, Rankings: rankings, Projected: projection}
@@ -303,10 +302,6 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 	for i, powerData := range sortedPowerData {
 		// Handle ties
 		if i > 0 && powerData.TotalPowerScore == sortedPowerData[i-1].TotalPowerScore {
-			for index := i - 2; index > 0 && powerData.TotalPowerScore == sortedPowerData[index].TotalPowerScore; index-- {
-				sortedPowerData[index].Rank++
-			}
-			sortedPowerData[i-1].Rank++
 			powerData.Rank = sortedPowerData[i-1].Rank
 		} else {
 			powerData.Rank = i + 1
@@ -332,9 +327,6 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 		if i > 0 &&
 			powerData.ProjectedPowerScore ==
 				sortedProjectionData[i-1].ProjectedPowerScore {
-			for index := i - 2; index > 0 && powerData.ProjectedPowerScore == sortedProjectionData[index].ProjectedPowerScore; index-- {
-				sortedProjectionData[index].ProjectedRank++
-			}
 			sortedProjectionData[i-1].ProjectedRank++
 			powerData.ProjectedRank = sortedProjectionData[i-1].ProjectedRank
 		} else {

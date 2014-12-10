@@ -310,10 +310,10 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 			rankings)
 	}
 
-	if rankings[0].TotalPowerScore != 12.0 ||
-		rankings[1].TotalPowerScore != 9.0 ||
-		rankings[2].TotalPowerScore != 6.0 ||
-		rankings[3].TotalPowerScore != 3.0 {
+	if rankings[0].TotalPowerScore != 9.0 ||
+		rankings[1].TotalPowerScore != 6.0 ||
+		rankings[2].TotalPowerScore != 3.0 ||
+		rankings[3].TotalPowerScore != 0.0 {
 		t.Fatalf("GetPowerData returned incorrect scores.\n"+
 			"\trankings: %+v",
 			rankings)
@@ -417,10 +417,10 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 			rankings)
 	}
 
-	if rankings[0].ProjectedPowerScore != 9.0 ||
-		rankings[1].ProjectedPowerScore != 8.0 ||
-		rankings[2].ProjectedPowerScore != 7.0 ||
-		rankings[3].ProjectedPowerScore != 6.0 {
+	if rankings[0].ProjectedPowerScore != 6.0 ||
+		rankings[1].ProjectedPowerScore != 5.0 ||
+		rankings[2].ProjectedPowerScore != 4.0 ||
+		rankings[3].ProjectedPowerScore != 3.0 {
 		t.Fatalf("GetPowerData returned incorrect scores.\n"+
 			"\trankings: %+v\n",
 			rankings)
@@ -505,8 +505,8 @@ func TestGetPowerDataTies(t *testing.T) {
 	}
 
 	rankings := data.OverallRankings
-	if rankings[0].Rank != 2 ||
-		rankings[1].Rank != 2 ||
+	if rankings[0].Rank != 1 ||
+		rankings[1].Rank != 1 ||
 		rankings[2].Rank != 3 ||
 		rankings[3].Rank != 4 {
 		t.Fatalf("GetPowerData did not correctly rank teams after a tie\n"+
