@@ -124,9 +124,19 @@ body {
     }
 }
 
+.overall-table h3 {
+    padding: 0.25em 0;
+    margin: 0;
+}
+
 .overall-table table {
     min-width: 765px;
     margin-bottom: 5px;
+}
+
+.overall-table td.rank {
+    text-align: right;
+    width: 33px;
 }
 
 .scrollable {
@@ -153,11 +163,6 @@ body {
  
 .overall-table-container {
     overflow-x: auto;
-}
-
-.overall-table h3 {
-    padding: 0.25em 0;
-    margin: 0;
 }
 
 .standings {
