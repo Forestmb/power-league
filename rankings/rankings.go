@@ -224,7 +224,10 @@ func GetWeeklyRanking(
 
 // GetPowerData returns a league's power rankings up to the given week and
 // projections until the end of the season.
-func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int, numWeeks int) (*LeaguePowerData, error) {
+func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek int) (*LeaguePowerData, error) {
+	numWeeks := league.EndWeek
+	leagueKey := league.LeagueKey
+
 	resultsChan := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
 	for week := 1; week <= currentWeek; week++ {
@@ -232,6 +235,11 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 	}
 	for week := currentWeek + 1; week <= numWeeks; week++ {
 		go GetWeeklyRanking(client, leagueKey, week, resultsChan, errorsChan, true)
+	}
+
+	teamDataByTeamKey := make(map[string]goff.Team)
+	for i, team := range league.Standings {
+		teamDataByTeamKey[team.TeamKey] = league.Standings[i]
 	}
 
 	// Calculate power score for each team
@@ -254,6 +262,10 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 			for _, teamScoreData := range weeklyRanking.Rankings {
 				powerData, ok := powerDataByTeamKey[teamScoreData.Team.TeamKey]
 				if !ok {
+					teamData, ok := teamDataByTeamKey[teamScoreData.Team.TeamKey]
+					if ok {
+						teamScoreData.Team.TeamStandings = teamData.TeamStandings
+					}
 					powerData = &TeamPowerData{
 						AllScores:              make([]*TeamScoreData, numWeeks),
 						Team:                   teamScoreData.Team,
@@ -327,7 +339,6 @@ func GetPowerData(client PowerRankingsClient, leagueKey string, currentWeek int,
 		if i > 0 &&
 			powerData.ProjectedPowerScore ==
 				sortedProjectionData[i-1].ProjectedPowerScore {
-			sortedProjectionData[i-1].ProjectedRank++
 			powerData.ProjectedRank = sortedProjectionData[i-1].ProjectedRank
 		} else {
 			powerData.ProjectedRank = i + 1

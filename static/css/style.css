@@ -118,10 +118,41 @@ body {
     float: left;
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1300px) {
     .overall-table {
-        width: 49.5%;
+        width: 65.5%;
     }
+}
+
+.overall-table table {
+    min-width: 765px;
+    margin-bottom: 5px;
+}
+
+.scrollable {
+    position: relative;
+    overflow: hidden; 
+}
+
+.scrollable:after {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 50px;
+    height: 100%;
+    border-radius: 10px 0 0 10px / 50% 0 0 50%;
+    box-shadow: -5px 0 10px rgba(0, 0, 0, 0.25);
+    content: '';
+}
+
+@media (min-width: 860px) {
+    .scrollable:after {
+        box-shadow: none;
+    }
+}
+ 
+.overall-table-container {
+    overflow-x: auto;
 }
 
 .overall-table h3 {
@@ -134,9 +165,9 @@ body {
     width: 100%;
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1300px) {
     .standings {
-        width: 49.5%;
+        width: 32.5%;
         padding-left: 15px;
     }
 }

@@ -18,51 +18,68 @@
                 {{$finished := .League.IsFinished}}
                 <div class="overall overall-table">
                     <h3>Overall through {{.Weeks}} Weeks</h3>
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Team</th>
-                                <th>
-                                    <span class="power-visible">Power Points</span>
-                                    <span class="record-visible hidden">Record</span>
-                                </th>
-                                {{if not $finished}} 
-                                    <th>
-                                        <span class="power-visible">Projected Power Points</span>
-                                        <span class="record-visible hidden">Projected Record</span>
-                                    </th>
-                                {{end}}
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {{with .LeaguePowerData}}
-                            {{with .OverallRankings}}
-                                {{$overall := .}}
-                                {{range $index, $teamRanking := .}}
-                                    {{if .Team.IsOwnedByCurrentLogin}}
-                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}} team-selected">
-                                    {{else}}
-                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}}">
-                                    {{end}}
-                                        <td>{{.Rank}}</td>
-                                        <td>{{.Team.Name}}</td>
-                                        <td>
-                                            <span class="power-visible">{{printf "%.0f" .TotalPowerScore}}</span>
-                                            <span class="record-visible hidden">{{.OverallRecord.Wins}} - {{.OverallRecord.Losses}} - {{.OverallRecord.Ties}}</span>
-                                        </td>
+                    <div class="scrollable">
+                        <div class="overall-table-container">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Team</th>
+                                        <th>
+                                            <span class="power-visible">Power Points</span>
+                                            <span class="record-visible hidden">Record</span>
+                                        </th>
                                         {{if not $finished}} 
-                                            <td>
-                                                <span class="power-visible">{{printf "%.0f" .ProjectedPowerScore}}</span>
-                                                <span class="record-visible hidden">{{.OverallProjectedRecord.Wins}} - {{.OverallProjectedRecord.Losses}} - {{.OverallProjectedRecord.Ties}}</span>
-                                            </td>
+                                            <th>
+                                                <span class="power-visible">Projected Power Points</span>
+                                                <span class="record-visible hidden">Projected Record</span>
+                                            </th>
                                         {{end}}
+                                        <th>
+                                            League Rank (+/-)
+                                        </th>
+                                        <th>
+                                            League Record
+                                        </th>
                                     </tr>
+                                </thead>
+                                <tbody>
+                                {{with .LeaguePowerData}}
+                                    {{with .OverallRankings}}
+                                        {{$overall := .}}
+                                        {{range $index, $teamRanking := .}}
+                                            {{if .Team.IsOwnedByCurrentLogin}}
+                                            <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}} team-selected">
+                                            {{else}}
+                                            <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}}">
+                                            {{end}}
+                                                <td>{{.Rank}}</td>
+                                                <td>{{.Team.Name}}</td>
+                                                <td>
+                                                    <span class="power-visible">{{printf "%.0f" .TotalPowerScore}}</span>
+                                                    <span class="record-visible hidden">{{.OverallRecord.Wins}} - {{.OverallRecord.Losses}} - {{.OverallRecord.Ties}}</span>
+                                                </td>
+                                                {{if not $finished}} 
+                                                    <td>
+                                                        <span class="power-visible">{{printf "%.0f" .ProjectedPowerScore}}</span>
+                                                        <span class="record-visible hidden">{{.OverallProjectedRecord.Wins}} - {{.OverallProjectedRecord.Losses}} - {{.OverallProjectedRecord.Ties}}</span>
+                                                    </td>
+                                                {{end}}
+                                                <td>{{.Team.TeamStandings.Rank}}
+                                                    ({{getRankOffset .Rank .Team.TeamStandings.Rank}})</td>
+                                                <td>
+                                                    {{.Team.TeamStandings.Record.Wins}} -
+                                                    {{.Team.TeamStandings.Record.Losses}} -
+                                                    {{.Team.TeamStandings.Record.Ties}}
+                                                </td>
+                                            </tr>
+                                        {{end}}
+                                    {{end}}
                                 {{end}}
-                            {{end}}
-                        {{end}}
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                         {{if .LeaguePowerData}}
                             <div class="standings">

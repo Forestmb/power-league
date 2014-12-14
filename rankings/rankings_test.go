@@ -294,7 +294,11 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 		},
 		WeekErrors: map[int]error{},
 	}
-	data, err := GetPowerData(m, "leagueID", 3, 3)
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+	}
+	data, err := GetPowerData(m, league, 3)
 
 	if err != nil {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)
@@ -401,7 +405,11 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 		},
 		WeekErrors: map[int]error{},
 	}
-	data, err := GetPowerData(m, "leagueID", 1, 3)
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+	}
+	data, err := GetPowerData(m, league, 1)
 
 	if err != nil {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)
@@ -460,7 +468,11 @@ func TestGetPowerDataClientError(t *testing.T) {
 			2: errors.New("error"),
 		},
 	}
-	data, err := GetPowerData(m, "leagueID", 3, 3)
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+	}
+	data, err := GetPowerData(m, league, 3)
 	if err == nil {
 		t.Fatalf("GetPowerData did not return error\n\tdata: %+v\n", data)
 	}
@@ -498,7 +510,11 @@ func TestGetPowerDataTies(t *testing.T) {
 		},
 		WeekErrors: map[int]error{},
 	}
-	data, err := GetPowerData(m, "leagueID", 4, 4)
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   4,
+	}
+	data, err := GetPowerData(m, league, 4)
 
 	if err != nil {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)

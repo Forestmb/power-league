@@ -235,7 +235,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	client, err := s.sessionManager.GetClient(w, req)
 	if err == nil {
 		glog.V(3).Infof("getting metadata -- league=%s", leagueKey)
-		league, err = client.GetLeagueMetadata(leagueKey)
+		league, err = client.GetLeagueStandings(leagueKey)
 		if err == nil {
 			if league.IsFinished {
 				glog.V(3).Infoln("league is finished")
@@ -262,9 +262,8 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		if leagueStarted {
 			leaguePowerData, err = rankings.GetPowerData(
 				&YahooClient{Client: client},
-				leagueKey,
-				currentWeek,
-				league.EndWeek)
+				league,
+				currentWeek)
 
 			if err != nil {
 				glog.Warningf("error generating power rankings page: %s", err)

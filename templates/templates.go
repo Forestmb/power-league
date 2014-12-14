@@ -113,6 +113,7 @@ func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageCont
 		"getPlacingTeams":  templateGetPlacingTeams,
 		"getPlaceFromRank": templateGetPlaceFromRank,
 		"getTeamPosition":  templateGetTeamPosition,
+		"getRankOffset":    templateGetRankOffset,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -225,6 +226,11 @@ func templateGetTeamPosition(teamID uint64, rankings []*rankings.TeamPowerData) 
 		}
 	}
 	return -1
+}
+
+func templateGetRankOffset(powerRank, leagueRank int) string {
+	offset := powerRank - leagueRank
+	return fmt.Sprintf("%+d", offset)
 }
 
 //

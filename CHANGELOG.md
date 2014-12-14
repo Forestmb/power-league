@@ -2,8 +2,10 @@
 
 ## 0.3.0 (TBD) ##
 
-- Traffic analysis through Google Analytics
+- Traffic analysis through Google Analytics.
 - Added user preference for displaying all-play records instead of power scores.
+- Changed signature of `rankings.GetPowerData`.
+- Added league rank and record to rankings page.
 
 ## 0.2.0 (2014-09-05) ##
 
