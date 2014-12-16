@@ -36,6 +36,24 @@ Once signed in, you can view the rankings for any of your current or past league
 
 ![Example Screenshot](https://raw.github.com/Forestmb/power-league/master/doc/screenshots/rankings.png)
 
+## Deploying ##
+
+If you wish to deploy the application to a remote host, you can use the
+`deploy.sh` utility by passing in the name of the server like so:
+
+    $ ./deploy.sh <host>
+
+This builds and packages the application, copies it to the remote host, stops
+the existing instance if necessary, and starts the application. By default it
+uses the `server.conf` file to configure the application, but you can override
+it by defining a host-specific file named `server.conf.<host>`.
+
+The `deploydir` variable in the configuration file determines where on the
+remote host the instances of the application are kept. The deploy utility
+maintains the last two deployed instances of the application in `deploydir`
+(`current` and `previous`), and archives old versions in the
+`<deploydir>/old/` directory.
+
 ## Options ##
 
 Command line flags can be passed when running `server.sh` or by appending them
