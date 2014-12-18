@@ -15,6 +15,10 @@ Options:
     -a <app-name>
         Name of the application being packaged. Defaults to 'power-rankings-<date>'. A
         package of the name '<app-name>.tar.gz' will be created.
+    -B
+        Don't build the application before packaging if the binary already exists. If
+        this is specified and the binary does not exist, the script will exit with a
+        non-zero exit code.
     -c <conf>
         Server configuration file to use in the package. Defaults to 'server.conf'
     -d <dir>
@@ -28,13 +32,17 @@ EOF
 binary="power-league"
 dist="build/dist"
 build_cmd="./build.sh"
+should_build="true"
 baseconf="server.conf"
 conf="${baseconf}"
 
-while getopts ":a:c:h" option; do
+while getopts ":a:Bc:h" option; do
     case "${option}" in
         a)
             appname="${OPTARG}"
+            ;;
+        B)
+            should_build="false"
             ;;
         c)
             conf="${OPTARG}"
@@ -71,7 +79,17 @@ fi
 
 app="${dist}/${appname}"
 
-"${build_cmd}"
+if [ "${should_build}" == "true" ]
+then
+    "${build_cmd}"
+else
+    if [ ! -f "${binary}" ]
+    then
+        echo "Error: No build was requested during packaging but binary file " 1>&2
+        echo "       '${binary}' does not exist, so nothing could be packaged." 1>&2
+        exit 2
+    fi
+fi
 
 echo "Packaging..."
 rm -rf "${app}"

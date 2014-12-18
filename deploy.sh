@@ -5,9 +5,38 @@ cd "$(dirname "$0")"
 prog="$(basename "$0")"
 function usage()
 {
-    echo "Usage: ${prog} host" 2>&1
+    cat 1>&2 << EOF
+Usage: ${prog} [ options ] [ host ]
+
+Description: Package and deploy a instance of the application to a remote host.
+
+Options:
+    -B
+        Don't build the application before packaging if the binary already exists. If
+        this is specified and the binary does not exist, the script will exit with a
+        non-zero exit code.
+EOF
     exit 1
 }
+
+should_build="true"
+while getopts ":Bh" option; do
+    case "${option}" in
+        B)
+            should_build="false"
+            ;;
+        h)
+            usage
+            ;;
+        \?) echo "Unknown option: -${OPTARG}" 1>&2
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 host="$1"
 conf="server.conf"
@@ -74,7 +103,13 @@ then
 fi
 
 # Build package
-"${package}" -a "${app}" -c "${conf}"
+
+if [ "${should_build}" == "false" ]
+then
+    "${package}" -a "${app}" -c "${conf}" -B
+else
+    "${package}" -a "${app}" -c "${conf}"
+fi
 
 echo "Deploying..."
 cat "${dist}/${app}.tar.gz" | ssh "${host}" "cat > ${deploydir}/${app}.tar.gz"
