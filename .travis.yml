@@ -2,6 +2,7 @@ language: go
 go:
 - 1.3
 before_install:
+- go get code.google.com/p/go.tools/cmd/vet
 - openssl aes-256-cbc -k "$conf_pass" -in encrypted/conf.enc -out ./server.conf.$server -d
 - openssl aes-256-cbc -k "$deploy_pass" -in encrypted/deploy.enc -out ~/.ssh/id_rsa -d
 - chmod 600 ~/.ssh/id_rsa
