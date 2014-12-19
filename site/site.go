@@ -31,8 +31,8 @@ type Site struct {
 	templates      *templates.Templates
 }
 
-// SiteHandlerFunc is a handler for a given site
-type SiteHandlerFunc func(s *Site, w http.ResponseWriter, r *http.Request)
+// HandlerFunc is a handler for a given site
+type HandlerFunc func(s *Site, w http.ResponseWriter, r *http.Request)
 
 // ContextHandler describes a context handled by this site
 type ContextHandler struct {
@@ -40,11 +40,11 @@ type ContextHandler struct {
 	Context string
 
 	// The function called when the context is accessed
-	Func SiteHandlerFunc
+	Func HandlerFunc
 }
 
 // ContextHandler adds a new handler for this site
-func (s *Site) ContextHandler(id string, context string, f SiteHandlerFunc) {
+func (s *Site) ContextHandler(id string, context string, f HandlerFunc) {
 	fullContext := fmt.Sprintf("%s%s", s.config.BaseContext, context)
 	if fullContext != "" {
 		glog.V(3).Infof("adding context handler -- id=%s, context=%s, navText=%s",
@@ -364,7 +364,7 @@ func calculateTeamScore(y *YahooClient, leagueKey string, week int, team *goff.T
 	allPlayers, err := y.Client.GetTeamRoster(team.TeamKey, week)
 	if err == nil {
 		score := 0.0
-		players := make([]goff.Player, 0)
+		var players []goff.Player
 		for _, player := range allPlayers {
 			if player.SelectedPosition.Position != "BN" {
 				players = append(players, player)

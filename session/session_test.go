@@ -60,7 +60,7 @@ func TestLogout(t *testing.T) {
 	manager := NewSessionManager(nil, store)
 	err := manager.Logout(mockResponseWriter(), &http.Request{})
 	if err != nil {
-		t.Fatal("error logging out of session: %s", err)
+		t.Fatalf("error logging out of session: %s", err)
 	}
 
 	_, ok := store.Values[AccessTokenKey].(*oauth.AccessToken)

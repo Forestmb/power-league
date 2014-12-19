@@ -75,7 +75,7 @@ func TestYahooClientZeroPointsRosterError(t *testing.T) {
 	_, err := client.GetAllTeamStats("123", 12, false)
 	if err == nil {
 		t.Fatalf("no error getting all team stats when team had 0 points " +
-			"and getting the roster failed: %s")
+			"and getting the roster failed")
 	}
 }
 
@@ -117,7 +117,7 @@ func TestYahooClientZeroPointsPlayerStatsError(t *testing.T) {
 	_, err := client.GetAllTeamStats("123", 12, false)
 	if err == nil {
 		t.Fatalf("no error getting all team stats when team had 0 points " +
-			"and getting player stats failed: %s")
+			"and getting player stats failed")
 	}
 }
 

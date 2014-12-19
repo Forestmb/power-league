@@ -185,7 +185,7 @@ func templateGetPlaceFromRank(rank int, places ...string) string {
 }
 
 func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.TeamPowerData {
-	placingTeams := make([]*rankings.TeamPowerData, 0)
+	var placingTeams []*rankings.TeamPowerData
 	for _, teamData := range powerData {
 		if templateGetActualRank(teamData) <= 3 {
 			placingTeams = append(placingTeams, teamData)

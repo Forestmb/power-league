@@ -16,10 +16,10 @@ go test -v ./...
 
 echo "Running golint..."
 go get github.com/golang/lint/golint
-golint .
+golint ./...
 
 echo "Running go vet..."
-go vet .
+go vet ./...
 
 echo "Running goimports..."
 go get code.google.com/p/go.tools/cmd/goimports
