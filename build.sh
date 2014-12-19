@@ -19,6 +19,7 @@ go get github.com/golang/lint/golint
 golint .
 
 echo "Running go vet..."
+go get -d code.google.com/p/go.tools/cmd/vet
 go vet .
 
 echo "Running goimports..."
