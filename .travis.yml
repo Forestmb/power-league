@@ -2,6 +2,7 @@ language: go
 go:
 - 1.3
 before_install:
+- go get code.google.com/p/go.tools/cmd/cover
 - go get code.google.com/p/go.tools/cmd/vet
 - go get github.com/mattn/goveralls
 - openssl aes-256-cbc -k "$conf_pass" -in encrypted/conf.enc -out ./server.conf.$server -d
