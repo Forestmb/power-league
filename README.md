@@ -1,4 +1,4 @@
-# Power League [![GoDoc](https://godoc.org/github.com/Forestmb/power-league?status.png)](https://godoc.org/github.com/Forestmb/power-league) [![Build Status](https://travis-ci.org/Forestmb/power-league.png?branch=master)](https://travis-ci.org/Forestmb/power-league) #
+# Power League [![GoDoc](https://godoc.org/github.com/Forestmb/power-league?status.png)](https://godoc.org/github.com/Forestmb/power-league) [![Build Status](https://travis-ci.org/Forestmb/power-league.png?branch=master)](https://travis-ci.org/Forestmb/power-league) [![Coverage Status](https://coveralls.io/repos/Forestmb/power-league/badge.png?branch=master)](https://coveralls.io/r/Forestmb/power-league?branch=master) #
 
 Power League is a web application that calculates alternative rankings for
 Yahoo Fantasy Sports leagues.
