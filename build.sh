@@ -6,6 +6,8 @@ set -e
 dir="$(dirname "$(readlink -f "$0")")"
 cd "${dir}"
 
+export PATH="${GOPATH}/bin:${PATH}"
+
 echo "Running go get..."
 go get
 
@@ -14,14 +16,14 @@ go test -v ./...
 
 echo "Running golint..."
 go get github.com/golang/lint/golint
-$GOPATH/bin/golint .
+golint .
 
 echo "Running go vet..."
 go vet .
 
 echo "Running goimports..."
 go get code.google.com/p/go.tools/cmd/goimports
-$GOPATH/bin/goimports -w .
+goimports -w .
 
 echo "Running go fmt..."
 go fmt ./...
