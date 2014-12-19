@@ -11,9 +11,6 @@ export PATH="${GOPATH}/bin:${PATH}"
 echo "Running go get..."
 go get
 
-echo "Running tests..."
-go test -v ./...
-
 echo "Running golint..."
 go get github.com/golang/lint/golint
 golint ./...
@@ -28,5 +25,21 @@ goimports -w .
 echo "Running go fmt..."
 go fmt ./...
 
-echo "Building..."
+echo "Running tests..."
+# Snippet taken from https://gist.github.com/hailiang/0f22736320abe6be71ce
+echo "mode: count" > profile.cov
+for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path '*/_*' -type d);
+do
+if ls $dir/*.go &> /dev/null; then
+    go test -v -covermode=count -coverprofile=$dir/profile.tmp $dir
+    if [ -f $dir/profile.tmp ]
+    then
+        cat $dir/profile.tmp | tail -n +2 >> profile.cov
+        rm $dir/profile.tmp
+    fi
+fi
+done
+go tool cover -func profile.cov
+
+echo "Building binary..."
 go build .
