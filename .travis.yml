@@ -7,8 +7,7 @@ before_install:
 - chmod 600 ~/.ssh/id_rsa
 - echo -e "Host $server\n\tPort $server_port\n\tUser $deploy_user\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 script:
-- go test -v ./...
-- go build .
+- ./build.sh
 after_success:
 - ./deploy.sh -B $server
 env:

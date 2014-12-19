@@ -1,11 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 # To run this before every commit, use: 
 #     $ ln -s "$(pwd)/build.sh" .git/hooks/pre-commit
  
-package="github.com/Forestmb/power-league"
-
-cd "${GOPATH}/src/${package}"
+dir="$(dirname "$(readlink -f "$0")")"
+cd "${dir}"
 
 echo "Running go get..."
 go get
@@ -28,4 +27,4 @@ echo "Running go fmt..."
 go fmt ./...
 
 echo "Building..."
-go build  "${package}"
+go build .

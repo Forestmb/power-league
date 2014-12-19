@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-cd "$(dirname "$0")"
 
+cd "$(dirname "$(readlink -f "$0")")"
 prog="$(basename "$0")"
 function usage()
 {
@@ -15,21 +15,27 @@ Options:
         Don't build the application before packaging if the binary already exists. If
         this is specified and the binary does not exist, the script will exit with a
         non-zero exit code.
+    -v
+        Print extra debug information.
 EOF
-    exit 1
+    exit ${1:-1}
 }
 
-should_build="true"
-while getopts ":Bh" option; do
+build_option=""
+verbose="false"
+while getopts ":Bhv" option; do
     case "${option}" in
         B)
-            should_build="false"
+            build_option="-B"
             ;;
         h)
-            usage
+            usage 0
+            ;;
+        v)
+            verbose="true"
             ;;
         \?) echo "Unknown option: -${OPTARG}" 1>&2
-            usage
+            usage 1
             ;;
         *)
             break
@@ -38,12 +44,26 @@ while getopts ":Bh" option; do
 done
 shift $((OPTIND-1))
 
+function log_verbose
+{
+    if [ "${verbose}" == "true" ]
+    then
+        echo "$@"
+    fi
+}
+
 host="$1"
+if [ -z "${host}" ]
+then
+    echo "No host specified." 1>&2
+    usage 2
+fi
+
 conf="server.conf"
 if [ -f "${conf}.${host}" ]
 then
     conf="${conf}.${host}"
-    echo "Using conf: ${conf}"
+    log_verbose "Using conf: ${conf}"
 fi
 . "${conf}"
 
@@ -51,6 +71,8 @@ if [ -z "${deploydir}" ]
 then
     deploydir="~/power-league"
 fi
+log_verbose "Deploy dir: ${deploydir}"
+
 package="./package.sh"
 
 link="current"
@@ -97,19 +119,8 @@ fi
 EOF
 }
 
-if [ -z "${host}" ]
-then
-    usage
-fi
-
 # Build package
-
-if [ "${should_build}" == "false" ]
-then
-    "${package}" -a "${app}" -c "${conf}" -B
-else
-    "${package}" -a "${app}" -c "${conf}"
-fi
+"${package}" ${build_option} -a "${app}" -c "${conf}"
 
 echo "Deploying..."
 cat "${dist}/${app}.tar.gz" | ssh "${host}" "cat > ${deploydir}/${app}.tar.gz"

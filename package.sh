@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-cd "$(dirname "$0")"
-
+cd "$(dirname "$(readlink -f "$0")")"
 prog="$(basename "$0")"
 function usage
 {
@@ -26,7 +25,7 @@ Options:
     -h
         Display this help.
 EOF
-    exit 1
+    exit ${1:-1}
 }
 
 binary="power-league"
@@ -51,10 +50,10 @@ while getopts ":a:Bc:h" option; do
             dist="${OPTARG}"
             ;;
         h)
-            usage
+            usage 0
             ;;
         \?) echo "Unknown option: -${OPTARG}" 1>&2
-            usage
+            usage 1
             ;;
         *)
             break
