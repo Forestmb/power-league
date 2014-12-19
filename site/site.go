@@ -26,7 +26,7 @@ type Site struct {
 	ServeMux *http.ServeMux
 
 	handlers       map[string]*ContextHandler
-	sessionManager session.SessionManager
+	sessionManager session.Manager
 	config         *templates.SiteConfig
 	templates      *templates.Templates
 }
@@ -69,7 +69,7 @@ func NewSite(
 	staticFiles string,
 	templatesDir string,
 	trackingID string,
-	s session.SessionManager) *Site {
+	s session.Manager) *Site {
 
 	mux := http.DefaultServeMux
 

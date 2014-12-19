@@ -43,12 +43,11 @@ const (
 )
 
 //
-// SessionManager interface
+// Manager interface
 //
 
-// SessionManager provides an interface to managing sessions for power
-// rankings users
-type SessionManager interface {
+// Manager provides an interface to managing sessions for power rankings users
+type Manager interface {
 	Login(w http.ResponseWriter, r *http.Request, redirectURL string) (loginURL string, err error)
 	Authenticate(w http.ResponseWriter, r *http.Request) error
 	Logout(w http.ResponseWriter, r *http.Request) error
@@ -56,7 +55,7 @@ type SessionManager interface {
 	GetClient(w http.ResponseWriter, r *http.Request) (*goff.Client, error)
 }
 
-// defaultManager is the default implementation of SessionManager
+// defaultManager is the default implementation of Manager
 type defaultManager struct {
 	consumer                 Consumer
 	store                    sessions.Store
@@ -64,24 +63,24 @@ type defaultManager struct {
 	userCacheDurationSeconds int
 }
 
-// NewSessionManager creates a new SessionManager that uses the given
-// consumer for OAuth authentication and store to persist the sessions across
-// requests. Each session client returned by `SessionManager.GetClient` will
-// cache responses for up to 6 hours.
+// NewManager creates a new Manager that uses the given consumer for OAuth
+// authentication and store to persist the sessions across requests. Each
+// session client returned by `Manager.GetClient` will cache responses for up
+// to 6 hours.
 //
-// See NewSessionManagerWithCache
-func NewSessionManager(c Consumer, s sessions.Store) SessionManager {
-	return NewSessionManagerWithCache(c, s, 6*60*60)
+// See NewManagerWithCache
+func NewManager(c Consumer, s sessions.Store) Manager {
+	return NewManagerWithCache(c, s, 6*60*60)
 }
 
-// NewSessionManagerWithCache creates a new SessionManager that uses the given
-// consumer for OAuth authentication and store to persist the sessions across
-// requests. Each session client returned by `SessionManager.GetClient` will
-// cache responses for up to `userCacheDurationSeconds` seconds.
-func NewSessionManagerWithCache(
+// NewManagerWithCache creates a new Manager that uses the given consumer for
+// OAuth authentication and store to persist the sessions across requests.
+// Each session client returned by `Manager.GetClient` will cache responses
+// for up to `userCacheDurationSeconds` seconds.
+func NewManagerWithCache(
 	c Consumer,
 	s sessions.Store,
-	userCacheDurationSeconds int) SessionManager {
+	userCacheDurationSeconds int) Manager {
 
 	gob.Register(&oauth.RequestToken{})
 	gob.Register(&oauth.AccessToken{})

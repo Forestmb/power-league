@@ -6,6 +6,8 @@
 - Added user preference for displaying all-play records instead of power scores.
 - Changed signature of `rankings.GetPowerData`.
 - Added league rank and record to rankings page.
+- Renamed `session.SessionManager` to `session.Manager` and updated associated
+  function names.
 
 ## 0.2.0 (2014-09-05) ##
 

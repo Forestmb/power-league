@@ -116,7 +116,7 @@ func main() {
 		cookieStoreEncryptionKey = []byte(*cookieEncryptionKey)
 	}
 
-	sessionManager := session.NewSessionManagerWithCache(
+	sessionManager := session.NewManagerWithCache(
 		goff.GetConsumer(*clientKey, *clientSecret),
 		sessions.NewCookieStore(cookieStoreAuthKey, cookieStoreEncryptionKey),
 		*userCacheDurationSeconds)
