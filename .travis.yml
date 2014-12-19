@@ -8,7 +8,7 @@ before_install:
 - openssl aes-256-cbc -k "$conf_pass" -in encrypted/conf.enc -out ./server.conf.$server -d
 - openssl aes-256-cbc -k "$deploy_pass" -in encrypted/deploy.enc -out ~/.ssh/id_rsa -d
 - chmod 600 ~/.ssh/id_rsa
-- echo -e "Host $server\n\tPort $server_port\n\tUser $deploy_user\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+- echo -e "Host $server\n\tPort $server_port\n\tUser $deploy_user\n\tStrictHostKeyChecking no\n\tLogLevel error\n" >> ~/.ssh/config
 script:
 - ./build.sh
 after_success:
