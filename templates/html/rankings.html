@@ -20,17 +20,17 @@
                     <h3>Overall through {{.Weeks}} Weeks</h3>
                     <div class="scrollable">
                         <div class="overall-table-container">
-                            <table class="table table-striped table-bordered">
+                            <table class="sortable table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th class="rank"></th>
+                                        <th class="rank sorter-false"></th>
                                         <th>Team</th>
-                                        <th>
+                                        <th class="tablesorter-headerDesc actual-points-header">
                                             <span class="power-visible">Power Points</span>
                                             <span class="record-visible hidden">Record</span>
                                         </th>
                                         {{if not $finished}} 
-                                            <th>
+                                            <th class="projected-points-header">
                                                 <span class="power-visible">Projected Power Points</span>
                                                 <span class="record-visible hidden">Projected Record</span>
                                             </th>
@@ -107,11 +107,11 @@
                                 <div class="weekly week-{{$week}}">
                                 <h3>Week {{$week}}</h3>
                             {{end}}
-                                <table class="table table-bordered table-striped table-condensed">
+                                <table class="sortable table table-bordered table-striped table-condensed">
                                     <thead>
                                         <tr>
                                             <th>Team</th>
-                                            <th>Fantasy</th>
+                                            <th class="tablesorter-headerDesc">Fantasy</th>
                                             <th>
                                                 <span class="power-visible">Points</span>
                                                 <span class="record-visible hidden">Record</span>

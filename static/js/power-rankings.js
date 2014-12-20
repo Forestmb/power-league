@@ -22,8 +22,51 @@ $(document).ready(function(){
         var teamId = id.substring(id.indexOf('-') + 1);
         return ".team-" + teamId;
     }
+
+    // Add the ability to sort the overall standings table
+    $('.overall-table table').tablesorter({
+        sortList: [[2,1]],
+        headers: {
+            '.actual-points-header': {
+                sortInitialOrder: 'desc',
+                sortRestart: true,
+                sortStable: true
+            },
+            '.projected-points-header': {
+                sortInitialOrder: 'desc',
+                sortRestart: true,
+                sortStable: true
+            }
+        }
+    });
+
+    var sortedWeeklyTables = 0;
+    var numberOfWeeklyTables = $('.weekly table').length;
+
+    // Add the ability to sort the weekly score tables
+    $('.weekly table').tablesorter({
+        sortList: [[1,1]],
+        sortInitialOrder: 'desc',
+        sortRestart: true,
+        sortStable: true,
+        headers: {
+            0: { sortInitialOrder: 'asc', }
+        }
+    // Sort the weekly tables in unison -- a.k.a. if one table is sorted
+    // by a column, all weekly tables are sorted by that column
+    }).bind("sortEnd", function(sorter) 
+    {
+        sortedWeeklyTables++;
+        var currentSort = sorter.target.config.sortList;
+        if (sortedWeeklyTables === 1) {
+            $('.weekly table').not(this).trigger("sorton", [ currentSort ]);
+        } else if (sortedWeeklyTables === numberOfWeeklyTables) {
+            sortedWeeklyTables = 0;
+        }
+    });
 });
 
+// Toggles all-play/power points and stores the last user preference in a cookie
 $(document).ready(function(){
     $('.toggle-display').click(function() {
         if($(this).hasClass('showing-power')) {

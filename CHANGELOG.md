@@ -4,8 +4,9 @@
 
 - Traffic analysis through Google Analytics.
 - Added user preference for displaying all-play records instead of power scores.
-- Changed signature of `rankings.GetPowerData`.
+- Added column sorting to rankings page.
 - Added league rank and record to rankings page.
+- Changed signature of `rankings.GetPowerData`.
 - Renamed `session.SessionManager` to `session.Manager` and updated associated
   function names.
 

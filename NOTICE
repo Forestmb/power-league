@@ -73,3 +73,9 @@ generates detailed statistics about a website's traffic and traffic sources.
     
     * LICENSE: Apache 2.0
     * HOMEPAGE: https://developers.google.com/analytics/
+
+This product contains a dependency on tablesorter, a jQuery plugin for turning
+a standard HTML table into a sortable table without page refreshes.
+
+    * LICENSE: MIT
+    * HOMEPAGE: https://github.com/mottie/tablesorter/

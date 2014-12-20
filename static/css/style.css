@@ -139,6 +139,33 @@ body {
     width: 33px;
 }
 
+table.sortable th {
+    background-image: url(data:image/gif;base64,R0lGODlhFQAEAIABAKKprP///yH5BAEAAAEALAIAAAASAAkAAAIUjI+AywHf2psxTVpzvThzfXSg0xQAOw==);
+    background-repeat: no-repeat;
+    background-position: center right;
+    cursor: pointer;
+}
+
+table.sortable th.sorter-false {
+    background: none;
+}
+
+table.sortable th.tablesorter-headerAsc {
+    background-image: url(data:image/gif;base64,R0lGODlhFQAEAIABAE1UV////yH5BAEAAAEALAIAAAASAAQAAAIMjI8ByQnf2psRzXsKADs=);
+    background-repeat: no-repeat;
+    background-position: center right;
+}
+
+table.sortable th.tablesorter-headerDesc {
+    background-image: url(data:image/gif;base64,R0lGODlhFQAEAIABAE1UV////yH5BAEAAAEALAIAAAASAAQAAAIMjB+gC+jH2ptr2jQLADs=);
+    background-repeat: no-repeat;
+    background-position: center right;
+}
+
+.table>thead>tr>th {
+    padding-right: 15px;
+}
+
 .scrollable {
     position: relative;
     overflow: hidden; 
