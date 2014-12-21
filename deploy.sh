@@ -18,7 +18,7 @@ Options:
     -v
         Print extra debug information.
 EOF
-    exit ${1:-1}
+    exit "${1:-1}"
 }
 
 build_option=""
@@ -123,5 +123,5 @@ EOF
 "${package}" ${build_option} -a "${app}" -c "${conf}"
 
 echo "Deploying..."
-cat "${dist}/${app}.tar.gz" | ssh "${host}" "cat > ${deploydir}/${app}.tar.gz"
+scp "${dist}/${app}.tar.gz" "${host}:${deploydir}/${app}.tar.gz"
 server_commands | ssh "${host}" "bash"

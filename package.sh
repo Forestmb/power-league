@@ -25,7 +25,7 @@ Options:
     -h
         Display this help.
 EOF
-    exit ${1:-1}
+    exit "${1:-1}"
 }
 
 binary="power-league"
@@ -93,7 +93,7 @@ fi
 echo "Packaging..."
 rm -rf "${app}"
 mkdir -p "${app}"
-for resource in ${resources[@]}; do
+for resource in "${resources[@]}"; do
     cp -R "${resource}" "${app}"
 done
 
