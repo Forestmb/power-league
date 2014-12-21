@@ -95,7 +95,7 @@ body {
     }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1500px) {
     .weekly {
         width: 24.5%;
     }

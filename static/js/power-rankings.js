@@ -26,16 +26,15 @@ $(document).ready(function(){
     // Add the ability to sort the overall standings table
     $('.overall-table table').tablesorter({
         sortList: [[2,1]],
+        sortInitialOrder: 'desc',
+        sortRestart: true,
+        sortStable: true,
         headers: {
-            '.actual-points-header': {
-                sortInitialOrder: 'desc',
-                sortRestart: true,
-                sortStable: true
+            '.overall-header-team': {
+                sortInitialOrder: 'asc',
             },
-            '.projected-points-header': {
-                sortInitialOrder: 'desc',
-                sortRestart: true,
-                sortStable: true
+            '.overall-header-league-rank': {
+                sortInitialOrder: 'asc',
             }
         }
     });
