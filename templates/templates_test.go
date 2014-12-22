@@ -1,6 +1,11 @@
 package templates
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/base64"
+	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -456,6 +461,172 @@ func TestTemplateGetTeamPositionNotPresent(t *testing.T) {
 	}
 }
 
+func TestTemplateGetExportFilename(t *testing.T) {
+	league := mockLeagues()[0]
+	filename := templateGetExportFilename(&league)
+	if len(filename) == 0 {
+		t.Fatal("Returned empty export filename for league")
+	}
+}
+
+func TestTemplateGetCSVContent(t *testing.T) {
+	rankings := mockLeaguePowerData().OverallRankings
+	csvBase64 := templateGetCSVContent(rankings)
+	csv, err := base64.StdEncoding.DecodeString(csvBase64)
+	if err != nil {
+		t.Fatalf("Error decoding content from Base64: %s", err)
+	}
+	csvScanner := bufio.NewScanner(bytes.NewReader(csv))
+
+	csvScanner.Scan()
+	titleLine := csvScanner.Text()
+	if titleLine !=
+		"Rank,"+
+			"Projected Rank,"+
+			"Team,"+
+			"Manager,"+
+			"Power Points,"+
+			"Projected Power Points,"+
+			"All-Play Record,"+
+			"Projected All-Play Record,"+
+			"League Rank,"+
+			"League Rank Offset,"+
+			"League Record" {
+		t.Fatalf("Unexpected title line in CSV content: %s\n", titleLine)
+	}
+
+	for _, teamData := range rankings {
+		csvScanner.Scan()
+		teamContent := csvScanner.Text()
+		expectedContent :=
+			fmt.Sprintf(
+				"%d,"+
+					"%d,"+
+					"%s,"+
+					"%s,"+
+					"%.2f,"+
+					"%.2f,"+
+					"%d-%d-%d,"+
+					"%d-%d-%d,"+
+					"%d,"+
+					"%s,"+
+					"%d-%d-%d",
+				teamData.Rank,
+				teamData.ProjectedRank,
+				teamData.Team.Name,
+				teamData.Team.Managers[0].Nickname,
+				teamData.TotalPowerScore,
+				teamData.ProjectedPowerScore,
+				teamData.OverallRecord.Wins,
+				teamData.OverallRecord.Losses,
+				teamData.OverallRecord.Ties,
+				teamData.OverallProjectedRecord.Wins,
+				teamData.OverallProjectedRecord.Losses,
+				teamData.OverallProjectedRecord.Ties,
+				teamData.Team.TeamStandings.Rank,
+				templateGetRankOffset(teamData.Rank, teamData.Team.TeamStandings.Rank),
+				teamData.Team.TeamStandings.Record.Wins,
+				teamData.Team.TeamStandings.Record.Losses,
+				teamData.Team.TeamStandings.Record.Ties)
+		if teamContent != expectedContent {
+			t.Fatalf("Unexpected content returned for team:\n\tExpected: %s\n\tActual: %s\n",
+				expectedContent,
+				teamContent)
+		}
+	}
+}
+
+func TestTemplateGetRecord(t *testing.T) {
+	teamScores := []*rankings.TeamScoreData{
+		&rankings.TeamScoreData{
+			Record: &goff.Record{
+				Wins:   1,
+				Losses: 2,
+				Ties:   3,
+			},
+		},
+		&rankings.TeamScoreData{
+			Record: &goff.Record{
+				Wins:   4,
+				Losses: 5,
+				Ties:   6,
+			},
+		},
+		&rankings.TeamScoreData{
+			Record: &goff.Record{
+				Wins:   1,
+				Losses: 3,
+				Ties:   5,
+			},
+		},
+		&rankings.TeamScoreData{
+			Record: &goff.Record{
+				Wins:   5,
+				Losses: 3,
+				Ties:   1,
+			},
+		},
+		&rankings.TeamScoreData{
+			Record: &goff.Record{
+				Wins:   0,
+				Losses: 0,
+				Ties:   8,
+			},
+		},
+	}
+
+	record := templateGetRecord(1, teamScores)
+	if record.Wins != 1 ||
+		record.Losses != 2 ||
+		record.Ties != 3 {
+		t.Fatalf("Incorrect cumulative record returned:\n\tExpected: "+
+			"%d - %d - %d\n\tActual: %d - %d - %d",
+			1, 2, 3, record.Wins, record.Losses, record.Ties)
+	}
+
+	record = templateGetRecord(3, teamScores)
+	if record.Wins != 6 ||
+		record.Losses != 10 ||
+		record.Ties != 14 {
+		t.Fatalf("Incorrect cumulative record returned:\n\tExpected: "+
+			"%d - %d - %d\n\tActual: %d - %d - %d",
+			6, 10, 14, record.Wins, record.Losses, record.Ties)
+	}
+}
+
+func TestSortAllYearlyLeagues(t *testing.T) {
+	leagues := []*YearlyLeagues{
+		&YearlyLeagues{
+			Year:    "2013",
+			Leagues: mockLeagues(),
+		},
+		&YearlyLeagues{
+			Year:    "2014",
+			Leagues: mockLeagues(),
+		},
+		&YearlyLeagues{
+			Year:    "2001",
+			Leagues: mockLeagues(),
+		},
+		&YearlyLeagues{
+			Year:    "2005",
+			Leagues: mockLeagues(),
+		},
+	}
+	sort.Sort(AllYearlyLeagues(leagues))
+	if leagues[0].Year != "2014" ||
+		leagues[1].Year != "2013" ||
+		leagues[2].Year != "2005" ||
+		leagues[3].Year != "2001" {
+		t.Fatalf("Unexpected order after sorting yearly leagues:\n\t"+
+			"Expected: 2014, 2013, 2005, 2001\n\tActual: %s, %s, %s, %s\n",
+			leagues[0].Year,
+			leagues[1].Year,
+			leagues[2].Year,
+			leagues[3].Year)
+	}
+}
+
 type MockResponseWriter struct {
 	content string
 }
@@ -481,9 +652,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            1,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 13.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          1,
+				ProjectedRank: 3,
 			},
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
@@ -494,9 +677,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            2,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 14.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          2,
+				ProjectedRank: 2,
 			},
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
@@ -507,9 +702,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            3,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 15.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          3,
+				ProjectedRank: 1,
 			},
 		},
 		ProjectedRankings: rankings.ProjectedPowerRankings{
@@ -522,9 +729,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            1,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 15.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          1,
+				ProjectedRank: 1,
 			},
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
@@ -535,9 +754,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            2,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 14.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          2,
+				ProjectedRank: 2,
 			},
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
@@ -548,9 +779,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						PowerScore: 36.0,
 					},
 				},
-				Team:            mockTeam(),
-				TotalPowerScore: 12.0,
-				Rank:            3,
+				Team:                mockTeam(),
+				TotalPowerScore:     12.0,
+				ProjectedPowerScore: 13.0,
+				OverallRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				OverallProjectedRecord: &goff.Record{
+					Wins:   1,
+					Losses: 2,
+					Ties:   3,
+				},
+				Rank:          3,
+				ProjectedRank: 3,
 			},
 		},
 	}
@@ -566,7 +809,20 @@ func mockTeam() *goff.Team {
 				URL:  "http://example.com/image.png",
 			},
 		},
+		Managers: []goff.Manager{
+			goff.Manager{
+				Nickname: "Manager",
+			},
+		},
 		Name: "TestTeam02",
+		TeamStandings: goff.TeamStandings{
+			Rank: 1,
+			Record: goff.Record{
+				Wins:   4,
+				Losses: 2,
+				Ties:   2,
+			},
+		},
 	}
 }
 
@@ -614,6 +870,11 @@ func mockTeams() []goff.Team {
 					URL:  "http://example.com/image.png",
 				},
 			},
+			Managers: []goff.Manager{
+				goff.Manager{
+					Nickname: "Manager 1",
+				},
+			},
 			Name: "TestTeam01",
 		},
 		goff.Team{
@@ -623,6 +884,11 @@ func mockTeams() []goff.Team {
 				goff.TeamLogo{
 					Size: "medium",
 					URL:  "http://example.com/image.png",
+				},
+			},
+			Managers: []goff.Manager{
+				goff.Manager{
+					Nickname: "Manager 2",
 				},
 			},
 			Name: "TestTeam02",

@@ -109,6 +109,23 @@ body {
     opacity: 0.75;
 }
 
+.export-data {
+    float: right;
+    position: relative;
+    padding-right: 5px;
+}
+
+.export-data-link {
+    font-size: 15px;
+    color: #000;
+    opacity: 0.25;
+}
+
+a.export-data-link:hover {
+    color: #000;
+    opacity: 0.45;
+}
+
 .overall-table .team-row {
     cursor: pointer;
 }

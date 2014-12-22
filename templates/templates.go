@@ -3,10 +3,13 @@
 package templates
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/Forestmb/goff"
 	"github.com/Forestmb/power-league/rankings"
@@ -106,14 +109,16 @@ type SiteLink struct {
 // WriteRankingsTemplate writes the raknings template to the given writer
 func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
-		"getPowerScore":    templateGetPowerScore,
-		"getRecord":        templateGetRecord,
-		"getRankings":      templateGetRankings,
-		"getActualRank":    templateGetActualRank,
-		"getPlacingTeams":  templateGetPlacingTeams,
-		"getPlaceFromRank": templateGetPlaceFromRank,
-		"getTeamPosition":  templateGetTeamPosition,
-		"getRankOffset":    templateGetRankOffset,
+		"getPowerScore":     templateGetPowerScore,
+		"getRecord":         templateGetRecord,
+		"getRankings":       templateGetRankings,
+		"getActualRank":     templateGetActualRank,
+		"getPlacingTeams":   templateGetPlacingTeams,
+		"getPlaceFromRank":  templateGetPlaceFromRank,
+		"getTeamPosition":   templateGetTeamPosition,
+		"getRankOffset":     templateGetRankOffset,
+		"getCSVContent":     templateGetCSVContent,
+		"getExportFilename": templateGetExportFilename,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -194,8 +199,8 @@ func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.Te
 	return placingTeams
 }
 
-func templateGetRecord(week int, teamScores []*rankings.TeamScoreData) rankings.Record {
-	record := rankings.Record{}
+func templateGetRecord(week int, teamScores []*rankings.TeamScoreData) goff.Record {
+	record := goff.Record{}
 	for i := 1; i <= week; i++ {
 		record.Wins += teamScores[i-1].Record.Wins
 		record.Losses += teamScores[i-1].Record.Losses
@@ -231,6 +236,69 @@ func templateGetTeamPosition(teamID uint64, rankings []*rankings.TeamPowerData) 
 func templateGetRankOffset(powerRank, leagueRank int) string {
 	offset := powerRank - leagueRank
 	return fmt.Sprintf("%+d", offset)
+}
+
+// templateGetExportFilename creates a filename for a file containing the
+// power rankings data for that league
+func templateGetExportFilename(l *goff.League) string {
+	return fmt.Sprintf("power-rankings-%s",
+		strings.Replace(
+			strings.ToLower(l.Name),
+			" ",
+			"-",
+			-1))
+}
+
+func templateGetCSVContent(rankings []*rankings.TeamPowerData) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("Rank,")
+	buffer.WriteString("Projected Rank,")
+	buffer.WriteString("Team,")
+	buffer.WriteString("Manager,")
+	buffer.WriteString("Power Points,")
+	buffer.WriteString("Projected Power Points,")
+	buffer.WriteString("All-Play Record,")
+	buffer.WriteString("Projected All-Play Record,")
+	buffer.WriteString("League Rank,")
+	buffer.WriteString("League Rank Offset,")
+	buffer.WriteString("League Record\n")
+	for _, teamData := range rankings {
+		buffer.WriteString(strconv.Itoa(teamData.Rank))
+		buffer.WriteString(",")
+		buffer.WriteString(strconv.Itoa(teamData.ProjectedRank))
+		buffer.WriteString(",")
+		buffer.WriteString(teamData.Team.Name)
+		buffer.WriteString(",")
+		buffer.WriteString(teamData.Team.Managers[0].Nickname)
+		buffer.WriteString(",")
+		buffer.WriteString(strconv.FormatFloat(teamData.TotalPowerScore, 'f', 2, 64))
+		buffer.WriteString(",")
+		buffer.WriteString(strconv.FormatFloat(teamData.ProjectedPowerScore, 'f', 2, 64))
+		buffer.WriteString(",")
+		writeRecordToBuffer(&buffer, teamData.OverallRecord)
+		buffer.WriteString(",")
+		writeRecordToBuffer(&buffer, teamData.OverallProjectedRecord)
+		buffer.WriteString(",")
+		buffer.WriteString(strconv.Itoa(teamData.Team.TeamStandings.Rank))
+		buffer.WriteString(",")
+		buffer.WriteString(
+			templateGetRankOffset(
+				teamData.Rank,
+				teamData.Team.TeamStandings.Rank))
+		buffer.WriteString(",")
+		writeRecordToBuffer(&buffer, &teamData.Team.TeamStandings.Record)
+		buffer.WriteString("\n")
+	}
+
+	return base64.StdEncoding.EncodeToString(buffer.Bytes())
+}
+
+func writeRecordToBuffer(buffer *bytes.Buffer, r *goff.Record) {
+	buffer.WriteString(strconv.Itoa(r.Wins))
+	buffer.WriteString("-")
+	buffer.WriteString(strconv.Itoa(r.Losses))
+	buffer.WriteString("-")
+	buffer.WriteString(strconv.Itoa(r.Ties))
 }
 
 //

@@ -28,20 +28,13 @@ type WeeklyRanking struct {
 	Projected bool
 }
 
-// Record tracking the amount of wins, losses, and ties a team has
-type Record struct {
-	Wins   int
-	Losses int
-	Ties   int
-}
-
 // TeamScoreData describes the score information for a single team
 type TeamScoreData struct {
 	Team       *goff.Team
 	Score      float64
 	Rank       int
 	PowerScore float64
-	Record     *Record
+	Record     *goff.Record
 }
 
 // TeamPowerData describes how a team performed in the power rankings
@@ -52,8 +45,8 @@ type TeamPowerData struct {
 	ProjectedPowerScore    float64
 	Rank                   int
 	ProjectedRank          int
-	OverallRecord          *Record
-	OverallProjectedRecord *Record
+	OverallRecord          *goff.Record
+	OverallProjectedRecord *goff.Record
 	HasProjections         bool
 }
 
@@ -170,7 +163,7 @@ func GetWeeklyRanking(
 		rankings[index] = &TeamScoreData{
 			Team:   &teams[index],
 			Score:  score,
-			Record: &Record{},
+			Record: &goff.Record{},
 		}
 	}
 
@@ -271,8 +264,8 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 						Team:                   teamScoreData.Team,
 						TotalPowerScore:        0.0,
 						ProjectedPowerScore:    0.0,
-						OverallRecord:          &Record{},
-						OverallProjectedRecord: &Record{},
+						OverallRecord:          &goff.Record{},
+						OverallProjectedRecord: &goff.Record{},
 						HasProjections:         weeklyRanking.Projected,
 					}
 					powerDataByTeamKey[teamScoreData.Team.TeamKey] = powerData

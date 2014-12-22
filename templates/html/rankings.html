@@ -9,15 +9,25 @@
         <div class="container">
         {{if .}}
             <h2>{{.League.Name}}
-                <button type="button" class="btn btn-primary toggle-display showing-power">
-                    <span class="power-visible">Show All-Play Records</span>
-                    <span class="record-visible hidden">Show Power Points</span>
-                </button>
+                {{if .LeagueStarted}}
+                    <button type="button" class="btn btn-primary toggle-display showing-power">
+                        <span class="power-visible">Show All-Play Records</span>
+                        <span class="record-visible hidden">Show Power Points</span>
+                    </button>
+                {{end}}
             </h2>
             {{if .LeagueStarted}}
                 {{$finished := .League.IsFinished}}
                 <div class="overall overall-table">
-                    <h3>Overall through {{.Weeks}} Weeks</h3>
+                    <h3>Overall through {{.Weeks}} Weeks
+                    <div class="export-data">
+                        <a class="export-data-link"
+                           href="data:text/csv;base64,{{getCSVContent .LeaguePowerData.OverallRankings}}"
+                           title="Export to CSV"
+                           download="{{getExportFilename .League}}.csv">
+                            <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+                        </a>
+                    </h3>
                     <div class="scrollable">
                         <div class="overall-table-container">
                             <table class="sortable table table-striped table-bordered">
