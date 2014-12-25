@@ -199,22 +199,12 @@ func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.Te
 	return placingTeams
 }
 
-func templateGetRecord(week int, teamScores []*rankings.TeamScoreData) goff.Record {
-	record := goff.Record{}
-	for i := 1; i <= week; i++ {
-		record.Wins += teamScores[i-1].Record.Wins
-		record.Losses += teamScores[i-1].Record.Losses
-		record.Ties += teamScores[i-1].Record.Ties
-	}
-	return record
+func templateGetRecord(week int, teamPowerData *rankings.TeamPowerData) *goff.Record {
+	return teamPowerData.AllRankings[week-1].OverallRecord
 }
 
-func templateGetPowerScore(week int, teamScores []*rankings.TeamScoreData) string {
-	totalScore := float64(0)
-	for i := 1; i <= week; i++ {
-		totalScore += teamScores[i-1].PowerScore
-	}
-	return fmt.Sprintf("%.0f", totalScore)
+func templateGetPowerScore(week int, teamPowerData *rankings.TeamPowerData) string {
+	return fmt.Sprintf("%.0f", teamPowerData.AllRankings[week-1].PowerScore)
 }
 
 func templateGetRankings(powerData rankings.LeaguePowerData, finished bool) []*rankings.TeamPowerData {
@@ -249,8 +239,9 @@ func templateGetExportFilename(l *goff.League) string {
 			-1))
 }
 
-func templateGetCSVContent(rankings []*rankings.TeamPowerData) string {
+func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 	var buffer bytes.Buffer
+	separator := ","
 	buffer.WriteString("Rank,")
 	buffer.WriteString("Projected Rank,")
 	buffer.WriteString("Team,")
@@ -261,32 +252,64 @@ func templateGetCSVContent(rankings []*rankings.TeamPowerData) string {
 	buffer.WriteString("Projected All-Play Record,")
 	buffer.WriteString("League Rank,")
 	buffer.WriteString("League Rank Offset,")
-	buffer.WriteString("League Record\n")
-	for _, teamData := range rankings {
+	buffer.WriteString("League Record")
+	for index, weeklyRanking := range leagueData.ByWeek {
+		var weekStr string
+		if weeklyRanking.Projected {
+			weekStr = fmt.Sprintf(",[Projected] Week %d ", index+1)
+		} else {
+			weekStr = fmt.Sprintf(",Week %d ", index+1)
+		}
+		buffer.WriteString(weekStr)
+		buffer.WriteString("Fantasy Points")
+		buffer.WriteString(weekStr)
+		buffer.WriteString("Weekly Rank")
+		buffer.WriteString(weekStr)
+		buffer.WriteString("Overall Power Points")
+		buffer.WriteString(weekStr)
+		buffer.WriteString("Overall All-Play Record")
+	}
+	buffer.WriteString("\n")
+	for _, teamData := range leagueData.OverallRankings {
 		buffer.WriteString(strconv.Itoa(teamData.Rank))
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		buffer.WriteString(strconv.Itoa(teamData.ProjectedRank))
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		buffer.WriteString(teamData.Team.Name)
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		buffer.WriteString(teamData.Team.Managers[0].Nickname)
-		buffer.WriteString(",")
-		buffer.WriteString(strconv.FormatFloat(teamData.TotalPowerScore, 'f', 2, 64))
-		buffer.WriteString(",")
-		buffer.WriteString(strconv.FormatFloat(teamData.ProjectedPowerScore, 'f', 2, 64))
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
+		buffer.WriteString(
+			strconv.FormatFloat(teamData.TotalPowerScore, 'f', 2, 64))
+		buffer.WriteString(separator)
+		buffer.WriteString(
+			strconv.FormatFloat(teamData.ProjectedPowerScore, 'f', 2, 64))
+		buffer.WriteString(separator)
 		writeRecordToBuffer(&buffer, teamData.OverallRecord)
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		writeRecordToBuffer(&buffer, teamData.OverallProjectedRecord)
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		buffer.WriteString(strconv.Itoa(teamData.Team.TeamStandings.Rank))
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		buffer.WriteString(
 			templateGetRankOffset(
 				teamData.Rank,
 				teamData.Team.TeamStandings.Rank))
-		buffer.WriteString(",")
+		buffer.WriteString(separator)
 		writeRecordToBuffer(&buffer, &teamData.Team.TeamStandings.Record)
+		for index, weeklyScore := range teamData.AllScores {
+			buffer.WriteString(separator)
+			buffer.WriteString(strconv.FormatFloat(weeklyScore.Score, 'f', 2, 64))
+			buffer.WriteString(separator)
+			buffer.WriteString(strconv.Itoa(weeklyScore.Rank))
+			buffer.WriteString(separator)
+			buffer.WriteString(
+				strconv.FormatFloat(
+					teamData.AllRankings[index].PowerScore, 'f', 2, 64))
+			buffer.WriteString(separator)
+			writeRecordToBuffer(
+				&buffer, teamData.AllRankings[index].OverallRecord)
+		}
 		buffer.WriteString("\n")
 	}
 
