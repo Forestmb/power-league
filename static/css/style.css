@@ -128,6 +128,17 @@ a.export-data-link:hover {
     cursor: pointer;
     text-decoration: none;
 }
+
+.export-data-label {
+    display: none;
+}
+
+@media (min-width: 600px) {
+    .export-data-label {
+        display: inline;
+    }
+}
+
 .export-modal .modal-header {
     border-bottom: 0px;
 }

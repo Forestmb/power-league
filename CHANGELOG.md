@@ -7,11 +7,6 @@
 - Added column sorting to rankings page.
 - Added league rank and record to rankings page.
 - Overall rankings can now be exported to CSV or a newsletter template.
-- Changed signature of `rankings.GetPowerData`.
-- Renamed `session.SessionManager` to `session.Manager` and updated associated
-  function names.
-- Replaced all occurrences of `rankings.Record` with the equivalent type
-  `goff.Record`.
 
 ## 0.2.0 (2014-09-05) ##
 
