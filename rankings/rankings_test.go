@@ -408,6 +408,47 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 	league := &goff.League{
 		LeagueKey: "leagueID",
 		EndWeek:   3,
+		Standings: []goff.Team{
+			goff.Team{
+				TeamKey: "a",
+				TeamStandings: goff.TeamStandings{
+					Rank: 1,
+					Record: goff.Record{
+						Wins:   5,
+						Losses: 2,
+						Ties:   0,
+					},
+					PointsFor:     12345.0,
+					PointsAgainst: 54321.0,
+				},
+			},
+			goff.Team{
+				TeamKey: "b",
+				TeamStandings: goff.TeamStandings{
+					Rank: 2,
+					Record: goff.Record{
+						Wins:   3,
+						Losses: 3,
+						Ties:   1,
+					},
+					PointsFor:     1234.0,
+					PointsAgainst: 4321.0,
+				},
+			},
+			goff.Team{
+				TeamKey: "c",
+				TeamStandings: goff.TeamStandings{
+					Rank: 3,
+					Record: goff.Record{
+						Wins:   0,
+						Losses: 6,
+						Ties:   1,
+					},
+					PointsFor:     234.0,
+					PointsAgainst: 321.0,
+				},
+			},
+		},
 	}
 	data, err := GetPowerData(m, league, 1)
 

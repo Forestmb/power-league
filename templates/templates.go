@@ -109,16 +109,17 @@ type SiteLink struct {
 // WriteRankingsTemplate writes the raknings template to the given writer
 func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
-		"getPowerScore":     templateGetPowerScore,
-		"getRecord":         templateGetRecord,
-		"getRankings":       templateGetRankings,
-		"getActualRank":     templateGetActualRank,
-		"getPlacingTeams":   templateGetPlacingTeams,
-		"getPlaceFromRank":  templateGetPlaceFromRank,
-		"getTeamPosition":   templateGetTeamPosition,
-		"getRankOffset":     templateGetRankOffset,
-		"getCSVContent":     templateGetCSVContent,
-		"getExportFilename": templateGetExportFilename,
+		"getPowerScore":          templateGetPowerScore,
+		"getRecord":              templateGetRecord,
+		"getRankings":            templateGetRankings,
+		"getActualRank":          templateGetActualRank,
+		"getPlacingTeams":        templateGetPlacingTeams,
+		"getPlaceFromRank":       templateGetPlaceFromRank,
+		"getTeamPosition":        templateGetTeamPosition,
+		"getRankOffset":          templateGetRankOffset,
+		"getRankForPreviousWeek": templateGetRankForPreviousWeek,
+		"getCSVContent":          templateGetCSVContent,
+		"getExportFilename":      templateGetExportFilename,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
 		t.BaseDir+baseTemplate,
@@ -228,6 +229,15 @@ func templateGetRankOffset(powerRank, leagueRank int) string {
 	return fmt.Sprintf("%+d", offset)
 }
 
+func templateGetRankForPreviousWeek(teamPowerData *rankings.TeamPowerData, currentWeek int) string {
+	if currentWeek > 1 {
+		previousWeekIndex := (currentWeek - 1) - 1
+		previousWeekRank := teamPowerData.AllRankings[previousWeekIndex].Rank
+		return fmt.Sprintf("%d", previousWeekRank)
+	}
+	return ""
+}
+
 // templateGetExportFilename creates a filename for a file containing the
 // power rankings data for that league
 func templateGetExportFilename(l *goff.League) string {
@@ -264,6 +274,8 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		buffer.WriteString("Fantasy Points")
 		buffer.WriteString(weekStr)
 		buffer.WriteString("Weekly Rank")
+		buffer.WriteString(weekStr)
+		buffer.WriteString("Overall Rank")
 		buffer.WriteString(weekStr)
 		buffer.WriteString("Overall Power Points")
 		buffer.WriteString(weekStr)
@@ -302,6 +314,8 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 			buffer.WriteString(strconv.FormatFloat(weeklyScore.Score, 'f', 2, 64))
 			buffer.WriteString(separator)
 			buffer.WriteString(strconv.Itoa(weeklyScore.Rank))
+			buffer.WriteString(separator)
+			buffer.WriteString(strconv.Itoa(teamData.AllRankings[index].Rank))
 			buffer.WriteString(separator)
 			buffer.WriteString(
 				strconv.FormatFloat(

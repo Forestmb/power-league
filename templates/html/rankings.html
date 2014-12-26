@@ -18,8 +18,9 @@
             </h2>
             {{if .LeagueStarted}}
                 {{$finished := .League.IsFinished}}
+                {{$currentWeek := .Weeks}}
                 <div class="overall overall-table">
-                    <h3>Overall through {{.Weeks}} Weeks
+                    <h3>Overall through {{$currentWeek}} Weeks
                     <div class="export-data">
                         <a class="export-data-link"
                            title="Export Power Rankings"
@@ -60,12 +61,21 @@
                                     <div style="clear:both;"></div>
                                 </div>
                                 <div class="modal-footer hidden newsletter-container">
-                                    <h4>Power Rankings Week {{.Weeks}}</h4>
+                                    {{if $finished}}
+                                    <h4>{{.League.Name}} Final Power Rankings</h4>
+                                    {{else}}
+                                    <h4>{{.League.Name}} Power Rankings Week {{$currentWeek}}</h4>
+                                    {{end}}
                                     {{with .LeaguePowerData}}
                                         {{with .OverallRankings}}
                                             {{$overall := .}}
                                             {{range $index, $teamRanking := .}}
-                                            <h5>{{.Rank}}. {{.Team.Name}} -
+                                            {{$previous := getRankForPreviousWeek . $currentWeek}}
+                                            <h5>{{.Rank}}.
+                                                {{if $previous}}
+                                                    ({{$previous}})
+                                                {{end}}
+                                                    {{.Team.Name}} -
                                                     {{printf "%.0f" .TotalPowerScore}} Power Points -
                                                     {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall</span>
                                             </h5>

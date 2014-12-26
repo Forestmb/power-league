@@ -470,6 +470,51 @@ func TestTemplateGetTeamPositionNotPresent(t *testing.T) {
 	}
 }
 
+func TestTemplateGetRankOffset(t *testing.T) {
+	offset := templateGetRankOffset(2, 3)
+	expected := "-1"
+	if offset != expected {
+		t.Fatalf("Unexpected offset returned:\n\tExpected: %s\n\tActual: %s",
+			expected,
+			offset)
+	}
+
+	offset = templateGetRankOffset(2, 2)
+	expected = "+0"
+	if offset != expected {
+		t.Fatalf("Unexpected offset returned:\n\tExpected: %s\n\tActual: %s",
+			expected,
+			offset)
+	}
+
+	offset = templateGetRankOffset(4, 2)
+	expected = "+2"
+	if offset != expected {
+		t.Fatalf("Unexpected offset returned:\n\tExpected: %s\n\tActual: %s",
+			expected,
+			offset)
+	}
+}
+
+func TestTemplateGetRankForPreviousWeek(t *testing.T) {
+	teamData := mockLeaguePowerData().OverallRankings[0]
+	previousWeek := templateGetRankForPreviousWeek(teamData, 1)
+	if previousWeek != "" {
+		t.Fatalf("Rank for previous returned for Week 1 when no rank should"+
+			"have been returned: %s",
+			previousWeek)
+	}
+
+	previousWeek = templateGetRankForPreviousWeek(teamData, 2)
+	expected := "1"
+	if previousWeek != expected {
+		t.Fatalf("Unexpected rank returned for previous week:\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expected,
+			previousWeek)
+	}
+}
+
 func TestTemplateGetExportFilename(t *testing.T) {
 	league := mockLeagues()[0]
 	filename := templateGetExportFilename(&league)
@@ -511,6 +556,7 @@ func TestTemplateGetCSVContent(t *testing.T) {
 		}
 		expectedTitle += weekStr + "Fantasy Points"
 		expectedTitle += weekStr + "Weekly Rank"
+		expectedTitle += weekStr + "Overall Rank"
 		expectedTitle += weekStr + "Overall Power Points"
 		expectedTitle += weekStr + "Overall All-Play Record"
 	}
@@ -561,10 +607,12 @@ func TestTemplateGetCSVContent(t *testing.T) {
 				fmt.Sprintf(
 					",%.2f"+
 						",%d"+
+						",%d"+
 						",%.2f"+
 						",%d-%d-%d",
 					teamScoreData.Score,
 					teamScoreData.Rank,
+					ranking.Rank,
 					ranking.PowerScore,
 					ranking.OverallRecord.Wins,
 					ranking.OverallRecord.Losses,
@@ -713,6 +761,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       1,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -723,6 +772,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       1,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -733,6 +783,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       3,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,
@@ -782,6 +833,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       2,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -792,6 +844,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       3,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -802,6 +855,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       2,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,
@@ -851,6 +905,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       3,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -861,6 +916,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       1,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -871,6 +927,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       1,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,
@@ -910,6 +967,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       1,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -920,6 +978,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       2,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -930,6 +989,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       3,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,
@@ -967,6 +1027,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       2,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -977,6 +1038,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       3,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -987,6 +1049,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       2,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,
@@ -1024,6 +1087,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
 						Week:       1,
+						Rank:       3,
 						PowerScore: 12.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -1034,6 +1098,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       2,
+						Rank:       1,
 						PowerScore: 22.0,
 						OverallRecord: &goff.Record{
 							Wins:   3,
@@ -1044,6 +1109,7 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 					},
 					&rankings.TeamRankingData{
 						Week:       3,
+						Rank:       1,
 						PowerScore: 32.0,
 						OverallRecord: &goff.Record{
 							Wins:   7,

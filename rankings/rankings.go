@@ -42,6 +42,7 @@ type TeamScoreData struct {
 // peer through a particular week of the season.
 type TeamRankingData struct {
 	Week          int
+	Rank          int
 	PowerScore    float64
 	OverallRecord *goff.Record
 	Projected     bool
@@ -59,6 +60,22 @@ type TeamPowerData struct {
 	OverallProjectedRecord *goff.Record
 	AllRankings            []*TeamRankingData
 	HasProjections         bool
+}
+
+// SortedTeamRankingsData allows information about how teams ranked for a week
+// to be sorted by their power scores
+type SortedTeamRankingsData []*TeamRankingData
+
+func (s SortedTeamRankingsData) Len() int {
+	return len(s)
+}
+
+func (s SortedTeamRankingsData) Less(i, j int) bool {
+	return s[i].PowerScore > s[j].PowerScore
+}
+
+func (s SortedTeamRankingsData) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 // PowerRankings ranks teams based on their performance over multiple weeks
@@ -305,11 +322,13 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 	}
 
 	glog.V(2).Infof("ranking teams -- league=%s", leagueKey)
-	// Calculate the actual power rankings
-	sortedPowerData := make([]*TeamPowerData, len(powerDataByTeamKey))
-	index := 0
-	for _, powerData := range powerDataByTeamKey {
-		for i := 0; i < numWeeks; i++ {
+
+	// Calculate the overall rankings for each week
+	weeklyTeamRankings := make([][]*TeamRankingData, numWeeks)
+	for i := 0; i < numWeeks; i++ {
+		weeklyTeamRankings[i] = make([]*TeamRankingData, len(powerDataByTeamKey))
+		j := 0
+		for _, powerData := range powerDataByTeamKey {
 			weeklyScore := powerData.AllScores[i]
 			powerData.AllRankings[i] = &TeamRankingData{
 				Week:       i + 1,
@@ -323,20 +342,43 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 			}
 			if i > 0 {
 				previousRanking := powerData.AllRankings[i-1]
-				powerData.AllRankings[i].PowerScore += previousRanking.PowerScore
+				powerData.AllRankings[i].PowerScore +=
+					previousRanking.PowerScore
 				addRecord(
 					powerData.AllRankings[i].OverallRecord,
 					previousRanking.OverallRecord)
 			}
+			weeklyTeamRankings[i][j] = powerData.AllRankings[i]
+			j++
 		}
 
+		// Sort by the cumulative power scores and assign ranks for this week
+		sort.Sort(SortedTeamRankingsData(weeklyTeamRankings[i]))
+		for j, rankingsData := range weeklyTeamRankings[i] {
+			if j > 0 &&
+				rankingsData.PowerScore ==
+					weeklyTeamRankings[i][j-1].PowerScore {
+				rankingsData.Rank = weeklyTeamRankings[i][j-1].Rank
+			} else {
+				rankingsData.Rank = j + 1
+			}
+		}
+	}
+
+	// Calculate the actual power rankings
+	sortedPowerData := make([]*TeamPowerData, len(powerDataByTeamKey))
+	index := 0
+	for _, powerData := range powerDataByTeamKey {
 		sortedPowerData[index] = powerData
 		index++
 	}
+
 	sort.Sort(PowerRankings(sortedPowerData))
 	for i, powerData := range sortedPowerData {
 		// Handle ties
-		if i > 0 && powerData.TotalPowerScore == sortedPowerData[i-1].TotalPowerScore {
+		if i > 0 &&
+			powerData.TotalPowerScore ==
+				sortedPowerData[i-1].TotalPowerScore {
 			powerData.Rank = sortedPowerData[i-1].Rank
 		} else {
 			powerData.Rank = i + 1
@@ -382,6 +424,7 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 	}, nil
 }
 
+// addRecord adds to the first record the wins/losses/ties of the second
 func addRecord(r, toAdd *goff.Record) {
 	r.Wins += toAdd.Wins
 	r.Losses += toAdd.Losses
