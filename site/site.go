@@ -28,7 +28,7 @@ type Site struct {
 	handlers       map[string]*ContextHandler
 	sessionManager session.Manager
 	config         *templates.SiteConfig
-	templates      *templates.Templates
+	templates      templates.Templates
 }
 
 // HandlerFunc is a handler for a given site
@@ -188,38 +188,6 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func getAllYearlyLeagues(client *goff.Client) templates.AllYearlyLeagues {
-	currentYear := time.Now().Year()
-	numberOfYears := (currentYear - EarliestSupportedYear) + 1
-	results := make(chan *templates.YearlyLeagues)
-	for ; currentYear >= EarliestSupportedYear; currentYear-- {
-		go getUserLeauges(client, currentYear, results)
-	}
-
-	allYearlyLeagues := make([]*templates.YearlyLeagues, numberOfYears)
-	for i := 0; i < numberOfYears; i++ {
-		allYearlyLeagues[i] = <-results
-	}
-	sort.Sort(templates.AllYearlyLeagues(allYearlyLeagues))
-	return allYearlyLeagues
-}
-
-func getUserLeauges(client *goff.Client, year int, results chan *templates.YearlyLeagues) {
-	yearStr := fmt.Sprintf("%d", year)
-	glog.V(2).Infof("getting user leagues -- year=%d", year)
-	leagues, err := client.GetUserLeagues(yearStr)
-	if err != nil {
-		glog.Warningf("unable to get leagues for year '%d': %s", year, err)
-		leagues = nil
-	}
-	glog.V(2).Infof("got user leagues -- year=%d, leagues=%v", year, leagues)
-	yearlyLeagues := &templates.YearlyLeagues{
-		Year:    yearStr,
-		Leagues: leagues,
-	}
-	results <- yearlyLeagues
-}
-
 func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	glog.V(5).Infoln("in handlePowerRankings")
 
@@ -306,6 +274,48 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	if client != nil {
 		glog.V(2).Infof("API Request Count: %d", client.RequestCount())
 	}
+}
+
+//
+// userLeaguesClient
+//
+
+// userLeaguesClient returns the leagues a user is a participant of for the
+// given year
+type userLeaguesClient interface {
+	GetUserLeagues(year string) ([]goff.League, error)
+}
+
+func getAllYearlyLeagues(client userLeaguesClient) templates.AllYearlyLeagues {
+	currentYear := time.Now().Year()
+	numberOfYears := (currentYear - EarliestSupportedYear) + 1
+	results := make(chan *templates.YearlyLeagues)
+	for ; currentYear >= EarliestSupportedYear; currentYear-- {
+		go getUserLeauges(client, currentYear, results)
+	}
+
+	allYearlyLeagues := make([]*templates.YearlyLeagues, numberOfYears)
+	for i := 0; i < numberOfYears; i++ {
+		allYearlyLeagues[i] = <-results
+	}
+	sort.Sort(templates.AllYearlyLeagues(allYearlyLeagues))
+	return allYearlyLeagues
+}
+
+func getUserLeauges(client userLeaguesClient, year int, results chan *templates.YearlyLeagues) {
+	yearStr := fmt.Sprintf("%d", year)
+	glog.V(2).Infof("getting user leagues -- year=%d", year)
+	leagues, err := client.GetUserLeagues(yearStr)
+	if err != nil {
+		glog.Warningf("unable to get leagues for year '%d': %s", year, err)
+		leagues = nil
+	}
+	glog.V(2).Infof("got user leagues -- year=%d, leagues=%v", year, leagues)
+	yearlyLeagues := &templates.YearlyLeagues{
+		Year:    yearStr,
+		Leagues: leagues,
+	}
+	results <- yearlyLeagues
 }
 
 //

@@ -29,21 +29,30 @@ const (
 )
 
 // Templates provides programmtic access to power rankings templates
-type Templates struct {
+type Templates interface {
+	WriteAboutTemplate(w io.Writer, content *AboutPageContent) error
+	WriteErrorTemplate(w io.Writer, content *ErrorPageContent) error
+	WriteLeaguesTemplate(w io.Writer, content *LeaguesPageContent) error
+	WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error
+}
+
+// defaultTemplates provides programmtic access to power rankings templates
+// created from files within a single base directory
+type defaultTemplates struct {
 	// Directory containing the HTML template files
-	BaseDir string
+	baseDir string
 }
 
 // NewTemplates creates new templates using the `DefaultBaseDir`
-func NewTemplates() *Templates {
+func NewTemplates() Templates {
 	return NewTemplatesFromDir(DefaultBaseDir)
 }
 
 // NewTemplatesFromDir creates new templates using the given directory as the base
-func NewTemplatesFromDir(dir string) *Templates {
+func NewTemplatesFromDir(dir string) Templates {
 	glog.V(2).Infof("creating new templates -- dir=%s", dir)
-	return &Templates{
-		BaseDir: dir,
+	return &defaultTemplates{
+		baseDir: dir,
 	}
 }
 
@@ -107,7 +116,7 @@ type SiteLink struct {
 }
 
 // WriteRankingsTemplate writes the raknings template to the given writer
-func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
+func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
 		"getPowerScore":          templateGetPowerScore,
 		"getRecord":              templateGetRecord,
@@ -122,8 +131,8 @@ func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageCont
 		"getExportFilename":      templateGetExportFilename,
 	}
 	template, err := template.New(rankingsTemplate).Funcs(funcMap).ParseFiles(
-		t.BaseDir+baseTemplate,
-		t.BaseDir+rankingsTemplate)
+		t.baseDir+baseTemplate,
+		t.baseDir+rankingsTemplate)
 	if err != nil {
 		return err
 	}
@@ -131,10 +140,10 @@ func (t *Templates) WriteRankingsTemplate(w io.Writer, content *RankingsPageCont
 }
 
 // WriteAboutTemplate writes the about page template to the given writer
-func (t *Templates) WriteAboutTemplate(w io.Writer, content *AboutPageContent) error {
+func (t *defaultTemplates) WriteAboutTemplate(w io.Writer, content *AboutPageContent) error {
 	template, err := template.New(aboutTemplate).ParseFiles(
-		t.BaseDir+baseTemplate,
-		t.BaseDir+aboutTemplate)
+		t.baseDir+baseTemplate,
+		t.baseDir+aboutTemplate)
 	if err != nil {
 		return err
 	}
@@ -142,14 +151,14 @@ func (t *Templates) WriteAboutTemplate(w io.Writer, content *AboutPageContent) e
 }
 
 // WriteLeaguesTemplate writes the leagues page template to the given writer
-func (t *Templates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPageContent) error {
+func (t *defaultTemplates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPageContent) error {
 
 	funcMap := template.FuncMap{
 		"getTitleFromYear": templateGetTitleFromYear,
 	}
 	template, err := template.New(leaguesTemplate).Funcs(funcMap).ParseFiles(
-		t.BaseDir+baseTemplate,
-		t.BaseDir+leaguesTemplate)
+		t.baseDir+baseTemplate,
+		t.baseDir+leaguesTemplate)
 	if err != nil {
 		return err
 	}
@@ -158,10 +167,10 @@ func (t *Templates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPageConten
 }
 
 // WriteErrorTemplate writes the error page template to the given writer
-func (t *Templates) WriteErrorTemplate(w io.Writer, content *ErrorPageContent) error {
+func (t *defaultTemplates) WriteErrorTemplate(w io.Writer, content *ErrorPageContent) error {
 	template, err := template.New(errorTemplate).ParseFiles(
-		t.BaseDir+baseTemplate,
-		t.BaseDir+errorTemplate)
+		t.baseDir+baseTemplate,
+		t.baseDir+errorTemplate)
 	if err != nil {
 		return err
 	}

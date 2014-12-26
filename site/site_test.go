@@ -2,10 +2,13 @@ package site
 
 import (
 	"errors"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/templates"
 )
 
 func TestNewSite(t *testing.T) {
@@ -16,6 +19,406 @@ func TestNewSite(t *testing.T) {
 
 	if site == nil {
 		t.Fatal("no site created")
+	}
+}
+
+func TestHandleAbout(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/about", nil)
+	mockTemplates := &MockTemplates{}
+	site := &Site{
+		config: &templates.SiteConfig{},
+		sessionManager: &MockSessionManager{
+			IsLoggedInRet: false,
+		},
+		templates: mockTemplates,
+	}
+
+	handleAbout(site, recorder, request)
+
+	if mockTemplates.LastAboutContent.SiteConfig != site.config {
+		t.Fatalf("Unexpected site config passed into templates:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*site.config,
+			*(mockTemplates.LastAboutContent.SiteConfig))
+	}
+
+	if mockTemplates.LastAboutContent.LoggedIn != false {
+		t.Fatal("Unexpected logged in status passed into templates:\n\t" +
+			"Expected: false\n\tActual: true")
+	}
+}
+
+func TestHandleAboutError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/about", nil)
+	mockTemplates := &MockTemplates{
+		WriteAboutError: errors.New("error"),
+	}
+	site := &Site{
+		config: &templates.SiteConfig{},
+		sessionManager: &MockSessionManager{
+			IsLoggedInRet: true,
+		},
+		templates: mockTemplates,
+	}
+
+	handleAbout(site, recorder, request)
+
+	if mockTemplates.LastAboutContent.SiteConfig != site.config {
+		t.Fatalf("Unexpected site config passed into templates:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*site.config,
+			*(mockTemplates.LastAboutContent.SiteConfig))
+	}
+
+	if mockTemplates.LastAboutContent.LoggedIn != true {
+		t.Fatal("Unexpected logged in status passed into templates:\n\t" +
+			"Expected: true\n\tActual: false")
+	}
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatal("Incorrect error code returned when writing about content "+
+			"fails\n\tExpected: %d\n\tActual: %d",
+			http.StatusInternalServerError,
+			recorder.Code)
+	}
+}
+
+func TestHandleLogout(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/logout", nil)
+	mockSessionManager := &MockSessionManager{}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: "/base",
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handleLogout(site, recorder, request)
+
+	if mockSessionManager.LogoutWriter != recorder {
+		t.Fatalf("Unexpected writer passed into session.Manager.Logout\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*recorder,
+			mockSessionManager.LogoutWriter)
+	}
+
+	if mockSessionManager.LogoutRequest != request {
+		t.Fatalf("Unexpected request passed into session.Manager.Logout\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*request,
+			*(mockSessionManager.LogoutRequest))
+	}
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when logging out\n\t"+
+			"Expected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	expected := "http://example.com:8080/base"
+	if redirectURL != expected {
+		t.Fatalf("Redirected to unexpected URL when logging out\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expected,
+			redirectURL)
+	}
+}
+
+func TestHandleLogin(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/login", nil)
+	authContext := "/auth"
+	requestURL := "http://example.com:18080/request/url"
+	mockSessionManager := &MockSessionManager{
+		LoginURL: requestURL,
+	}
+	site := &Site{
+		config: &templates.SiteConfig{},
+		handlers: map[string]*ContextHandler{
+			"auth": &ContextHandler{
+				Context: authContext,
+			},
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handleLogin(site, recorder, request)
+
+	if mockSessionManager.LoginWriter != recorder {
+		t.Fatalf("Unexpected writer passed into session.Manager.Login\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*recorder,
+			mockSessionManager.LoginWriter)
+	}
+
+	if mockSessionManager.LoginRequest != request {
+		t.Fatalf("Unexpected request passed into session.Manager.Login\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*request,
+			*(mockSessionManager.LoginRequest))
+	}
+
+	expectedAuthURL := "http://example.com:8080/auth"
+	if mockSessionManager.LoginAuthURL != expectedAuthURL {
+		t.Fatalf("Unexpected auth URL passed into session.Manager.Login\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expectedAuthURL,
+			mockSessionManager.LoginAuthURL)
+	}
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when logging in\n\t"+
+			"Expected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	if redirectURL != requestURL {
+		t.Fatalf("Redirected to unexpected URL when loggin in\n\t"+
+			"Expected: %s\n\tActual: %s",
+			requestURL,
+			redirectURL)
+	}
+}
+
+func TestHandleLoginError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/login", nil)
+	authContext := "/auth"
+	mockSessionManager := &MockSessionManager{
+		LoginError: errors.New("error"),
+	}
+	site := &Site{
+		config: &templates.SiteConfig{},
+		handlers: map[string]*ContextHandler{
+			"auth": &ContextHandler{
+				Context: authContext,
+			},
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handleLogin(site, recorder, request)
+
+	if mockSessionManager.LoginWriter != recorder {
+		t.Fatalf("Unexpected writer passed into session.Manager.Login\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*recorder,
+			mockSessionManager.LoginWriter)
+	}
+
+	if mockSessionManager.LoginRequest != request {
+		t.Fatalf("Unexpected request passed into session.Manager.Login\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*request,
+			*(mockSessionManager.LoginRequest))
+	}
+
+	expectedAuthURL := "http://example.com:8080/auth"
+	if mockSessionManager.LoginAuthURL != expectedAuthURL {
+		t.Fatalf("Unexpected auth URL passed into session.Manager.Login\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expectedAuthURL,
+			mockSessionManager.LoginAuthURL)
+	}
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("Unexpected response code given when an error occurs while "+
+			"logging in\n\tExpected: %d\n\tActual: %d",
+			http.StatusInternalServerError,
+			recorder.Code)
+	}
+}
+
+func TestHandleAuthentication(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/auth", nil)
+	leaguesContext := "/leagues"
+	mockSessionManager := &MockSessionManager{}
+	site := &Site{
+		config: &templates.SiteConfig{},
+		handlers: map[string]*ContextHandler{
+			"showLeagues": &ContextHandler{
+				Context: leaguesContext,
+			},
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handleAuthentication(site, recorder, request)
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when authenticating\n\t"+
+			"Expected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	expected := "http://example.com:8080" + leaguesContext
+	if redirectURL != expected {
+		t.Fatalf("Redirected to unexpected URL when authenticating\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expected,
+			redirectURL)
+	}
+}
+
+func TestHandleAuthenticationError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/auth", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		AuthError: errors.New("error"),
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers: map[string]*ContextHandler{
+			"showLeagues": &ContextHandler{
+				Context: "/leagues",
+			},
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handleAuthentication(site, recorder, request)
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when an error occurs while "+
+			"authenticating\n\tExpected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	expected := "http://example.com:8080" + baseContext
+	if redirectURL != expected {
+		t.Fatalf("Redirected to unexpected URL when an error occurs while "+
+			"authenticating\n\tExpected: %s\n\tActual: %s",
+			expected,
+			redirectURL)
+	}
+}
+
+func TestGetUserLeagues(t *testing.T) {
+	year := "2012"
+	client := &MockUserLeaguesClient{
+		Leagues: map[string][]goff.League{
+			year: []goff.League{
+				goff.League{
+					Name: "League 1",
+				},
+				goff.League{
+					Name: "League 2",
+				},
+				goff.League{
+					Name: "League 3",
+				},
+			},
+		},
+	}
+	results := make(chan *templates.YearlyLeagues)
+	go getUserLeauges(client, 2012, results)
+
+	yearlyLeagues := <-results
+	if yearlyLeagues.Year != year {
+		t.Fatalf("Leagues returned for the wrong year:\n\t"+
+			"Expected: %s\n\tActual: %s",
+			year,
+			yearlyLeagues.Year)
+	}
+
+	assertLeaguesEqual(t, yearlyLeagues.Leagues, client.Leagues[year])
+}
+
+func TestGetUserLeaguesError(t *testing.T) {
+	year := "2012"
+	client := &MockUserLeaguesClient{
+		Error: errors.New("error"),
+	}
+	results := make(chan *templates.YearlyLeagues)
+	go getUserLeauges(client, 2012, results)
+
+	yearlyLeagues := <-results
+	if yearlyLeagues.Year != year {
+		t.Fatalf("Leagues returned for the wrong year:\n\t"+
+			"Expected: %s\n\tActual: %s",
+			year,
+			yearlyLeagues.Year)
+	}
+
+	if len(yearlyLeagues.Leagues) != 0 {
+		t.Fatalf("Leagues present after client returned error: %+v",
+			yearlyLeagues.Leagues)
+	}
+}
+
+func TestGetAllYearlyLeagues(t *testing.T) {
+	client := &MockUserLeaguesClient{
+		Leagues: map[string][]goff.League{
+			"2012": []goff.League{
+				goff.League{
+					Name: "League 1",
+				},
+				goff.League{
+					Name: "League 2",
+				},
+				goff.League{
+					Name: "League 3",
+				},
+			},
+			"2010": []goff.League{
+				goff.League{
+					Name: "League 1",
+				},
+				goff.League{
+					Name: "League 2",
+				},
+				goff.League{
+					Name: "League 3",
+				},
+			},
+			"2007": []goff.League{
+				goff.League{
+					Name: "League 1",
+				},
+				goff.League{
+					Name: "League 2",
+				},
+				goff.League{
+					Name: "League 3",
+				},
+			},
+			"2006": []goff.League{
+				goff.League{
+					Name: "League 1",
+				},
+				goff.League{
+					Name: "League 2",
+				},
+				goff.League{
+					Name: "League 3",
+				},
+			},
+		},
+	}
+	allYearlyLeagues := getAllYearlyLeagues(client)
+
+	for _, yearlyLeagues := range allYearlyLeagues {
+		assertLeaguesEqual(t, yearlyLeagues.Leagues, client.Leagues[yearlyLeagues.Year])
 	}
 }
 
@@ -217,6 +620,12 @@ func (m *MockGoffClient) GetPlayersStats(leagueKey string, week int, players []g
 }
 
 type MockSessionManager struct {
+	LoginWriter   http.ResponseWriter
+	LoginRequest  *http.Request
+	LoginAuthURL  string
+	LogoutWriter  http.ResponseWriter
+	LogoutRequest *http.Request
+
 	LoginURL      string
 	LoginError    error
 	LogoutError   error
@@ -227,6 +636,10 @@ type MockSessionManager struct {
 }
 
 func (m *MockSessionManager) Login(w http.ResponseWriter, r *http.Request, redirectURL string) (loginURL string, err error) {
+	m.LoginWriter = w
+	m.LoginRequest = r
+	m.LoginAuthURL = redirectURL
+
 	return m.LoginURL, m.LoginError
 }
 
@@ -235,6 +648,8 @@ func (m *MockSessionManager) Authenticate(w http.ResponseWriter, r *http.Request
 }
 
 func (m *MockSessionManager) Logout(w http.ResponseWriter, r *http.Request) error {
+	m.LogoutWriter = w
+	m.LogoutRequest = r
 	return m.LogoutError
 }
 
@@ -244,4 +659,64 @@ func (m *MockSessionManager) IsLoggedIn(r *http.Request) bool {
 
 func (m *MockSessionManager) GetClient(w http.ResponseWriter, r *http.Request) (*goff.Client, error) {
 	return m.Client, m.ClientError
+}
+
+type MockUserLeaguesClient struct {
+	Leagues map[string][]goff.League
+	Error   error
+}
+
+func (m *MockUserLeaguesClient) GetUserLeagues(year string) ([]goff.League, error) {
+	return m.Leagues[year], m.Error
+}
+
+type MockTemplates struct {
+	WriteAboutError    error
+	WriteErrorError    error
+	WriteLeaguesError  error
+	WriteRankingsError error
+
+	LastAboutContent    *templates.AboutPageContent
+	LastErrorContent    *templates.ErrorPageContent
+	LastLeaguesContent  *templates.LeaguesPageContent
+	LastRankingsContent *templates.RankingsPageContent
+}
+
+func (m *MockTemplates) WriteRankingsTemplate(w io.Writer, content *templates.RankingsPageContent) error {
+	m.LastRankingsContent = content
+	return m.WriteRankingsError
+}
+
+func (m *MockTemplates) WriteAboutTemplate(w io.Writer, content *templates.AboutPageContent) error {
+	m.LastAboutContent = content
+	return m.WriteAboutError
+}
+
+func (m *MockTemplates) WriteLeaguesTemplate(w io.Writer, content *templates.LeaguesPageContent) error {
+	m.LastLeaguesContent = content
+	return m.WriteLeaguesError
+}
+
+func (m *MockTemplates) WriteErrorTemplate(w io.Writer, content *templates.ErrorPageContent) error {
+	m.LastErrorContent = content
+	return m.WriteErrorError
+}
+
+func assertLeaguesEqual(t *testing.T, actualLeagues, expectedLeagues []goff.League) {
+	if len(actualLeagues) != len(expectedLeagues) {
+		t.Fatalf("Unexpected number of leagues returned:\n\t"+
+			"Expected: %d\n\tActual: %d",
+			len(actualLeagues),
+			len(expectedLeagues))
+	}
+
+	for i, actual := range actualLeagues {
+		expected := expectedLeagues[i]
+		if actual.Name != expected.Name {
+			t.Fatalf("Unexpected league returned:\n\t"+
+				"Expected: %+v\n\tActual: %+v",
+				expected,
+				actual)
+		}
+	}
 }
