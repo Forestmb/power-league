@@ -6,7 +6,7 @@
 - Added user preference for displaying all-play records instead of power scores.
 - Added column sorting to rankings page.
 - Added league rank and record to rankings page.
-- Overall rankings can now be exported to CSV.
+- Overall rankings can now be exported to CSV or a newsletter template.
 - Changed signature of `rankings.GetPowerData`.
 - Renamed `session.SessionManager` to `session.Manager` and updated associated
   function names.

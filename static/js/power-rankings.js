@@ -63,6 +63,11 @@ $(document).ready(function(){
             sortedWeeklyTables = 0;
         }
     });
+
+    $(".newsletter-export").click(function(){
+        $('.newsletter-container').toggleClass('hidden');
+        $('.newsletter-export').toggleClass('selected');
+    });
 });
 
 // Toggles all-play/power points and stores the last user preference in a cookie

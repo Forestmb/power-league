@@ -22,12 +22,58 @@
                     <h3>Overall through {{.Weeks}} Weeks
                     <div class="export-data">
                         <a class="export-data-link"
-                           href="data:text/csv;base64,{{getCSVContent .LeaguePowerData}}"
-                           title="Export to CSV"
-                           download="{{getExportFilename .League}}.csv">
-                            <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+                           data-toggle="modal"
+                           data-target=".export-modal">
+                            Export <span class="glyphicon glyphicon-open" aria-hidden="true"></span>
                         </a>
                     </h3>
+                    <div class="modal fade export-modal"
+                         tabindex="-1"
+                         role="dialog"
+                         aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="export-option export-option-1">
+                                        <a class="btn btn-primary"
+                                           href="data:text/csv;base64,{{getCSVContent .LeaguePowerData}}"
+                                           download="{{getExportFilename .League}}.csv">
+                                           <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+                                           <br/>
+                                           <br/>
+                                           Download as CSV
+                                        </a>
+                                    </div>
+                                    <div class="export-option export-option-2">
+                                        <a class="btn btn-primary newsletter-export">
+                                           <span class="glyphicon glyphicon-bullhorn" aria-hidden="true"></span>
+                                           <br/>
+                                           <br/>
+                                            Newsletter Template
+                                        </a>
+                                    </div>
+                                    <div style="clear:both;"></div>
+                                </div>
+                                <div class="modal-footer hidden newsletter-container">
+                                    <h4>Power Rankings Week {{.Weeks}}</h4>
+                                    {{with .LeaguePowerData}}
+                                        {{with .OverallRankings}}
+                                            {{$overall := .}}
+                                            {{range $index, $teamRanking := .}}
+                                            <h5>{{.Rank}}. {{.Team.Name}} -
+                                                    {{printf "%.0f" .TotalPowerScore}} Power Points -
+                                                    {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall</span>
+                                            </h5>
+                                            {{end}}
+                                        {{end}}
+                                    {{end}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="scrollable">
                         <div class="overall-table-container">
                             <table class="sortable table table-striped table-bordered">
