@@ -192,9 +192,9 @@
                                         {{range $index, $score := .}}
                                             {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
                                             {{if .Team.IsOwnedByCurrentLogin}}
-                                            <tr class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
+                                            <tr id="week-{{$week}}-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
                                             {{else}}
-                                            <tr class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
+                                            <tr id="week-{{$week}}-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
                                             {{end}}
                                                 <td>{{.Team.Name}}</td>
                                                 <td>{{printf "%.2f" .Score}}</td>

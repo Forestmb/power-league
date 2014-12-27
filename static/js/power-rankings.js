@@ -1,5 +1,5 @@
 $(document).ready(function(){
-    $('.overall-table tbody tr').hover(function() {
+    $('.team-row').hover(function() {
         var id = $(this).attr("id");
         $(getTeam(id)).addClass('team-hover');
     }, function() {
@@ -7,7 +7,7 @@ $(document).ready(function(){
         $(getTeam(id)).removeClass('team-hover');
     });
 
-    $('.overall-table tbody tr').click(function() {
+    $('.team-row').click(function() {
         var selectedClass = 'team-selected';
         var id = $(this).attr("id");
 
@@ -19,7 +19,7 @@ $(document).ready(function(){
     });
 
     function getTeam(id) {
-        var teamId = id.substring(id.indexOf('-') + 1);
+        var teamId = id.substring(id.lastIndexOf('-') + 1);
         return ".team-" + teamId;
     }
 
