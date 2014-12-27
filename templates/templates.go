@@ -109,12 +109,6 @@ type SiteConfig struct {
 	AnalyticsTrackingID string
 }
 
-// SiteLink represents a link to a page in the site's navigation.
-type SiteLink struct {
-	Link string
-	Name string
-}
-
 // WriteRankingsTemplate writes the raknings template to the given writer
 func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
