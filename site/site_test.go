@@ -313,6 +313,162 @@ func TestHandleAuthenticationError(t *testing.T) {
 	}
 }
 
+func TestHandleShowLeagues(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
+	baseContext := "/base"
+	leagues := []goff.League{
+		goff.League{
+			Name: "League 1",
+		},
+		goff.League{
+			Name: "League 2",
+		},
+		goff.League{
+			Name: "League 3",
+		},
+		goff.League{
+			Name: "League 4",
+		},
+	}
+	mockTemplates := &MockTemplates{}
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		Client: &goff.Client{
+			Provider: &MockedContentProvider{
+				content: &goff.FantasyContent{
+					Users: []goff.User{
+						goff.User{
+							Games: []goff.Game{
+								goff.Game{
+									Leagues: leagues,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleShowLeagues(site, recorder, request)
+
+	if mockTemplates.LastLeaguesContent.SiteConfig != site.config {
+		t.Fatalf("Unexpected site config passed into templates:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*site.config,
+			*(mockTemplates.LastLeaguesContent.SiteConfig))
+	}
+
+	if mockTemplates.LastLeaguesContent.LoggedIn != true {
+		t.Fatal("Unexpected logged in status passed into templates:\n\t" +
+			"Expected: true\n\tActual: false")
+	}
+
+	for _, yearlyLeagues := range mockTemplates.LastLeaguesContent.AllYears {
+		assertLeaguesEqual(t, yearlyLeagues.Leagues, leagues)
+	}
+}
+
+func TestHandleShowLeaguesNotLoggedIn(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
+	baseContext := "/base"
+	mockTemplates := &MockTemplates{}
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: false,
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleShowLeagues(site, recorder, request)
+
+	if mockTemplates.LastLeaguesContent.SiteConfig != site.config {
+		t.Fatalf("Unexpected site config passed into templates:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*site.config,
+			*(mockTemplates.LastLeaguesContent.SiteConfig))
+	}
+
+	if mockTemplates.LastLeaguesContent.LoggedIn != false {
+		t.Fatal("Unexpected logged in status passed into templates:\n\t" +
+			"Expected: false\n\tActual: true")
+	}
+
+	if mockTemplates.LastLeaguesContent.AllYears != nil {
+		t.Fatalf("Leagues passed into templates when user was not logged "+
+			"in: %+v",
+			mockTemplates.LastLeaguesContent.AllYears)
+	}
+}
+
+func TestHandleShowLeaguesGetClientError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
+	baseContext := "/base"
+	mockTemplates := &MockTemplates{}
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		ClientError:   errors.New("error"),
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleShowLeagues(site, recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatal("Incorrect error code returned when getting client "+
+			"fails\n\tExpected: %d\n\tActual: %d",
+			http.StatusInternalServerError,
+			recorder.Code)
+	}
+}
+
+func TestHandleShowLeaguesWriteTemplateError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
+	baseContext := "/base"
+	mockTemplates := &MockTemplates{
+		WriteLeaguesError: errors.New("error"),
+	}
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: false,
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleShowLeagues(site, recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatal("Incorrect error code returned when writing leagues content "+
+			"fails\n\tExpected: %d\n\tActual: %d",
+			http.StatusInternalServerError,
+			recorder.Code)
+	}
+}
+
 func TestGetUserLeagues(t *testing.T) {
 	year := "2012"
 	client := &MockUserLeaguesClient{
@@ -700,6 +856,25 @@ func (m *MockTemplates) WriteLeaguesTemplate(w io.Writer, content *templates.Lea
 func (m *MockTemplates) WriteErrorTemplate(w io.Writer, content *templates.ErrorPageContent) error {
 	m.LastErrorContent = content
 	return m.WriteErrorError
+}
+
+// MockedContentProvider creates a goff.ContentProvider that returns the
+// given content and error whenever provider.Get is called.
+type MockedContentProvider struct {
+	lastGetURL string
+	content    *goff.FantasyContent
+	err        error
+	count      int
+}
+
+func (m *MockedContentProvider) Get(url string) (*goff.FantasyContent, error) {
+	m.lastGetURL = url
+	m.count++
+	return m.content, m.err
+}
+
+func (m *MockedContentProvider) RequestCount() int {
+	return m.count
 }
 
 func assertLeaguesEqual(t *testing.T, actualLeagues, expectedLeagues []goff.League) {
