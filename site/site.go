@@ -254,13 +254,19 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 			}
 		}
 
+		displayAllPlayRecords := false
+		powerPreferenceCookie, err := req.Cookie("PowerPreference")
+		if err == nil {
+			displayAllPlayRecords = powerPreferenceCookie.Value == "record"
+		}
 		rankingsContent = &templates.RankingsPageContent{
-			Weeks:           currentWeek,
-			League:          league,
-			LeagueStarted:   leagueStarted,
-			LeaguePowerData: leaguePowerData,
-			LoggedIn:        loggedIn,
-			SiteConfig:      s.config,
+			Weeks:                 currentWeek,
+			League:                league,
+			LeagueStarted:         leagueStarted,
+			LeaguePowerData:       leaguePowerData,
+			DisplayAllPlayRecords: displayAllPlayRecords,
+			LoggedIn:              loggedIn,
+			SiteConfig:            s.config,
 		}
 	}
 

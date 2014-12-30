@@ -499,19 +499,44 @@ func TestTemplateGetRankOffset(t *testing.T) {
 func TestTemplateGetRankForPreviousWeek(t *testing.T) {
 	teamData := mockLeaguePowerData().OverallRankings[0]
 	previousWeek := templateGetRankForPreviousWeek(teamData, 1)
-	if previousWeek != "" {
+	if previousWeek != nil {
 		t.Fatalf("Rank for previous returned for Week 1 when no rank should"+
-			"have been returned: %s",
+			"have been returned: %+v",
 			previousWeek)
 	}
 
 	previousWeek = templateGetRankForPreviousWeek(teamData, 2)
-	expected := "1"
-	if previousWeek != expected {
+	expectedRank := 1
+	if previousWeek.Rank != expectedRank {
 		t.Fatalf("Unexpected rank returned for previous week:\n\t"+
-			"Expected: %s\n\tActual: %s",
-			expected,
-			previousWeek)
+			"Expected: %d\n\tActual: %d",
+			expectedRank,
+			previousWeek.Rank)
+	}
+	expectedOffset := -2
+	if previousWeek.Rank != expectedRank {
+		t.Fatalf("Unexpected rank offset returned for previous week:\n\t"+
+			"Expected: %d\n\tActual: %d",
+			expectedOffset,
+			previousWeek.Offset)
+	}
+}
+
+func TestTemplateGetAbsoluteValue(t *testing.T) {
+	for input, expected := range map[int]int{
+		0:   0,
+		10:  10,
+		-10: 10,
+		2:   2,
+		-2:  2,
+	} {
+		actual := templateGetAbsoluteValue(input)
+		if actual != expected {
+			t.Fatalf("Unexpected result when calculating absolute value\n\t"+
+				"Expected: %d\n\tActual: %d",
+				expected,
+				actual)
+		}
 	}
 }
 

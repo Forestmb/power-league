@@ -8,11 +8,16 @@
         {{template "nav" .}}
         <div class="container">
         {{if .}}
+        {{$showRecords := .DisplayAllPlayRecords}}
             <h2>{{.League.Name}}
                 {{if .LeagueStarted}}
                     <button type="button" class="btn btn-primary toggle-display showing-power">
-                        <span class="power-visible">Show All-Play Records</span>
-                        <span class="record-visible hidden">Show Power Points</span>
+                        <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                            Show All-Play Records
+                        </span>
+                        <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                            Show Power Points
+                        </span>
                     </button>
                 {{end}}
             </h2>
@@ -72,12 +77,20 @@
                                             {{range $index, $teamRanking := .}}
                                             {{$previous := getRankForPreviousWeek . $currentWeek}}
                                             <h5>{{.Rank}}.
-                                                {{if $previous}}
-                                                    ({{$previous}})
-                                                {{end}}
+                                                    {{if $previous}}
+                                                        {{if lt $previous.Offset 0}}
+                                                        <span class="rank-decrease">
+                                                            (▾ {{getAbsoluteValue $previous.Offset}})
+                                                        </span>
+                                                        {{else if gt $previous.Offset 0}}
+                                                        <span class="rank-increase">
+                                                            (▴ {{$previous.Offset}})
+                                                        </span>
+                                                        {{end}}
+                                                    {{end}}
                                                     {{.Team.Name}} -
                                                     {{printf "%.0f" .TotalPowerScore}} Power Points -
-                                                    {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall</span>
+                                                    {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall
                                             </h5>
                                             {{end}}
                                         {{end}}
@@ -94,13 +107,21 @@
                                         <th class="rank sorter-false"></th>
                                         <th class="overall-header-team">Team</th>
                                         <th class="tablesorter-headerDesc overall-header-actual">
-                                            <span class="power-visible">Power Points</span>
-                                            <span class="record-visible hidden">Record</span>
+                                            <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                Power Points
+                                            </span>
+                                            <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                Record
+                                            </span>
                                         </th>
                                         {{if not $finished}} 
                                             <th class="overall-header-projected">
-                                                <span class="power-visible">Projected Power Points</span>
-                                                <span class="record-visible hidden">Projected Record</span>
+                                                <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                    Projected Power Points
+                                                </span>
+                                                <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                    Projected Record
+                                                </span>
                                             </th>
                                         {{end}}
                                         <th class="overall-header-league-rank">
@@ -124,13 +145,25 @@
                                                 <td class="rank">{{.Rank}}</td>
                                                 <td>{{.Team.Name}}</td>
                                                 <td>
-                                                    <span class="power-visible">{{printf "%.0f" .TotalPowerScore}}</span>
-                                                    <span class="record-visible hidden">{{.OverallRecord.Wins}} - {{.OverallRecord.Losses}} - {{.OverallRecord.Ties}}</span>
+                                                    <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                        {{printf "%.0f" .TotalPowerScore}}
+                                                    </span>
+                                                    <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                        {{.OverallRecord.Wins}} -
+                                                        {{.OverallRecord.Losses}} -
+                                                        {{.OverallRecord.Ties}}
+                                                    </span>
                                                 </td>
                                                 {{if not $finished}} 
                                                     <td>
-                                                        <span class="power-visible">{{printf "%.0f" .ProjectedPowerScore}}</span>
-                                                        <span class="record-visible hidden">{{.OverallProjectedRecord.Wins}} - {{.OverallProjectedRecord.Losses}} - {{.OverallProjectedRecord.Ties}}</span>
+                                                        <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                            {{printf "%.0f" .ProjectedPowerScore}}
+                                                        </span>
+                                                        <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                            {{.OverallProjectedRecord.Wins}} -
+                                                            {{.OverallProjectedRecord.Losses}} -
+                                                            {{.OverallProjectedRecord.Ties}}
+                                                        </span>
                                                     </td>
                                                 {{end}}
                                                 <td>{{.Team.TeamStandings.Rank}}
@@ -181,8 +214,12 @@
                                             <th>Team</th>
                                             <th class="tablesorter-headerDesc">Fantasy</th>
                                             <th>
-                                                <span class="power-visible">Points</span>
-                                                <span class="record-visible hidden">Record</span>
+                                                <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                    Points
+                                                </span>
+                                                <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                    Record
+                                                </span>
                                             </th>
                                         </tr>
                                     </thead>
@@ -200,8 +237,14 @@
                                                 <td>{{printf "%.2f" .Score}}</td>
                                                 {{$record := getRecord $week $teamPowerData}}
                                                 <td>
-                                                    <span class="power-visible">{{getPowerScore $week $teamPowerData}}</span>
-                                                    <span class="record-visible hidden">{{$record.Wins}} - {{$record.Losses}} - {{$record.Ties}}</span>
+                                                    <span class="power-visible {{if $showRecords}} hidden {{end}}">
+                                                        {{getPowerScore $week $teamPowerData}}
+                                                    </span>
+                                                    <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                        {{$record.Wins}} -
+                                                        {{$record.Losses}} -
+                                                        {{$record.Ties}}
+                                                    </span>
                                                 </td>
                                             </tr>
                                         {{end}}     

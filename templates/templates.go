@@ -63,12 +63,13 @@ func NewTemplatesFromDir(dir string) Templates {
 // RankingsPageContent is used to show an given league's power rankings up
 // to a certain week in the season.
 type RankingsPageContent struct {
-	Weeks           int
-	League          *goff.League
-	LeagueStarted   bool
-	LeaguePowerData *rankings.LeaguePowerData
-	LoggedIn        bool
-	SiteConfig      *SiteConfig
+	Weeks                 int
+	League                *goff.League
+	LeagueStarted         bool
+	LeaguePowerData       *rankings.LeaguePowerData
+	DisplayAllPlayRecords bool
+	LoggedIn              bool
+	SiteConfig            *SiteConfig
 }
 
 // YearlyLeagues describes the leagues for a user for a given year.
@@ -109,6 +110,13 @@ type SiteConfig struct {
 	AnalyticsTrackingID string
 }
 
+// PreviousRank defines the rank a team had for a previous week and the
+// offset between that rank and the current rank.
+type PreviousRank struct {
+	Rank   int
+	Offset int
+}
+
 // WriteRankingsTemplate writes the raknings template to the given writer
 func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsPageContent) error {
 	funcMap := template.FuncMap{
@@ -121,6 +129,7 @@ func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsP
 		"getTeamPosition":        templateGetTeamPosition,
 		"getRankOffset":          templateGetRankOffset,
 		"getRankForPreviousWeek": templateGetRankForPreviousWeek,
+		"getAbsoluteValue":       templateGetAbsoluteValue,
 		"getCSVContent":          templateGetCSVContent,
 		"getExportFilename":      templateGetExportFilename,
 	}
@@ -227,18 +236,29 @@ func templateGetTeamPosition(teamID uint64, rankings []*rankings.TeamPowerData) 
 	return -1
 }
 
-func templateGetRankOffset(powerRank, leagueRank int) string {
-	offset := powerRank - leagueRank
+func templateGetRankOffset(rank, otherRank int) string {
+	offset := rank - otherRank
 	return fmt.Sprintf("%+d", offset)
 }
 
-func templateGetRankForPreviousWeek(teamPowerData *rankings.TeamPowerData, currentWeek int) string {
+func templateGetAbsoluteValue(value int) int {
+	if value < 0 {
+		return value * -1
+	}
+	return value
+}
+
+func templateGetRankForPreviousWeek(teamPowerData *rankings.TeamPowerData, currentWeek int) *PreviousRank {
 	if currentWeek > 1 {
 		previousWeekIndex := (currentWeek - 1) - 1
+		currentWeekRank := teamPowerData.AllRankings[currentWeek-1].Rank
 		previousWeekRank := teamPowerData.AllRankings[previousWeekIndex].Rank
-		return fmt.Sprintf("%d", previousWeekRank)
+		return &PreviousRank{
+			Rank:   previousWeekRank,
+			Offset: previousWeekRank - currentWeekRank,
+		}
 	}
-	return ""
+	return nil
 }
 
 // templateGetExportFilename creates a filename for a file containing the

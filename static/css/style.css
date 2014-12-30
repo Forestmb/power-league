@@ -182,6 +182,14 @@ a.export-data-link:hover {
     font-weight: bold;
 }
 
+.rank-increase {
+    color: #007B00;
+}
+
+.rank-decrease {
+    color: #7B0000;
+}
+
 .team-row {
     cursor: pointer;
 }
