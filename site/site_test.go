@@ -373,7 +373,9 @@ func TestHandleShowLeagues(t *testing.T) {
 	}
 
 	for _, yearlyLeagues := range mockTemplates.LastLeaguesContent.AllYears {
-		assertLeaguesEqual(t, yearlyLeagues.Leagues, leagues)
+		if _, ok := goff.YearKeys[yearlyLeagues.Year]; ok {
+			assertLeaguesEqual(t, yearlyLeagues.Leagues, leagues)
+		}
 	}
 }
 
@@ -881,8 +883,8 @@ func assertLeaguesEqual(t *testing.T, actualLeagues, expectedLeagues []goff.Leag
 	if len(actualLeagues) != len(expectedLeagues) {
 		t.Fatalf("Unexpected number of leagues returned:\n\t"+
 			"Expected: %d\n\tActual: %d",
-			len(actualLeagues),
-			len(expectedLeagues))
+			len(expectedLeagues),
+			len(actualLeagues))
 	}
 
 	for i, actual := range actualLeagues {
