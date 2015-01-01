@@ -8,7 +8,7 @@ log_dir="log"
 stdout_file="server.stdout.log"
 stderr_file="server.stderr.log"
 binary="power-league"
-pid="server.pid"
+pid_file="server.pid"
 conf="server.conf"
 
 prog="$(basename "$0")"
@@ -34,9 +34,9 @@ function error()
 
 function start()
 {
-    if [ -f "${pid}" ]
+    if [ -f "${pid_file}" ]
     then
-        error "PID file '${pid}' already exists. Server may already be running"
+        error "PID file '${pid_file}' already exists. Server may already be running"
         exit 1
     fi
 
@@ -82,40 +82,55 @@ function start()
             > "${log_dir}/${stdout_file}" \
             2> "${log_dir}/${stderr_file}" &
 
-    echo "$!" > "${pid}"
+    echo "$!" > "${pid_file}"
     echo "Server started"
 }
 
 function stop()
 {
-    if [ ! -f "${pid}" ]
+    if [ ! -f "${pid_file}" ]
     then
-        error "PID file '${pid}' does not exist. Server will not be stopped"
-        exit 1
+        error "PID file '${pid_file}' does not exist. Server will not be stopped"
+    else
+        pid="$(cat "${pid_file}")"
+        kill "${pid}" || true
+
+        count=0
+        while [ -d "/proc/${pid}/" ] && \
+              [ "${count}" -lt 10 ]
+        do
+            sleep 0.5
+            count=$((${count}+1))
+        done
+
+        if [ -d "/proc/${pid}/" ]
+        then
+            error "Process with id '${pid}' could not be stopped"
+            exit 2
+        else
+            echo "Server stopped"
+        fi
+        rm "${pid_file}"
     fi
-    
-    kill "$(cat "${pid}")" 
-    rm "${pid}"
-    echo "Server stopped"
 }
 
 function status()
 {
-    if [ -f "${pid}" ]
+    if [ -f "${pid_file}" ]
     then
-        process="$(cat "${pid}")"
-        if [ ! -d "/proc/${process}/" ]
+        pid="$(cat "${pid_file}")"
+        if [ ! -d "/proc/${pid}/" ]
         then
-            error "PID file '${pid}' exists but process with id '${process}' could not be found."
+            error "PID file '${pid_file}' exists but process with id '${pid}' could not be found."
             error "Check '${log_dir}/' for more information."
             exit 1
         else
-            echo "Server is running. PID=${process}"
+            echo "Server is running. PID=${pid}"
             exit 0
         fi
     else
         echo "Server is stopped."
-        exit 0
+        exit 2
     fi
 }
 
