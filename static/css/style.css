@@ -69,11 +69,12 @@ a:hover, a:focus {
 
 .btn-primary {
     background: #1E75A2;
+    border-color: #105376;
 }
 
 .btn-primary:hover, .btn-primary:focus, .btn-primary.focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
-    background: #1B6A93;
-    border-color: #156893;
+    background: #135D83;
+    border-color: #0E5477;
 }
 
 .btn-info {
