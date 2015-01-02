@@ -9,6 +9,13 @@ https://github.com/Forestmb/power-league/blob/master/LICENSE).
 
 ## Building ##
 
+Building requires an installation of the [Go programming language tools](
+https://golang.org/doc/install). Once installed, you can follow [this guide](
+https://golang.org/doc/code.html) to become familiar with the structure of
+most Go projects.
+
+Once your `GOPATH` is set up, you can build this project with the following:
+
     $ go get github.com/Forestmb/power-league
     $ cd $GOPATH/src/github.com/Forestmb/power-league
     $ ./build.sh
@@ -38,8 +45,8 @@ Once signed in, you can view the rankings for any of your current or past league
 
 ## Deploying ##
 
-If you wish to deploy the application to a remote host, you can use the
-`deploy.sh` utility by passing in the name of the server like so:
+If you wish to deploy the application to a remote server, you can use the
+`deploy.sh` utility by passing in the name of the host like so:
 
     $ ./deploy.sh <host>
 
