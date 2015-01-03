@@ -169,13 +169,14 @@ a.export-data-link:hover {
 .export-option {
     width: 100%;
     float: left;
-    margin: 5px;
+    margin-bottom: 10px;
     text-align: center;
 }
 
 @media (min-width: 600px) {
     .export-option {
         width: 48%;
+        margin: 5px;
     }
 }
 
