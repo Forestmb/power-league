@@ -191,11 +191,16 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	glog.V(5).Infoln("in handlePowerRankings")
 
+	loggedIn := s.sessionManager.IsLoggedIn(req)
+	if !loggedIn {
+		leaguesURL := fmt.Sprintf("http://%s%s", req.Host, s.config.BaseContext)
+		http.Redirect(w, req, leaguesURL, http.StatusTemporaryRedirect)
+		return
+	}
+
 	// Determine the current week
 	currentWeek := -1
 	leagueStarted := true
-	loggedIn := s.sessionManager.IsLoggedIn(req)
-
 	values := req.URL.Query()
 	leagueKey := values.Get("key")
 
@@ -215,11 +220,9 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 			leagueStarted = league.DraftStatus == "postdraft"
 		} else {
 			glog.Warningf("unable to get current week from league metadata: %s", err)
-			loggedIn = false
 		}
 	} else {
 		glog.Warningf("unable to create client: %s", err)
-		loggedIn = false
 	}
 
 	glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
@@ -232,49 +235,43 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 				&YahooClient{Client: client},
 				league,
 				currentWeek)
-
-			if err != nil {
-				glog.Warningf("error generating power rankings page: %s", err)
-				err = s.templates.WriteErrorTemplate(
-					w,
-					&templates.ErrorPageContent{
-						Message: "Error occurred while generating the rankings. " +
-							"Try refreshing the page.",
-						LoggedIn:   loggedIn,
-						SiteConfig: s.config,
-					})
-
-				if err != nil {
-					http.Error(
-						w,
-						"Error occurred when calculating rankings",
-						http.StatusInternalServerError)
-				}
-				return
-			}
 		}
 
-		displayAllPlayRecords := false
-		powerPreferenceCookie, err := req.Cookie("PowerPreference")
 		if err == nil {
-			displayAllPlayRecords = powerPreferenceCookie.Value == "record"
-		}
-		rankingsContent = &templates.RankingsPageContent{
-			Weeks:                 currentWeek,
-			League:                league,
-			LeagueStarted:         leagueStarted,
-			LeaguePowerData:       leaguePowerData,
-			DisplayAllPlayRecords: displayAllPlayRecords,
-			LoggedIn:              loggedIn,
-			SiteConfig:            s.config,
+			displayAllPlayRecords := false
+			powerPreferenceCookie, err := req.Cookie("PowerPreference")
+			if err == nil {
+				displayAllPlayRecords = powerPreferenceCookie.Value == "record"
+			}
+			rankingsContent = &templates.RankingsPageContent{
+				Weeks:                 currentWeek,
+				League:                league,
+				LeagueStarted:         leagueStarted,
+				LeaguePowerData:       leaguePowerData,
+				DisplayAllPlayRecords: displayAllPlayRecords,
+				LoggedIn:              loggedIn,
+				SiteConfig:            s.config,
+			}
+
+			err = s.templates.WriteRankingsTemplate(w, rankingsContent)
 		}
 	}
 
-	err = s.templates.WriteRankingsTemplate(w, rankingsContent)
 	if err != nil {
 		glog.Warningf("error generating power rankings page: %s", err)
-		http.Error(w, "Error occurred when calculating rankings",
-			http.StatusInternalServerError)
+		err = s.templates.WriteErrorTemplate(
+			w,
+			&templates.ErrorPageContent{
+				Message:    "Error occurred while generating the rankings.",
+				LoggedIn:   loggedIn,
+				SiteConfig: s.config,
+			})
+
+		if err != nil {
+			http.Error(w, "Error occurred when calculating rankings",
+				http.StatusInternalServerError)
+		}
+		return
 	}
 
 	if client != nil {

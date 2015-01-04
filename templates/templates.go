@@ -139,7 +139,7 @@ func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsP
 	if err != nil {
 		return err
 	}
-	return template.Execute(w, content)
+	return writeTemplateSafe(w, template, content)
 }
 
 // WriteAboutTemplate writes the about page template to the given writer
@@ -150,7 +150,7 @@ func (t *defaultTemplates) WriteAboutTemplate(w io.Writer, content *AboutPageCon
 	if err != nil {
 		return err
 	}
-	return template.Execute(w, content)
+	return writeTemplateSafe(w, template, content)
 }
 
 // WriteLeaguesTemplate writes the leagues page template to the given writer
@@ -165,8 +165,7 @@ func (t *defaultTemplates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPag
 	if err != nil {
 		return err
 	}
-
-	return template.Execute(w, content)
+	return writeTemplateSafe(w, template, content)
 }
 
 // WriteErrorTemplate writes the error page template to the given writer
@@ -177,7 +176,18 @@ func (t *defaultTemplates) WriteErrorTemplate(w io.Writer, content *ErrorPageCon
 	if err != nil {
 		return err
 	}
-	return template.Execute(w, content)
+	return writeTemplateSafe(w, template, content)
+}
+
+// Write to a writer if and only if the template can be executed successfully
+// with the given content as input.
+func writeTemplateSafe(w io.Writer, t *template.Template, content interface{}) error {
+	buffer := &bytes.Buffer{}
+	err := t.Execute(buffer, content)
+	if err == nil {
+		_, err = io.Copy(w, buffer)
+	}
+	return err
 }
 
 //

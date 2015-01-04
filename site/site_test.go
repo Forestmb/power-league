@@ -471,6 +471,130 @@ func TestHandleShowLeaguesWriteTemplateError(t *testing.T) {
 	}
 }
 
+func TestHandlePowerRankingsNotLoggedIn(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: false,
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers:       map[string]*ContextHandler{},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when attempting to access "+
+			"rankings when not logged in\n\tExpected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	expected := "http://example.com:8080" + baseContext
+	if redirectURL != expected {
+		t.Fatalf("Redirected to unexpected URL when attempting to access "+
+			"rankings when not logged in\n\tExpected: %s\n\tActual: %s",
+			expected,
+			redirectURL)
+	}
+}
+
+func TestHandlePowerRankingsGetClientError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		ClientError:   errors.New("error"),
+	}
+	mockTemplates := &MockTemplates{}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers:       map[string]*ContextHandler{},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	if mockTemplates.LastErrorContent == nil {
+		t.Fatal("No error page passed into templates")
+	}
+
+	if mockTemplates.LastErrorContent.Message == "" {
+		t.Fatal("No message passed into error page")
+	}
+
+	if mockTemplates.LastErrorContent.SiteConfig != site.config {
+		t.Fatalf("Wrong site config passed into error page:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*(site.config),
+			*(mockTemplates.LastErrorContent.SiteConfig))
+	}
+
+	if mockTemplates.LastErrorContent.LoggedIn != true {
+		t.Fatal("User should be logged in when displaying error page")
+	}
+}
+
+func TestHandlePowerRankingsWriteErrorTemplateError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		ClientError:   errors.New("error"),
+	}
+	mockTemplates := &MockTemplates{
+		WriteErrorError: errors.New("another error"),
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers:       map[string]*ContextHandler{},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	if mockTemplates.LastErrorContent == nil {
+		t.Fatal("No error page passed into templates")
+	}
+
+	if mockTemplates.LastErrorContent.Message == "" {
+		t.Fatal("No message passed into error page")
+	}
+
+	if mockTemplates.LastErrorContent.SiteConfig != site.config {
+		t.Fatalf("Wrong site config passed into error page:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*(site.config),
+			*(mockTemplates.LastErrorContent.SiteConfig))
+	}
+
+	if mockTemplates.LastErrorContent.LoggedIn != true {
+		t.Fatal("User should be logged in when displaying error page")
+	}
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatal("Incorrect error code returned when getting client "+
+			"fails\n\tExpected: %d\n\tActual: %d",
+			http.StatusInternalServerError,
+			recorder.Code)
+	}
+}
+
 func TestGetUserLeagues(t *testing.T) {
 	year := "2012"
 	client := &MockUserLeaguesClient{

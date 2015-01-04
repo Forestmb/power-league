@@ -737,7 +737,7 @@ type MockResponseWriter struct {
 
 func (m *MockResponseWriter) Write(b []byte) (n int, err error) {
 	m.content += string(b)
-	return 0, nil
+	return len(b), nil
 }
 
 func mockWriter() *MockResponseWriter {
