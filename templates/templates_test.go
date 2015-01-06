@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"html/template"
+	"net/http/httptest"
 	"sort"
 	"strings"
 	"testing"
@@ -146,6 +148,35 @@ func TestWriteErrorTemplateError(t *testing.T) {
 	err := templates.WriteErrorTemplate(mockWriter(), content)
 	if err == nil {
 		t.Fatalf("Writing error template did not fail with non-existent dir")
+	}
+}
+
+func TestWriteTemplateSafeWithCodeResponseWriter(t *testing.T) {
+	message := "This is the message"
+	content := &ErrorPageContent{
+		Message:    message,
+		LoggedIn:   true,
+		SiteConfig: mockSiteConfig(),
+	}
+
+	templates := NewTemplates().(*defaultTemplates)
+	template, err := template.New(errorTemplate).ParseFiles(
+		templates.baseDir+baseTemplate,
+		templates.baseDir+errorTemplate)
+
+	recorder := httptest.NewRecorder()
+	code := 123
+	err = writeTemplateSafeWithCode(recorder, template, content, code)
+	if err != nil {
+		t.Fatalf("Writing error template safely failed with err='%s'",
+			err.Error())
+	}
+
+	if recorder.Code != code {
+		t.Fatalf("Did not write expected error code:\n\tExpected: %d"+
+			"\n\tActual: %d",
+			code,
+			recorder.Code)
 	}
 }
 

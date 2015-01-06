@@ -116,8 +116,7 @@ func handleAbout(s *Site, w http.ResponseWriter, r *http.Request) {
 	err := s.templates.WriteAboutTemplate(w, aboutContent)
 	if err != nil {
 		glog.Warningf("error generating about page: %s", err)
-		http.Error(w, "Error occurred when generating page content",
-			http.StatusInternalServerError)
+		writeErrorPage(s, w, "Error occurred while generating the page.", loggedIn)
 	}
 }
 
@@ -136,8 +135,7 @@ func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 	requestURL, err := s.sessionManager.Login(w, r, loginURL)
 	if err != nil {
 		glog.Warningf("error generating login page: %s", err)
-		http.Error(w, "Error occurred when authenticating user",
-			http.StatusInternalServerError)
+		writeErrorPage(s, w, "Error occurred while logging in.", false)
 		return
 	}
 	http.Redirect(w, r, requestURL, http.StatusTemporaryRedirect)
@@ -166,8 +164,11 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			glog.Warningf("error getting client to retreive league list: %s",
 				err)
-			http.Error(w, "Error occurred when retreiving league list",
-				http.StatusInternalServerError)
+			writeErrorPage(
+				s,
+				w,
+				"Error occurred while retrieving user's leagues.",
+				loggedIn)
 			return
 		}
 		allYearlyLeagues = getAllYearlyLeagues(client)
@@ -183,8 +184,11 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 	err := s.templates.WriteLeaguesTemplate(w, leaguesContent)
 	if err != nil {
 		glog.Warningf("error generating league overview page: %s", err)
-		http.Error(w, "Error occurred when retreiving league list",
-			http.StatusInternalServerError)
+		writeErrorPage(
+			s,
+			w,
+			"Error occurred while retrieving user's leagues.",
+			loggedIn)
 	}
 }
 
@@ -259,24 +263,33 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		glog.Warningf("error generating power rankings page: %s", err)
-		err = s.templates.WriteErrorTemplate(
-			w,
-			&templates.ErrorPageContent{
-				Message:    "Error occurred while generating the rankings.",
-				LoggedIn:   loggedIn,
-				SiteConfig: s.config,
-			})
-
-		if err != nil {
-			http.Error(w, "Error occurred when calculating rankings",
-				http.StatusInternalServerError)
-		}
-		return
+		writeErrorPage(s, w, "Error occurred while generating the rankings.", loggedIn)
 	}
 
 	if client != nil {
 		glog.V(2).Infof("API Request Count: %d", client.RequestCount())
 	}
+}
+
+// Respond to an HTTP request with an error page
+func writeErrorPage(
+	s *Site,
+	w http.ResponseWriter,
+	message string,
+	loggedIn bool) error {
+
+	err := s.templates.WriteErrorTemplate(
+		w,
+		&templates.ErrorPageContent{
+			Message:    message,
+			LoggedIn:   loggedIn,
+			SiteConfig: s.config,
+		})
+
+	if err != nil {
+		http.Error(w, message, http.StatusInternalServerError)
+	}
+	return err
 }
 
 //

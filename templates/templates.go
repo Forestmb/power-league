@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -169,6 +170,10 @@ func (t *defaultTemplates) WriteLeaguesTemplate(w io.Writer, content *LeaguesPag
 }
 
 // WriteErrorTemplate writes the error page template to the given writer
+//
+// If the io.Writer is an http.ResponseWriter, this function will write an
+// error code of http.StatusInternalServerError (500) before writing the
+// actual content.
 func (t *defaultTemplates) WriteErrorTemplate(w io.Writer, content *ErrorPageContent) error {
 	template, err := template.New(errorTemplate).ParseFiles(
 		t.baseDir+baseTemplate,
@@ -176,15 +181,34 @@ func (t *defaultTemplates) WriteErrorTemplate(w io.Writer, content *ErrorPageCon
 	if err != nil {
 		return err
 	}
-	return writeTemplateSafe(w, template, content)
+	return writeTemplateSafeWithCode(
+		w, template, content, http.StatusInternalServerError)
 }
 
 // Write to a writer if and only if the template can be executed successfully
 // with the given content as input.
 func writeTemplateSafe(w io.Writer, t *template.Template, content interface{}) error {
+	return writeTemplateSafeWithCode(w, t, content, http.StatusOK)
+}
+
+// Write to a writer if and only if the template can be executed successfully
+// with the given content as input.
+//
+// If the given writer is an http.ResponseWriter, the httpResponseCode will be
+// written to the header before any content is written. If the writer is not
+// an http.ResponseWriter this field is ignored.
+func writeTemplateSafeWithCode(
+	w io.Writer,
+	t *template.Template,
+	content interface{},
+	httpResponseCode int) error {
+
 	buffer := &bytes.Buffer{}
 	err := t.Execute(buffer, content)
 	if err == nil {
+		if rw, ok := w.(http.ResponseWriter); ok {
+			rw.WriteHeader(httpResponseCode)
+		}
 		_, err = io.Copy(w, buffer)
 	}
 	return err

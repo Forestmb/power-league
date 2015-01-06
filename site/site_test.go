@@ -77,12 +77,7 @@ func TestHandleAboutError(t *testing.T) {
 			"Expected: true\n\tActual: false")
 	}
 
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatal("Incorrect error code returned when writing about content "+
-			"fails\n\tExpected: %d\n\tActual: %d",
-			http.StatusInternalServerError,
-			recorder.Code)
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
 func TestHandleLogout(t *testing.T) {
@@ -196,6 +191,7 @@ func TestHandleLoginError(t *testing.T) {
 	mockSessionManager := &MockSessionManager{
 		LoginError: errors.New("error"),
 	}
+	mockTemplates := &MockTemplates{}
 	site := &Site{
 		config: &templates.SiteConfig{},
 		handlers: map[string]*ContextHandler{
@@ -204,7 +200,7 @@ func TestHandleLoginError(t *testing.T) {
 			},
 		},
 		sessionManager: mockSessionManager,
-		templates:      &MockTemplates{},
+		templates:      mockTemplates,
 	}
 
 	handleLogin(site, recorder, request)
@@ -231,12 +227,7 @@ func TestHandleLoginError(t *testing.T) {
 			mockSessionManager.LoginAuthURL)
 	}
 
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatalf("Unexpected response code given when an error occurs while "+
-			"logging in\n\tExpected: %d\n\tActual: %d",
-			http.StatusInternalServerError,
-			recorder.Code)
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, false)
 }
 
 func TestHandleAuthentication(t *testing.T) {
@@ -435,12 +426,7 @@ func TestHandleShowLeaguesGetClientError(t *testing.T) {
 
 	handleShowLeagues(site, recorder, request)
 
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatal("Incorrect error code returned when getting client "+
-			"fails\n\tExpected: %d\n\tActual: %d",
-			http.StatusInternalServerError,
-			recorder.Code)
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
 func TestHandleShowLeaguesWriteTemplateError(t *testing.T) {
@@ -463,12 +449,7 @@ func TestHandleShowLeaguesWriteTemplateError(t *testing.T) {
 
 	handleShowLeagues(site, recorder, request)
 
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatal("Incorrect error code returned when writing leagues content "+
-			"fails\n\tExpected: %d\n\tActual: %d",
-			http.StatusInternalServerError,
-			recorder.Code)
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, false)
 }
 
 func TestHandlePowerRankingsNotLoggedIn(t *testing.T) {
@@ -526,24 +507,7 @@ func TestHandlePowerRankingsGetClientError(t *testing.T) {
 
 	handlePowerRankings(site, recorder, request)
 
-	if mockTemplates.LastErrorContent == nil {
-		t.Fatal("No error page passed into templates")
-	}
-
-	if mockTemplates.LastErrorContent.Message == "" {
-		t.Fatal("No message passed into error page")
-	}
-
-	if mockTemplates.LastErrorContent.SiteConfig != site.config {
-		t.Fatalf("Wrong site config passed into error page:\n\t"+
-			"Expected: %+v\n\tActual: %+v",
-			*(site.config),
-			*(mockTemplates.LastErrorContent.SiteConfig))
-	}
-
-	if mockTemplates.LastErrorContent.LoggedIn != true {
-		t.Fatal("User should be logged in when displaying error page")
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
 func TestHandlePowerRankingsWriteErrorTemplateError(t *testing.T) {
@@ -568,31 +532,7 @@ func TestHandlePowerRankingsWriteErrorTemplateError(t *testing.T) {
 
 	handlePowerRankings(site, recorder, request)
 
-	if mockTemplates.LastErrorContent == nil {
-		t.Fatal("No error page passed into templates")
-	}
-
-	if mockTemplates.LastErrorContent.Message == "" {
-		t.Fatal("No message passed into error page")
-	}
-
-	if mockTemplates.LastErrorContent.SiteConfig != site.config {
-		t.Fatalf("Wrong site config passed into error page:\n\t"+
-			"Expected: %+v\n\tActual: %+v",
-			*(site.config),
-			*(mockTemplates.LastErrorContent.SiteConfig))
-	}
-
-	if mockTemplates.LastErrorContent.LoggedIn != true {
-		t.Fatal("User should be logged in when displaying error page")
-	}
-
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatal("Incorrect error code returned when getting client "+
-			"fails\n\tExpected: %d\n\tActual: %d",
-			http.StatusInternalServerError,
-			recorder.Code)
-	}
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
 func TestGetUserLeagues(t *testing.T) {
@@ -877,6 +817,36 @@ func TestYahooClientAllTeamStatsZeroPoints(t *testing.T) {
 			"\texpected: %f\n\tactual: %f",
 			23.0,
 			teams[3].TeamPoints.Total)
+	}
+}
+
+func assertErrorHandledCorrectly(
+	t *testing.T,
+	s *Site,
+	m *MockTemplates,
+	loggedIn bool) {
+
+	if m.LastErrorContent == nil {
+		t.Fatal("No error content passed into templates")
+	}
+
+	if m.LastErrorContent.Message == "" {
+		t.Fatal("No message passed into error page")
+	}
+
+	if m.LastErrorContent.SiteConfig != s.config {
+		t.Fatalf("Wrong site config passed into error page:\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*(s.config),
+			*(m.LastErrorContent.SiteConfig))
+	}
+
+	if m.LastErrorContent.LoggedIn != loggedIn {
+		if loggedIn {
+			t.Fatal("User should be logged in when displaying error page")
+		} else {
+			t.Fatal("User should not be logged in when displaying error page")
+		}
 	}
 }
 
