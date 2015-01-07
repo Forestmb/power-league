@@ -9,9 +9,7 @@
         {{$config := .SiteConfig}}
         <div class="container error-container">
             <div class="alert alert-warning">
-                <span class="glyphicon glyphicon-warning-sign"></span>
                 {{.Message}}
-                <span class="glyphicon glyphicon-warning-sign glyphicon-balancer"></span>
             </div>
             <div class="error-image">
                 <img src="{{.SiteConfig.StaticContext}}/images/error.png"/>

@@ -116,7 +116,11 @@ func handleAbout(s *Site, w http.ResponseWriter, r *http.Request) {
 	err := s.templates.WriteAboutTemplate(w, aboutContent)
 	if err != nil {
 		glog.Warningf("error generating about page: %s", err)
-		writeErrorPage(s, w, "Error occurred while generating the page.", loggedIn)
+		writeErrorPage(
+			s,
+			w,
+			"An error occurred while generating this page.",
+			loggedIn)
 	}
 }
 
@@ -135,7 +139,7 @@ func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 	requestURL, err := s.sessionManager.Login(w, r, loginURL)
 	if err != nil {
 		glog.Warningf("error generating login page: %s", err)
-		writeErrorPage(s, w, "Error occurred while logging in.", false)
+		writeErrorPage(s, w, "An error occurred while logging in.", false)
 		return
 	}
 	http.Redirect(w, r, requestURL, http.StatusTemporaryRedirect)
@@ -167,7 +171,7 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 			writeErrorPage(
 				s,
 				w,
-				"Error occurred while retrieving user's leagues.",
+				"An error occurred while retrieving your leagues from Yahoo.",
 				loggedIn)
 			return
 		}
@@ -187,7 +191,7 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 		writeErrorPage(
 			s,
 			w,
-			"Error occurred while retrieving user's leagues.",
+			"An error occurred while generating your list of leagues.",
 			loggedIn)
 	}
 }
@@ -243,7 +247,8 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 		if err == nil {
 			displayAllPlayRecords := false
-			powerPreferenceCookie, err := req.Cookie("PowerPreference")
+			var powerPreferenceCookie *http.Cookie
+			powerPreferenceCookie, err = req.Cookie("PowerPreference")
 			if err == nil {
 				displayAllPlayRecords = powerPreferenceCookie.Value == "record"
 			}
@@ -263,7 +268,11 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		glog.Warningf("error generating power rankings page: %s", err)
-		writeErrorPage(s, w, "Error occurred while generating the rankings.", loggedIn)
+		writeErrorPage(
+			s,
+			w,
+			"An error occurred while generating your power rankings.",
+			loggedIn)
 	}
 
 	if client != nil {
