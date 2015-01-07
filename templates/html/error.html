@@ -7,12 +7,33 @@
     <body>
         {{template "nav" .}}
         {{$config := .SiteConfig}}
-        <div class="container">
+        <div class="container error-container">
             <div class="alert alert-warning">
                 <span class="glyphicon glyphicon-warning-sign"></span>
                 {{.Message}}
+                <span class="glyphicon glyphicon-warning-sign glyphicon-balancer"></span>
+            </div>
+            <div class="error-image">
+                <img src="{{.SiteConfig.StaticContext}}/images/error.png"/>
+                <h2>Pass Interference!</h2>
+                <p class="lead">
+                    There was a problem delivering you this page. Please try again later.
+                </p>
+                <div class="attribution-info">
+                    <span class="attribution-content">
+                        Original Photo By Ed Siasoco [<a href="http://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>], <a href="http://commons.wikimedia.org/wiki/File%3ABoston_Terrier_Dog_002.jpg">via Wikimedia Commons</a></span>
+                    </span>
+                    <span class="attribution-icon glyphicon glyphicon-info-sign">
+                </div>
             </div>
         </div>
         {{template "footer" .}}
+        <script>
+            $('.attribution-info').hover(function(){
+                $('.attribution-content').show();
+            },function(){
+                $('.attribution-content').hide();
+            });
+        </script>
     </body>
 </html>
