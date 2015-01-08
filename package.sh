@@ -67,6 +67,7 @@ then
     appname="${binary}-$(date +%Y-%m-%d_%H%M%S)"
 fi
 resources=("LICENSE" "NOTICE" "CHANGELOG.md" "static" "server.sh" "${binary}")
+excluded_resources=("static/images/originals/")
 
 if [ ! -f "${conf}" ]
 then
@@ -95,6 +96,9 @@ rm -rf "${app}"
 mkdir -p "${app}"
 for resource in "${resources[@]}"; do
     cp -R "${resource}" "${app}"
+done
+for excluded in "${excluded_resources[@]}"; do
+    rm -rf "${app}/${excluded}"
 done
 
 # Copy template folder
