@@ -119,7 +119,8 @@ func handleAbout(s *Site, w http.ResponseWriter, r *http.Request) {
 		writeErrorPage(
 			s,
 			w,
-			"An error occurred while generating this page.",
+			"There was a problem delivering you this page. "+
+				"Please try again later.",
 			loggedIn)
 	}
 }
@@ -139,7 +140,12 @@ func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 	requestURL, err := s.sessionManager.Login(w, r, loginURL)
 	if err != nil {
 		glog.Warningf("error generating login page: %s", err)
-		writeErrorPage(s, w, "An error occurred while logging in.", false)
+		writeErrorPage(
+			s,
+			w,
+			"There was a problem logging you in. "+
+				"Please try again later.",
+			false)
 		return
 	}
 	http.Redirect(w, r, requestURL, http.StatusTemporaryRedirect)
@@ -171,7 +177,8 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 			writeErrorPage(
 				s,
 				w,
-				"An error occurred while retrieving your leagues from Yahoo.",
+				"There was a problem getting your leagues from Yahoo. "+
+					"Please try again later.",
 				loggedIn)
 			return
 		}
@@ -191,7 +198,8 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 		writeErrorPage(
 			s,
 			w,
-			"An error occurred while generating your list of leagues.",
+			"There was a problem generating your list of leagues. "+
+				"Please try again later.",
 			loggedIn)
 	}
 }
@@ -271,7 +279,8 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		writeErrorPage(
 			s,
 			w,
-			"An error occurred while generating your power rankings.",
+			"There was a problem delivering you your power rankings. "+
+				"Please try again later.",
 			loggedIn)
 	}
 
