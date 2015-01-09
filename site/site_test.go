@@ -487,6 +487,47 @@ func TestHandlePowerRankingsNotLoggedIn(t *testing.T) {
 	}
 }
 
+func TestHandlePowerRankingsNoLeagueKey(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league", nil)
+	leaguesContext := "/leagues"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: "/base",
+		},
+		handlers: map[string]*ContextHandler{
+			"showLeagues": &ContextHandler{
+				Context: leaguesContext,
+			},
+		},
+		sessionManager: mockSessionManager,
+		templates:      &MockTemplates{},
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	if recorder.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("Unexpected response code given when attempting to access "+
+			"rankings when no league key is given\n\t"+
+			"Expected: %d\n\tActual: %d",
+			http.StatusTemporaryRedirect,
+			recorder.Code)
+	}
+
+	redirectURL := recorder.HeaderMap.Get("Location")
+	expected := "http://example.com:8080" + leaguesContext
+	if redirectURL != expected {
+		t.Fatalf("Redirected to unexpected URL when attempting to access "+
+			"rankings when no league key is given\n\t"+
+			"Expected: %s\n\tActual: %s",
+			expected,
+			redirectURL)
+	}
+}
+
 func TestHandlePowerRankingsGetClientError(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)

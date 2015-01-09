@@ -209,8 +209,8 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	loggedIn := s.sessionManager.IsLoggedIn(req)
 	if !loggedIn {
-		leaguesURL := fmt.Sprintf("http://%s%s", req.Host, s.config.BaseContext)
-		http.Redirect(w, req, leaguesURL, http.StatusTemporaryRedirect)
+		homePage := fmt.Sprintf("http://%s%s", req.Host, s.config.BaseContext)
+		http.Redirect(w, req, homePage, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -219,6 +219,12 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	leagueStarted := true
 	values := req.URL.Query()
 	leagueKey := values.Get("key")
+	if leagueKey == "" {
+		leaguesContext := s.handlers["showLeagues"].Context
+		leaguesURL := fmt.Sprintf("http://%s%s", req.Host, leaguesContext)
+		http.Redirect(w, req, leaguesURL, http.StatusTemporaryRedirect)
+		return
+	}
 
 	var league *goff.League
 	client, err := s.sessionManager.GetClient(w, req)
