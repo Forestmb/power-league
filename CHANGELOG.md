@@ -1,6 +1,6 @@
 # Changelog #
 
-## 0.3.0 (TBD) ##
+## 0.3.0 (2015-01-09) ##
 
 - Traffic analysis through Google Analytics.
 - Added user preference for displaying all-play records instead of power scores.
