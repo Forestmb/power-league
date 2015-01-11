@@ -13,7 +13,7 @@ script:
 - ./build.sh
 after_success:
 - goveralls -coverprofile=profile.cov -service=travis-ci
-- ./deploy.sh -B $server
+- ./package.sh -D $server
 env:
   global:
   - secure: BfLspDjXgf0k+WZAc5YgDrozNQgkpMEr8DRAJNJC/lUhNEulDs8xBIFDT8J0WII+PyEbc91AD9OB3L3SRLAXhdBhyHrNq/5oDLJEyzxoJWraPeehAjBSzpRTnumRYCjFs0Q68mY8tSeQOuAbRjOy6SxEvkmjJJ/VUQByQLNw3z0=

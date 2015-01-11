@@ -12,42 +12,57 @@ Description: Creates a distributable package to run the power rankings server.
 
 Options:
     -a <app-name>
-        Name of the application being packaged. Defaults to 'power-rankings-<date>'. A
-        package of the name '<app-name>.tar.gz' will be created.
-    -B
-        Don't build the application before packaging if the binary already exists. If
-        this is specified and the binary does not exist, the script will exit with a
-        non-zero exit code.
+        Name of the application being packaged. A package of the name
+        '<app-name>.tar.gz' will be created.
+
+        Defaults to 'power-league-<version>'. If the version contains '-SNAPSHOT' then
+        the current timestamp (YYY-MM-DD_HHMMSS) will be appended to the name.
+
     -c <conf>
         Server configuration file to use in the package. Defaults to 'server.conf'
+
     -d <dir>
         Directory to place the packaged files. Defaults to 'build/dist'
+
+    -D <host>
+        Deploy the packaged application to a remote host.
+
     -h
         Display this help.
 EOF
     exit "${1:-1}"
 }
 
-binary="power-league"
-dist="build/dist"
-build_cmd="./build.sh"
-should_build="true"
-baseconf="server.conf"
-conf="${baseconf}"
+function snapshot
+{
+    grep -q -- '-SNAPSHOT' "${1}"
+}
 
-while getopts ":a:Bc:h" option; do
+binary="power-league"
+version="$(cat "./.version")"
+dist="build/dist"
+deploy_cmd="./deploy.sh"
+baseconf="server.conf"
+
+appname="${binary}-${version}"
+if snapshot "./.version"
+then
+    appname="${appname}-$(date +%Y-%m-%d_%H%M%S)"
+fi
+
+while getopts ":a:c:d:D:h" option; do
     case "${option}" in
         a)
             appname="${OPTARG}"
-            ;;
-        B)
-            should_build="false"
             ;;
         c)
             conf="${OPTARG}"
             ;;
         d)
             dist="${OPTARG}"
+            ;;
+        D)
+            host="${OPTARG}"
             ;;
         h)
             usage 0
@@ -62,12 +77,19 @@ while getopts ":a:Bc:h" option; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${appname}" ]
-then
-    appname="${binary}-$(date +%Y-%m-%d_%H%M%S)"
-fi
 resources=("LICENSE" "NOTICE" "CHANGELOG.md" "static" "server.sh" "${binary}")
 excluded_resources=("static/images/originals/")
+
+if [ -z "${conf}" ]
+then
+    conf="${baseconf}"
+
+    if [ ! -z "${host}" ] && \
+       [ -f "${baseconf}.${host}" ]
+    then
+        conf="${baseconf}.${host}"
+    fi
+fi
 
 if [ ! -f "${conf}" ]
 then
@@ -79,16 +101,11 @@ fi
 
 app="${dist}/${appname}"
 
-if [ "${should_build}" == "true" ]
+if [ ! -f "${binary}" ]
 then
-    "${build_cmd}"
-else
-    if [ ! -f "${binary}" ]
-    then
-        echo "Error: No build was requested during packaging but binary file " 1>&2
-        echo "       '${binary}' does not exist, so nothing could be packaged." 1>&2
-        exit 2
-    fi
+    echo "Error: Binary file '${binary}' does not exist, so nothing" 1>&2
+    echo "       could be packaged." 1>&2
+    exit 2
 fi
 
 echo "Packaging..."
@@ -111,3 +128,14 @@ cp "${conf}" "${app}/${baseconf}"
 pushd "${dist}" >& /dev/null
 tar -zcf "${appname}.tar.gz" "${appname}"
 popd >& /dev/null
+
+if [ ! -z "${host}" ]
+then
+    . "${conf}"
+    if [ -z "${deploydir}" ]
+    then
+        "${deploy_cmd}" "${app}.tar.gz" "${host}"
+    else
+        "${deploy_cmd}" -d "${deploydir}" "${app}.tar.gz" "${host}"
+    fi
+fi

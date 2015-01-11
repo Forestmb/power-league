@@ -46,11 +46,11 @@ Once signed in, you can view the rankings for any of your current or past league
 ## Deploying ##
 
 If you wish to deploy the application to a remote server, you can use the
-`deploy.sh` utility by passing in the name of the host like so:
+`package.sh` utility by passing in the name of the host like so:
 
-    $ ./deploy.sh <host>
+    $ ./package.sh -D <host>
 
-This builds and packages the application, copies it to the remote host, stops
+This packages a built application, copies it to the remote host, stops
 the existing instance if necessary, and starts the application. By default it
 uses the `server.conf` file to configure the application, but you can override
 it by defining a host-specific file named `server.conf.<host>`.
