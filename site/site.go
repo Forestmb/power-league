@@ -282,12 +282,20 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		glog.Warningf("error generating power rankings page: %s", err)
-		writeErrorPage(
-			s,
-			w,
-			"There was a problem delivering you your power rankings. "+
-				"Please try again later.",
-			loggedIn)
+		if err == goff.ErrAccessDenied {
+			writeErrorPage(
+				s,
+				w,
+				"You do not have permission to access this league.",
+				loggedIn)
+		} else {
+			writeErrorPage(
+				s,
+				w,
+				"There was a problem delivering you your power rankings. "+
+					"Please try again later.",
+				loggedIn)
+		}
 	}
 
 	if client != nil {

@@ -551,6 +551,69 @@ func TestHandlePowerRankingsGetClientError(t *testing.T) {
 	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
+func TestHandlePowerRankingsGetLeagueErrorAccessDenied(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		Client: &goff.Client{
+			Provider: &MockedContentProvider{
+				content: nil,
+				err:     goff.ErrAccessDenied,
+			},
+		},
+	}
+	mockTemplates := &MockTemplates{}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers:       map[string]*ContextHandler{},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
+	expected := "You do not have permission to access this league."
+	if mockTemplates.LastErrorContent.Message != expected {
+		t.Fatalf("Unexpected error message when user does not have access "+
+			"to get league information:\n\tExpected: %s\n\tActual: %s",
+			expected,
+			mockTemplates.LastErrorContent.Message)
+	}
+}
+
+func TestHandlePowerRankingsGetLeagueError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
+	baseContext := "/base"
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		Client: &goff.Client{
+			Provider: &MockedContentProvider{
+				content: nil,
+				err:     errors.New("error"),
+			},
+		},
+	}
+	mockTemplates := &MockTemplates{}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		handlers:       map[string]*ContextHandler{},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handlePowerRankings(site, recorder, request)
+
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
+}
+
 func TestHandlePowerRankingsWriteErrorTemplateError(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "http://example.com:8080/league?key=3.2.1", nil)
