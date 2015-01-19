@@ -47,13 +47,17 @@ type ContextHandler struct {
 func (s *Site) ContextHandler(id string, context string, f HandlerFunc) {
 	fullContext := fmt.Sprintf("%s%s", s.config.BaseContext, context)
 	if fullContext != "" {
-		glog.V(3).Infof("adding context handler -- id=%s, context=%s, navText=%s",
+		glog.V(3).Infof("adding context handler -- id=%s, context=%s",
 			id,
 			fullContext)
 		s.ServeMux.HandleFunc(
 			fullContext,
 			func(w http.ResponseWriter, r *http.Request) {
+				start := time.Now()
 				f(s, w, r)
+				glog.Infof("request %s took %s",
+					r.URL.String(),
+					time.Since(start))
 			})
 	}
 
