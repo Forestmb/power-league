@@ -251,10 +251,10 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		glog.Warningf("unable to create client: %s", err)
 	}
 
-	glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 
 	var rankingsContent *templates.RankingsPageContent
 	if err == nil {
+        glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 		var leaguePowerData *rankings.LeaguePowerData
 		if leagueStarted {
 			leaguePowerData, err = rankings.GetPowerData(
@@ -402,7 +402,7 @@ func (y *YahooClient) GetAllTeamStats(leagueKey string, week int, projection boo
 	for index, team := range teams {
 		score := team.TeamPoints.Total
 		if score == 0.0 && !projection {
-			glog.Warningf("yahoo returned team with zero points -- "+
+			glog.V(2).Infof("yahoo returned team with zero points -- "+
 				"league=%s, week=%d, team=%s",
 				leagueKey,
 				week,
