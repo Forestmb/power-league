@@ -251,10 +251,9 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		glog.Warningf("unable to create client: %s", err)
 	}
 
-
 	var rankingsContent *templates.RankingsPageContent
 	if err == nil {
-        glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
+		glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 		var leaguePowerData *rankings.LeaguePowerData
 		if leagueStarted {
 			leaguePowerData, err = rankings.GetPowerData(
@@ -384,6 +383,13 @@ type yahooGoffClient interface {
 	GetAllTeamStats(leagueKey string, week int) ([]goff.Team, error)
 	GetTeamRoster(teamKey string, week int) ([]goff.Player, error)
 	GetPlayersStats(leagueKey string, week int, players []goff.Player) ([]goff.Player, error)
+	GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error)
+}
+
+// GetMatchupsForWeekRange returns a list of matchups for each week in the
+// requested range.
+func (y *YahooClient) GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error) {
+	return y.Client.GetMatchupsForWeekRange(leagueKey, startWeek, endWeek)
 }
 
 // GetAllTeamStats gets teams stats for a given week from the Yahoo fantasy

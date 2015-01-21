@@ -10,6 +10,13 @@ import (
 )
 
 //
+// Configuration variables
+//
+
+// MinimizeAPICalls to the fantasy sports provider, where possible
+var MinimizeAPICalls = true
+
+//
 // Data structures
 //
 
@@ -147,10 +154,11 @@ func (t TeamProjectedRanking) Swap(i int, j int) {
 // Interface
 //
 
-// PowerRankingsClient is used to calculate the power rankings from a fantasy
-// football statistics provider.
+// PowerRankingsClient calculates the power rankings from a fantasy football
+// statistics provider.
 type PowerRankingsClient interface {
 	GetAllTeamStats(leagueKey string, week int, projection bool) ([]goff.Team, error)
+	GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error)
 }
 
 //
@@ -172,6 +180,33 @@ func GetWeeklyRanking(
 		errors <- err
 		return
 	}
+
+	createWeeklyRankings(week, teams, projection, results)
+}
+
+// GetWeeklyRankingFromMatchups rankings teams for a given week using
+// matchups
+func GetWeeklyRankingFromMatchups(
+	week int,
+	matchups []goff.Matchup,
+	results chan *WeeklyRanking) {
+
+	var teams []goff.Team
+	for _, matchup := range matchups {
+		teams = append(teams, matchup.Teams[0])
+		teams = append(teams, matchup.Teams[1])
+	}
+
+	createWeeklyRankings(week, teams, false, results)
+}
+
+// Ranks the given teams on their performance for one week, and sends the
+// result to the given channel.
+func createWeeklyRankings(
+	week int,
+	teams []goff.Team,
+	projection bool,
+	results chan *WeeklyRanking) {
 
 	// Sort teams and convert them into TeamScoreData
 	if !projection {
@@ -227,10 +262,9 @@ func GetWeeklyRanking(
 			scoreType = "weekly rankings"
 		}
 
-		glog.V(4).Infof("%s -- league=%s, week=%d, rank=%d, team=%s, "+
+		glog.V(4).Infof("%s -- week=%d, rank=%d, team=%s, "+
 			"fantasyScore=%f, powerScore=%f, wins=%d, losses=%d, ties=%d",
 			scoreType,
-			leagueKey,
 			week,
 			team.Rank,
 			team.Team.Name,
@@ -247,15 +281,44 @@ func GetWeeklyRanking(
 // GetPowerData returns a league's power rankings up to the given week and
 // projections until the end of the season.
 func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek int) (*LeaguePowerData, error) {
-	numWeeks := league.EndWeek
+	endWeek := league.EndWeek
 	leagueKey := league.LeagueKey
+	playoffsStart := league.Settings.PlayoffStartWeek
 
 	resultsChan := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	for week := 1; week <= currentWeek; week++ {
+
+	// Getting matchups for a span of multiple weeks results in less API calls
+	// to the fantasy sports provider, and thus a lower risk of being
+	// throttled. However it should be noted that this particular request
+	// actually takes longer than requesting data for each week individually.
+	matchupsEnd := 0
+	if MinimizeAPICalls {
+		matchupsEnd = currentWeek
+		// Matchups cannot be used for playoff games or projections
+		if currentWeek >= playoffsStart && league.Settings.UsesPlayoff {
+			matchupsEnd = playoffsStart - 1
+		}
+		glog.V(2).Infof("getting weekly matchups -- weekStart=%d, weekEnd=%d",
+			1,
+			matchupsEnd)
+		allMatchups, err := client.GetMatchupsForWeekRange(leagueKey, 1, matchupsEnd)
+		if err != nil {
+			return nil, err
+		}
+
+		for week, matchups := range allMatchups {
+			go GetWeeklyRankingFromMatchups(week, matchups, resultsChan)
+		}
+	}
+
+	// Get playoff weeks (if necessary)
+	for week := matchupsEnd + 1; week <= currentWeek; week++ {
 		go GetWeeklyRanking(client, leagueKey, week, resultsChan, errorsChan, false)
 	}
-	for week := currentWeek + 1; week <= numWeeks; week++ {
+
+	// Get projections
+	for week := currentWeek + 1; week <= endWeek; week++ {
 		go GetWeeklyRanking(client, leagueKey, week, resultsChan, errorsChan, true)
 	}
 
@@ -266,8 +329,8 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 
 	// Calculate power score for each team
 	powerDataByTeamKey := make(map[string]*TeamPowerData)
-	weeklyRankings := make([]*WeeklyRanking, numWeeks)
-	for week := 1; week <= numWeeks; week++ {
+	weeklyRankings := make([]*WeeklyRanking, endWeek)
+	for week := 1; week <= endWeek; week++ {
 		select {
 		case err := <-errorsChan:
 			glog.Warningf("error calculating weekly ranking -- "+
@@ -289,13 +352,13 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 						teamScoreData.Team.TeamStandings = teamData.TeamStandings
 					}
 					powerData = &TeamPowerData{
-						AllScores:              make([]*TeamScoreData, numWeeks),
+						AllScores:              make([]*TeamScoreData, endWeek),
 						Team:                   teamScoreData.Team,
 						TotalPowerScore:        0.0,
 						ProjectedPowerScore:    0.0,
 						OverallRecord:          &goff.Record{},
 						OverallProjectedRecord: &goff.Record{},
-						AllRankings:            make([]*TeamRankingData, numWeeks),
+						AllRankings:            make([]*TeamRankingData, endWeek),
 						HasProjections:         weeklyRanking.Projected,
 					}
 					powerDataByTeamKey[teamScoreData.Team.TeamKey] = powerData
@@ -324,8 +387,8 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 	glog.V(2).Infof("ranking teams -- league=%s", leagueKey)
 
 	// Calculate the overall rankings for each week
-	weeklyTeamRankings := make([][]*TeamRankingData, numWeeks)
-	for i := 0; i < numWeeks; i++ {
+	weeklyTeamRankings := make([][]*TeamRankingData, endWeek)
+	for i := 0; i < endWeek; i++ {
 		weeklyTeamRankings[i] = make([]*TeamRankingData, len(powerDataByTeamKey))
 		j := 0
 		for _, powerData := range powerDataByTeamKey {

@@ -77,6 +77,7 @@ to the `server_args` variable in `server.conf`.
       -log_backtrace_at=:0: when logging hits line file:N, emit a stack trace
       -log_dir="": If non-empty, write log files in this directory
       -logtostderr=false: log to standard error instead of files
+      -minimizeAPICalls=false: Minimize calls to the Yahoo Fantasy Sports API. If enabled, it will lower the risk of being throttled but will result in a higher average page load time.
       -static="static": Directory to access static files
       -stderrthreshold=0: logs at or above this threshold go to stderr
       -trackingID="": Google Analytics tracking ID. If blank, tracking will not be activated

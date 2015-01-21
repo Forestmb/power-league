@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/rankings"
 	"github.com/Forestmb/power-league/session"
 	"github.com/Forestmb/power-league/site"
 	"github.com/golang/glog"
@@ -46,6 +47,12 @@ func main() {
 		6*60*60,
 		"Maximum duration user data will be cached, in seconds. Defaults to"+
 			" six hours")
+	minimizeAPICalls := flag.Bool(
+		"minimizeAPICalls",
+		false,
+		"Minimize calls to the Yahoo Fantasy Sports API. If enabled, it will "+
+			"lower the risk of being throttled but will result in a higher "+
+			"average page load time.")
 	trackingID := flag.String(
 		"trackingID",
 		"",
@@ -96,6 +103,8 @@ func main() {
 		size = size - 1
 	}
 	glog.Infof("starting power rankings site -- context=%s", baseContext)
+
+	rankings.MinimizeAPICalls = *minimizeAPICalls
 
 	// Create cookie store
 	var cookieStoreAuthKey []byte

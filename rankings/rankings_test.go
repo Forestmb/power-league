@@ -271,25 +271,49 @@ func TestGetWeeklyRankingError(t *testing.T) {
 
 func TestGetPowerDataOverallRankings(t *testing.T) {
 	m := mockClient{
-		WeekStats: map[int][]goff.Team{
+		Matchups: map[int][]goff.Matchup{
 			// Week 1
-			1: []goff.Team{
-				goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
-				goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
-				goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
-				goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+			1: []goff.Matchup{
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
+						goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
+					},
+				},
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
+						goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+					},
+				},
 			},
-			2: []goff.Team{
-				goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
-				goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
-				goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
-				goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+			2: []goff.Matchup{
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
+						goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
+					},
+				},
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
+						goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+					},
+				},
 			},
-			3: []goff.Team{
-				goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
-				goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
-				goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
-				goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+			3: []goff.Matchup{
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "a", TeamPoints: goff.Points{Total: 4.0}},
+						goff.Team{TeamKey: "b", TeamPoints: goff.Points{Total: 3.0}},
+					},
+				},
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{TeamKey: "c", TeamPoints: goff.Points{Total: 2.0}},
+						goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
+					},
+				},
 			},
 		},
 		WeekErrors: map[int]error{},
@@ -335,29 +359,39 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 
 func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 	m := mockClient{
-		WeekStats: map[int][]goff.Team{
-			1: []goff.Team{
-				goff.Team{
-					TeamKey:             "a",
-					TeamPoints:          goff.Points{Total: 4.0},
-					TeamProjectedPoints: goff.Points{Total: 7.0},
+		Matchups: map[int][]goff.Matchup{
+			1: []goff.Matchup{
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{
+							TeamKey:             "a",
+							TeamPoints:          goff.Points{Total: 4.0},
+							TeamProjectedPoints: goff.Points{Total: 7.0},
+						},
+						goff.Team{
+							TeamKey:             "b",
+							TeamPoints:          goff.Points{Total: 3.0},
+							TeamProjectedPoints: goff.Points{Total: 8.0},
+						},
+					},
 				},
-				goff.Team{
-					TeamKey:             "b",
-					TeamPoints:          goff.Points{Total: 3.0},
-					TeamProjectedPoints: goff.Points{Total: 8.0},
-				},
-				goff.Team{
-					TeamKey:             "c",
-					TeamPoints:          goff.Points{Total: 2.0},
-					TeamProjectedPoints: goff.Points{Total: 9.0},
-				},
-				goff.Team{
-					TeamKey:             "d",
-					TeamPoints:          goff.Points{Total: 1.0},
-					TeamProjectedPoints: goff.Points{Total: 10.0},
+				goff.Matchup{
+					Teams: []goff.Team{
+						goff.Team{
+							TeamKey:             "c",
+							TeamPoints:          goff.Points{Total: 2.0},
+							TeamProjectedPoints: goff.Points{Total: 9.0},
+						},
+						goff.Team{
+							TeamKey:             "d",
+							TeamPoints:          goff.Points{Total: 1.0},
+							TeamProjectedPoints: goff.Points{Total: 10.0},
+						},
+					},
 				},
 			},
+		},
+		WeekStats: map[int][]goff.Team{
 			2: []goff.Team{
 				goff.Team{
 					TeamKey:             "a",
@@ -490,6 +524,7 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 
 func TestGetPowerDataClientError(t *testing.T) {
 	m := mockClient{
+		MatchupsError: errors.New("error"),
 		WeekStats: map[int][]goff.Team{
 			// Week 1
 			1: []goff.Team{
@@ -554,6 +589,10 @@ func TestGetPowerDataTies(t *testing.T) {
 	league := &goff.League{
 		LeagueKey: "leagueID",
 		EndWeek:   4,
+		Settings: goff.Settings{
+			UsesPlayoff:      true,
+			PlayoffStartWeek: 1,
+		},
 	}
 	data, err := GetPowerData(m, league, 4)
 
@@ -625,11 +664,22 @@ func (m mockFailureClient) GetAllTeamStats(leagueKey string, week int, projected
 	return nil, m.err
 }
 
+func (m mockFailureClient) GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error) {
+	return nil, m.err
+}
+
 type mockClient struct {
 	WeekStats  map[int][]goff.Team
 	WeekErrors map[int]error
+
+	Matchups      map[int][]goff.Matchup
+	MatchupsError error
 }
 
 func (m mockClient) GetAllTeamStats(leagueKey string, week int, projected bool) ([]goff.Team, error) {
 	return m.WeekStats[week], m.WeekErrors[week]
+}
+
+func (m mockClient) GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error) {
+	return m.Matchups, m.MatchupsError
 }

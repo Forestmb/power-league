@@ -177,7 +177,7 @@ func (d *defaultManager) Authenticate(w http.ResponseWriter, req *http.Request) 
 		return fmt.Errorf("unable to create goff client for request, "+
 			"no verification code in URL: %s", req.URL.String())
 	}
-	glog.V(2).Infoln("authenticating client with verification code: %s",
+	glog.V(2).Infof("authenticating client with verification code: %s",
 		verificationCode)
 
 	rtoken, ok := session.Values[RequestTokenKey].(*oauth.RequestToken)
