@@ -1,5 +1,9 @@
 # Changelog #
 
+## 0.4.0 (TBD) ##
+
+- Lower required number of API calls (disabled by default)
+
 ## 0.3.0 (2015-01-09) ##
 
 - Traffic analysis through Google Analytics.

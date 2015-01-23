@@ -13,7 +13,7 @@ import (
 // Configuration variables
 //
 
-// MinimizeAPICalls to the fantasy sports provider, where possible
+// MinimizeAPICalls to the fantasy sports provider, whenever possible
 var MinimizeAPICalls = true
 
 //
@@ -283,7 +283,6 @@ func createWeeklyRankings(
 func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek int) (*LeaguePowerData, error) {
 	endWeek := league.EndWeek
 	leagueKey := league.LeagueKey
-	playoffsStart := league.Settings.PlayoffStartWeek
 
 	resultsChan := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
@@ -294,11 +293,7 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 	// actually takes longer than requesting data for each week individually.
 	matchupsEnd := 0
 	if MinimizeAPICalls {
-		matchupsEnd = currentWeek
-		// Matchups cannot be used for playoff games or projections
-		if currentWeek >= playoffsStart && league.Settings.UsesPlayoff {
-			matchupsEnd = playoffsStart - 1
-		}
+		matchupsEnd = lastWeekMatchupsAreAvailable(currentWeek, league)
 		glog.V(2).Infof("getting weekly matchups -- weekStart=%d, weekEnd=%d",
 			1,
 			matchupsEnd)
@@ -312,7 +307,6 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 		}
 	}
 
-	// Get playoff weeks (if necessary)
 	for week := matchupsEnd + 1; week <= currentWeek; week++ {
 		go GetWeeklyRanking(client, leagueKey, week, resultsChan, errorsChan, false)
 	}
@@ -323,8 +317,8 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 	}
 
 	teamDataByTeamKey := make(map[string]goff.Team)
-	for i, team := range league.Standings {
-		teamDataByTeamKey[team.TeamKey] = league.Standings[i]
+	for _, team := range league.Standings {
+		teamDataByTeamKey[team.TeamKey] = team
 	}
 
 	// Calculate power score for each team
@@ -384,58 +378,15 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 		}
 	}
 
+	createWeeklyTeamRankings(powerDataByTeamKey, endWeek)
+
 	glog.V(2).Infof("ranking teams -- league=%s", leagueKey)
-
-	// Calculate the overall rankings for each week
-	weeklyTeamRankings := make([][]*TeamRankingData, endWeek)
-	for i := 0; i < endWeek; i++ {
-		weeklyTeamRankings[i] = make([]*TeamRankingData, len(powerDataByTeamKey))
-		j := 0
-		for _, powerData := range powerDataByTeamKey {
-			weeklyScore := powerData.AllScores[i]
-			powerData.AllRankings[i] = &TeamRankingData{
-				Week:       i + 1,
-				PowerScore: weeklyScore.PowerScore,
-				OverallRecord: &goff.Record{
-					Wins:   weeklyScore.Record.Wins,
-					Losses: weeklyScore.Record.Losses,
-					Ties:   weeklyScore.Record.Ties,
-				},
-				Projected: weeklyScore.Projected,
-			}
-			if i > 0 {
-				previousRanking := powerData.AllRankings[i-1]
-				powerData.AllRankings[i].PowerScore +=
-					previousRanking.PowerScore
-				addRecord(
-					powerData.AllRankings[i].OverallRecord,
-					previousRanking.OverallRecord)
-			}
-			weeklyTeamRankings[i][j] = powerData.AllRankings[i]
-			j++
-		}
-
-		// Sort by the cumulative power scores and assign ranks for this week
-		sort.Sort(SortedTeamRankingsData(weeklyTeamRankings[i]))
-		for j, rankingsData := range weeklyTeamRankings[i] {
-			if j > 0 &&
-				rankingsData.PowerScore ==
-					weeklyTeamRankings[i][j-1].PowerScore {
-				rankingsData.Rank = weeklyTeamRankings[i][j-1].Rank
-			} else {
-				rankingsData.Rank = j + 1
-			}
-		}
-	}
-
-	// Calculate the actual power rankings
 	sortedPowerData := make([]*TeamPowerData, len(powerDataByTeamKey))
 	index := 0
 	for _, powerData := range powerDataByTeamKey {
 		sortedPowerData[index] = powerData
 		index++
 	}
-
 	sort.Sort(PowerRankings(sortedPowerData))
 	for i, powerData := range sortedPowerData {
 		// Handle ties
@@ -485,6 +436,65 @@ func GetPowerData(client PowerRankingsClient, league *goff.League, currentWeek i
 		ByTeam:            powerDataByTeamKey,
 		ByWeek:            weeklyRankings,
 	}, nil
+}
+
+// Find the last week in a season that matchups can be used to gather data for
+// the power rankings. (Matchups cannot be used for playoff games or
+// projections)
+func lastWeekMatchupsAreAvailable(currentWeek int, l *goff.League) int {
+	if l.Settings.UsesPlayoff && currentWeek >= l.Settings.PlayoffStartWeek {
+		return l.Settings.PlayoffStartWeek - 1
+	}
+	return currentWeek
+}
+
+// Update each team in the power data map to have their overall ranking
+// in the power league for each week in a season
+func createWeeklyTeamRankings(
+	powerDataByTeamKey map[string]*TeamPowerData,
+	endWeek int) {
+
+	// Calculate the overall rankings for each week
+	weeklyTeamRankings := make([][]*TeamRankingData, endWeek)
+	for i := 0; i < endWeek; i++ {
+		weeklyTeamRankings[i] = make([]*TeamRankingData, len(powerDataByTeamKey))
+		j := 0
+		for _, powerData := range powerDataByTeamKey {
+			weeklyScore := powerData.AllScores[i]
+			powerData.AllRankings[i] = &TeamRankingData{
+				Week:       i + 1,
+				PowerScore: weeklyScore.PowerScore,
+				OverallRecord: &goff.Record{
+					Wins:   weeklyScore.Record.Wins,
+					Losses: weeklyScore.Record.Losses,
+					Ties:   weeklyScore.Record.Ties,
+				},
+				Projected: weeklyScore.Projected,
+			}
+			if i > 0 {
+				previousRanking := powerData.AllRankings[i-1]
+				powerData.AllRankings[i].PowerScore +=
+					previousRanking.PowerScore
+				addRecord(
+					powerData.AllRankings[i].OverallRecord,
+					previousRanking.OverallRecord)
+			}
+			weeklyTeamRankings[i][j] = powerData.AllRankings[i]
+			j++
+		}
+
+		// Sort by the cumulative power scores and assign ranks for this week
+		sort.Sort(SortedTeamRankingsData(weeklyTeamRankings[i]))
+		for j, rankingsData := range weeklyTeamRankings[i] {
+			if j > 0 &&
+				rankingsData.PowerScore ==
+					weeklyTeamRankings[i][j-1].PowerScore {
+				rankingsData.Rank = weeklyTeamRankings[i][j-1].Rank
+			} else {
+				rankingsData.Rank = j + 1
+			}
+		}
+	}
 }
 
 // addRecord adds to the first record the wins/losses/ties of the second
