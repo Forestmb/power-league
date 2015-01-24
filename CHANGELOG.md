@@ -3,6 +3,7 @@
 ## 0.4.0 (TBD) ##
 
 - Lower required number of API calls (disabled by default)
+- Made cache size configurable and lowered default to 10000
 
 ## 0.3.0 (2015-01-09) ##
 

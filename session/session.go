@@ -36,10 +36,6 @@ const (
 	// oauthVerifierKey acceses the verification code after oauth
 	// authentication
 	oauthVerifierKey = "oauth_verifier"
-
-	// cacheSize sets the maximum size of the fantasy content cache for all
-	// sessions
-	cacheSize = 100000
 )
 
 //
@@ -70,7 +66,7 @@ type defaultManager struct {
 //
 // See NewManagerWithCache
 func NewManager(c Consumer, s sessions.Store) Manager {
-	return NewManagerWithCache(c, s, 6*60*60)
+	return NewManagerWithCache(c, s, 6*60*60, 10000)
 }
 
 // NewManagerWithCache creates a new Manager that uses the given consumer for
@@ -80,7 +76,8 @@ func NewManager(c Consumer, s sessions.Store) Manager {
 func NewManagerWithCache(
 	c Consumer,
 	s sessions.Store,
-	userCacheDurationSeconds int) Manager {
+	userCacheDurationSeconds int,
+	cacheSize int64) Manager {
 
 	gob.Register(&oauth.RequestToken{})
 	gob.Register(&oauth.AccessToken{})

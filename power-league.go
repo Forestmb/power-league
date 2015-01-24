@@ -47,6 +47,10 @@ func main() {
 		6*60*60,
 		"Maximum duration user data will be cached, in seconds. Defaults to"+
 			" six hours")
+	totalCacheSize := flag.Int64(
+		"totalCacheSize",
+		10000,
+		"Maximum number of responses that well be cached across all users.")
 	minimizeAPICalls := flag.Bool(
 		"minimizeAPICalls",
 		false,
@@ -128,7 +132,8 @@ func main() {
 	sessionManager := session.NewManagerWithCache(
 		goff.GetConsumer(*clientKey, *clientSecret),
 		sessions.NewCookieStore(cookieStoreAuthKey, cookieStoreEncryptionKey),
-		*userCacheDurationSeconds)
+		*userCacheDurationSeconds,
+		*totalCacheSize)
 
 	site := site.NewSite(
 		baseContext, *staticFilesLocation, "templates/html/", *trackingID, sessionManager)

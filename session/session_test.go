@@ -20,7 +20,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestNewManagerWithCache(t *testing.T) {
-	manager := NewManagerWithCache(&MockConsumer{}, mockStore(), 30)
+	manager := NewManagerWithCache(&MockConsumer{}, mockStore(), 30, 10)
 	if manager == nil {
 		t.Fatal("no manager returned")
 	}

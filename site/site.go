@@ -187,6 +187,7 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		allYearlyLeagues = getAllYearlyLeagues(client)
+		glog.V(2).Infof("API Request Count: %d", client.RequestCount())
 	} else {
 		glog.V(2).Infoln("user not logged in, can't show leagues")
 	}

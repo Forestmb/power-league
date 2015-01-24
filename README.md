@@ -67,20 +67,21 @@ Command line flags can be passed when running `server.sh` or by appending them
 to the `server_args` variable in `server.conf`.
 
     Usage of ./power-league:
-      -address=":8080": Address to listen for incoming connections.
-      -alsologtostderr=false: log to standard error as well as files
-      -baseContext="/power-rankings": Root context of the server.
-      -clientKey="": Required client OAuth key. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
-      -clientSecret="": Required client OAuth secret. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
-      -cookieAuthKey="": Authentication key for cookie store. By default uses a randomly generated key.
-      -cookieEncryptionKey="": Encryption key for cookie store. By default uses a randomly generated key.
-      -log_backtrace_at=:0: when logging hits line file:N, emit a stack trace
-      -log_dir="": If non-empty, write log files in this directory
-      -logtostderr=false: log to standard error instead of files
-      -minimizeAPICalls=false: Minimize calls to the Yahoo Fantasy Sports API. If enabled, it will lower the risk of being throttled but will result in a higher average page load time.
-      -static="static": Directory to access static files
-      -stderrthreshold=0: logs at or above this threshold go to stderr
-      -trackingID="": Google Analytics tracking ID. If blank, tracking will not be activated
-      -userCacheDurationSeconds=21600: Maximum duration user data will be cached, in seconds. Defaults to six hours
-      -v=0: log level for V logs
-      -vmodule=: comma-separated list of pattern=N settings for file-filtered logging
+        -address=":8080": Address to listen for incoming connections.
+        -alsologtostderr=false: log to standard error as well as files
+        -baseContext="/power-rankings": Root context of the server.
+        -clientKey="": Required client OAuth key. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
+        -clientSecret="": Required client OAuth secret. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html for more information
+        -cookieAuthKey="": Authentication key for cookie store. By default uses a randomly generated key.
+        -cookieEncryptionKey="": Encryption key for cookie store. By default uses a randomly generated key.
+        -log_backtrace_at=:0: when logging hits line file:N, emit a stack trace
+        -log_dir="": If non-empty, write log files in this directory
+        -logtostderr=false: log to standard error instead of files
+        -minimizeAPICalls=false: Minimize calls to the Yahoo Fantasy Sports API. If enabled, it will lower the risk of being throttled but will result in a higher average page load time.
+        -static="static": Directory to access static files
+        -stderrthreshold=0: logs at or above this threshold go to stderr
+        -totalCacheSize=1000: Maximum number of responses that well be cached across all users.
+        -trackingID="": Google Analytics tracking ID. If blank, tracking will not be activated
+        -userCacheDurationSeconds=21600: Maximum duration user data will be cached, in seconds. Defaults to six hours
+        -v=0: log level for V logs
+        -vmodule=: comma-separated list of pattern=N settings for file-filtered logging
