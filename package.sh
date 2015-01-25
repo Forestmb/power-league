@@ -77,8 +77,19 @@ while getopts ":a:c:d:D:h" option; do
 done
 shift $((OPTIND-1))
 
-resources=("LICENSE" "NOTICE" "CHANGELOG.md" "static" "server.sh" "${binary}")
-excluded_resources=("static/images/originals/")
+resources=( \
+    "LICENSE" \
+    "NOTICE" \
+    "CHANGELOG.md" \
+    ".version" \
+    "static" \
+    "server.sh" \
+    "${binary}" \
+)
+
+excluded_resources=( \
+    "static/images/originals/" \
+)
 
 if [ -z "${conf}" ]
 then
@@ -99,17 +110,34 @@ then
     exit 1
 fi
 
+if [ -z "${dist}" ]
+then
+    echo "Error: '-d' is undefind." 1>&2
+    usage 2
+fi
+
+if [ -z "${appname}" ]
+then
+    echo "Error: '-a' is undefined." 1>&2
+    usage 3
+fi
 app="${dist}/${appname}"
 
 if [ ! -f "${binary}" ]
 then
     echo "Error: Binary file '${binary}' does not exist, so nothing" 1>&2
     echo "       could be packaged." 1>&2
-    exit 2
+    exit 4
 fi
 
 echo "Packaging..."
-rm -rf "${app}"
+if [ -d "${app}" ]
+then
+    echo "Packaging directory already exists, please remove before continuining" 1>&2
+    echo "    dir: ${app}" 1>&2
+    exit 5
+fi
+
 mkdir -p "${app}"
 for resource in "${resources[@]}"; do
     cp -R "${resource}" "${app}"

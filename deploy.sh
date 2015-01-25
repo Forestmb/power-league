@@ -80,7 +80,6 @@ link="current"
 prev="previous"
 old="old"
 server="server.sh"
-dist="build/dist"
 
 # 1. Copies package
 # 2. Updates symbolic links to latest and previous versions
