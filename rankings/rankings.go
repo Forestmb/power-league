@@ -94,6 +94,9 @@ func (p PowerRankings) Len() int {
 
 func (p PowerRankings) Less(i, j int) bool {
 	if p[i].TotalPowerScore == p[j].TotalPowerScore {
+		if p[i].ProjectedPowerScore == p[j].ProjectedPowerScore {
+			return p[i].Team.Name < p[j].Team.Name
+		}
 		return p[i].ProjectedPowerScore > p[j].ProjectedPowerScore
 	}
 	return p[i].TotalPowerScore > p[j].TotalPowerScore
@@ -127,6 +130,9 @@ func (t TeamRanking) Len() int {
 }
 
 func (t TeamRanking) Less(i int, j int) bool {
+	if t[i].TeamPoints.Total == t[j].TeamPoints.Total {
+		return t[i].Name < t[j].Name
+	}
 	return t[i].TeamPoints.Total > t[j].TeamPoints.Total
 }
 
@@ -143,6 +149,9 @@ func (t TeamProjectedRanking) Len() int {
 }
 
 func (t TeamProjectedRanking) Less(i int, j int) bool {
+	if t[i].TeamProjectedPoints.Total == t[j].TeamProjectedPoints.Total {
+		return t[i].Name < t[j].Name
+	}
 	return t[i].TeamProjectedPoints.Total > t[j].TeamProjectedPoints.Total
 }
 

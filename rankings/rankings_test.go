@@ -615,8 +615,8 @@ func TestPowerRankingsSort(t *testing.T) {
 	var teamData = []*TeamPowerData{
 		&TeamPowerData{TotalPowerScore: 3.0},
 		&TeamPowerData{TotalPowerScore: 2.0},
-		&TeamPowerData{TotalPowerScore: 4.0},
-		&TeamPowerData{TotalPowerScore: 4.0},
+		&TeamPowerData{TotalPowerScore: 4.0, Team: &goff.Team{Name: "Name"}},
+		&TeamPowerData{TotalPowerScore: 4.0, Team: &goff.Team{Name: "Name2"}},
 		&TeamPowerData{TotalPowerScore: 1.0},
 		&TeamPowerData{TotalPowerScore: 5.0},
 	}
