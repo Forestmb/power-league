@@ -25,17 +25,41 @@
                 {{$finished := .League.IsFinished}}
                 {{$currentWeek := .Weeks}}
                 <div class="overall overall-table">
-                    <h3>Overall through {{$currentWeek}} Weeks
-                    <div class="export-data">
-                        <a class="export-data-link"
+                    <div class="rankings-data-actions">
+                        <a class="graph-data-link rankings-action"
+                           title="Graph Power Rankings"
+                           data-toggle="modal"
+                           data-target=".graph-modal">
+                           <span class="graph-data-label rankings-action-label">Graph</span>
+                           <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+                        </a>
+                        <a class="export-data-link rankings-action"
                            title="Export Power Rankings"
                            data-toggle="modal"
                            data-target=".export-modal">
-                           <span class="export-data-label">Export</span>
+                           <span class="export-data-label rankings-action-label">Export</span>
                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
                         </a>
-                    </h3>
-                    <div class="modal fade export-modal"
+                    </div>
+                    <h3>Overall through {{$currentWeek}} Weeks</h3>
+                    <div style="clear: right;"></div>
+                    <div class="modal fade graph-modal rankings-modal"
+                         tabindex="-1"
+                         role="dialog"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="rankings-chart">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal fade export-modal rankings-modal"
                          tabindex="-1"
                          role="dialog"
                          aria-hidden="true">
@@ -269,6 +293,94 @@
         </div>
         {{template "footer" .}}
         <script src="{{.SiteConfig.StaticContext}}js/power-rankings.js"></script>
+        <script src="//code.highcharts.com/highcharts.js"></script>
+        {{if and . .LeaguePowerData}}
+        <script>
+            var colors = [
+                'hsl(100, 58%, 75%)',
+                'hsl(130, 58%, 75%)',
+                'hsl(160, 58%, 75%)',
+                'hsl(190, 58%, 75%)',
+                'hsl(220, 58%, 75%)',
+                'hsl(250, 58%, 75%)',
+                'hsl(280, 58%, 75%)',
+                'hsl(310, 58%, 75%)',
+                'hsl(340, 58%, 75%)',
+                'hsl(10, 58%, 75%)',
+                'hsl(40, 58%, 75%)',
+                'hsl(70, 58%, 75%)',
+                'hsl(100, 48%, 55%)',
+                'hsl(130, 48%, 55%)',
+                'hsl(160, 48%, 55%)',
+                'hsl(190, 48%, 55%)',
+                'hsl(220, 48%, 55%)',
+                'hsl(250, 48%, 55%)',
+                'hsl(280, 48%, 55%)',
+                'hsl(310, 48%, 55%)'
+            ];
+            $('.graph-modal').on("shown.bs.modal", function () { 
+                $('.rankings-chart').highcharts({
+                    chart: {
+                        type: 'spline'
+                    },
+                    title: {
+                        text: 'Weekly Power Rank'
+                    },
+                    xAxis: {
+                        title: {
+                            text: 'Week'
+                        },
+                        categories: [
+                        {{with .LeaguePowerData}}
+                            {{$allPowerData := .}}
+                            {{with .ByWeek}}
+                                {{range $index, $ranking := .}}
+                                    '{{.Week}}',
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        ]
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Rank'
+                        },
+                        min: 1,
+                        max: {{len .LeaguePowerData.OverallRankings}},
+                        tickInterval: 1,
+                        reversed: true,
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    legend: {
+                        align: 'center',
+                        borderWidth: 0,
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            return  this.series.name + '<br/>Week ' + this.x + ' rank: ' + this.y;
+                        }
+                    },
+                    series: [
+                        {{range $index, $teamData := .LeaguePowerData.OverallRankings}}
+                            {
+                                name: '{{$teamData.Team.Name}}',
+                                color: colors[{{$index}}],
+                                data: [
+                                    {{range $j, $ranking := $teamData.AllRankings}}
+                                        {{$ranking.Rank}},        
+                                    {{end}}
+                                ]
+                            },
+                        {{end}}
+                    ]
+                })
+            });
+        </script>
+        {{end}}
     </body>
 </html>
 

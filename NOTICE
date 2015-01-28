@@ -79,3 +79,9 @@ a standard HTML table into a sortable table without page refreshes.
 
     * LICENSE: MIT
     * HOMEPAGE: https://github.com/mottie/tablesorter/
+
+This product contains a dependency on highcharts, a JavaScript charting
+library.
+
+    * LICENSE: CC BY-NC 3.0
+    * HOMEPAGE: http://www.highcharts.com/products/highcharts

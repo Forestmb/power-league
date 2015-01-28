@@ -132,37 +132,38 @@ a:hover, a:focus {
     opacity: 0.75;
 }
 
-.export-data {
+.rankings-data-actions {
     float: right;
-    position: relative;
     padding-right: 5px;
+    padding-top: 12px;
 }
 
-.export-data-link {
+.rankings-action {
     font-size: 15px;
     color: #000;
     opacity: 0.25;
     text-decoration: none;
+    padding-left: 10px;
 }
 
-a.export-data-link:hover {
+a.rankings-action:hover {
     color: #000;
     opacity: 0.45;
     cursor: pointer;
     text-decoration: none;
 }
 
-.export-data-label {
+.rankings-action-label {
     display: none;
 }
 
 @media (min-width: 600px) {
-    .export-data-label {
+    .rankings-action-label {
         display: inline;
     }
 }
 
-.export-modal .modal-header {
+.rankings-modal .modal-header {
     border-bottom: 0px;
 }
 
