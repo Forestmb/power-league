@@ -1,3 +1,11 @@
+function getTeamId(id) {
+    return id.substring(id.lastIndexOf('-') + 1);
+}
+
+function getTeam(id) {
+    return ".team-" + getTeamId(id);
+}
+
 $(document).ready(function(){
     $('.team-row').hover(function() {
         var id = $(this).attr("id");
@@ -17,11 +25,6 @@ $(document).ready(function(){
             $(getTeam(id)).removeClass(selectedClass);
         }
     });
-
-    function getTeam(id) {
-        var teamId = id.substring(id.lastIndexOf('-') + 1);
-        return ".team-" + teamId;
-    }
 
     // Add the ability to sort the overall standings table
     $('.overall-table table').tablesorter({

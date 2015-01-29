@@ -318,10 +318,26 @@
                 'hsl(280, 48%, 55%)',
                 'hsl(310, 48%, 55%)'
             ];
+            var selectedTeamsById = {};
+            {{range .LeaguePowerData.OverallRankings}}
+                {{if .Team.IsOwnedByCurrentLogin}}
+                    selectedTeamsById[{{.Team.TeamID}}] = true;
+                {{end}}
+            {{end}}
+            $('.team-row').click(function() {
+                var teamId = getTeamId($(this).attr("id"));
+                selectedTeamsById[teamId] = !selectedTeamsById[teamId];
+            });
+            $('.graph-modal').on("show.bs.modal", function () { 
+                $('.rankings-chart').hide();
+            });
             $('.graph-modal').on("shown.bs.modal", function () { 
+                $('.rankings-chart').show();
                 $('.rankings-chart').highcharts({
                     chart: {
-                        type: 'spline'
+                        type: 'spline',
+                        spacingRight: 40,
+                        animation: false
                     },
                     title: {
                         text: 'Weekly Power Rank'
@@ -358,17 +374,35 @@
                     legend: {
                         align: 'center',
                         borderWidth: 0,
+                        title: {
+                            text: 'Choose Teams:'
+                        }
                     },
                     tooltip: {
                         formatter: function() {
-                            return  this.series.name + '<br/>Week ' + this.x + ' rank: ' + this.y;
+                            var output = '<b>' + this.series.name + '</b>';
+                            output += '<br/>';
+                            output += 'Week ' + this.x + ' Rank: ' + this.y;
+                            return output;
                         }
                     },
+                    plotOptions: {
+                        series: {
+                            events: {
+                                legendItemClick: function () {
+                                    $('#overall-' + this.options.teamId).trigger(
+                                                'click');
+                                }
+                            }
+                        }
+                    },           
                     series: [
                         {{range $index, $teamData := .LeaguePowerData.OverallRankings}}
                             {
                                 name: '{{$teamData.Team.Name}}',
                                 color: colors[{{$index}}],
+                                visible: selectedTeamsById[{{$teamData.Team.TeamID}}] == true,
+                                teamId: {{$teamData.Team.TeamID}},
                                 data: [
                                     {{range $j, $ranking := $teamData.AllRankings}}
                                         {{$ranking.Rank}},        
