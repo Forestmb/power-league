@@ -382,7 +382,11 @@
                         formatter: function() {
                             var output = '<b>' + this.series.name + '</b>';
                             output += '<br/>';
-                            output += 'Week ' + this.x + ' Rank: ' + this.y;
+                            if(this.point.projected) {
+                                output += 'Week ' + this.x + ' Projected Rank: ' + this.y;
+                            } else {
+                                output += 'Week ' + this.x + ' Rank: ' + this.y;
+                            }
                             return output;
                         }
                     },
@@ -405,7 +409,18 @@
                                 teamId: {{$teamData.Team.TeamID}},
                                 data: [
                                     {{range $j, $ranking := $teamData.AllRankings}}
-                                        {{$ranking.Rank}},        
+                                        {
+                                            marker: {
+                                                radius: '5',
+                                            {{if $ranking.Projected}}
+                                                fillColor: '#FFFFFF',
+                                                lineColor: colors[{{$index}}],
+                                                lineWidth: '2',
+                                            {{end}}
+                                            },
+                                            projected: {{$ranking.Projected}},
+                                            y: {{$ranking.Rank}},        
+                                        },
                                     {{end}}
                                 ]
                             },
