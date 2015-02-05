@@ -167,6 +167,10 @@ a.rankings-action:hover {
     border-bottom: 0px;
 }
 
+.graph-modal .modal-header {
+    text-align: center;
+}
+
 .export-option {
     width: 100%;
     float: left;

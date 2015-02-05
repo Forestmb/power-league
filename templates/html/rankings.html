@@ -51,9 +51,21 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                    <div class="btn-group" data-toggle="buttons">
+                                        <label class="btn btn-default active show-power-rank-graph">
+                                            <input type="radio" autocomplete="off" checked>
+                                            Power Rank
+                                        </label>
+                                        <label class="btn btn-default show-fantasy-points-graph" >
+                                            <input type="radio" autocomplete="off">
+                                            Fantasy Points
+                                        </label>
+                                    </div>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="rankings-chart">
+                                    <div class="rankings-chart chart">
+                                    </div>
+                                    <div class="fantasy-points-chart chart">
                                     </div>
                                 </div>
                             </div>
@@ -328,10 +340,8 @@
                 var teamId = getTeamId($(this).attr("id"));
                 selectedTeamsById[teamId] = !selectedTeamsById[teamId];
             });
-            $('.graph-modal').on("show.bs.modal", function () { 
-                $('.rankings-chart').hide();
-            });
-            $('.graph-modal').on("shown.bs.modal", function () { 
+
+            var showRankingsChart = function() {
                 $('.rankings-chart').show();
                 $('.rankings-chart').highcharts({
                     chart: {
@@ -340,7 +350,7 @@
                         animation: false
                     },
                     title: {
-                        text: 'Weekly Power Rank'
+                        text: null
                     },
                     xAxis: {
                         title: {
@@ -392,6 +402,7 @@
                     },
                     plotOptions: {
                         series: {
+                            animation: false,
                             events: {
                                 legendItemClick: function () {
                                     $('#overall-' + this.options.teamId).trigger(
@@ -427,6 +438,119 @@
                         {{end}}
                     ]
                 })
+            };
+
+            var showFantasyPointsChart = function() {
+                $('.fantasy-points-chart').show();
+                $('.fantasy-points-chart').highcharts({
+                    chart: {
+                        type: 'spline',
+                        spacingRight: 40,
+                        animation: false
+                    },
+                    title: {
+                        text: null
+                    },
+                    xAxis: {
+                        title: {
+                            text: 'Week'
+                        },
+                        categories: [
+                        {{with .LeaguePowerData}}
+                            {{$allPowerData := .}}
+                            {{with .ByWeek}}
+                                {{range $index, $ranking := .}}
+                                    '{{.Week}}',
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        ]
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Points'
+                        },
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    legend: {
+                        align: 'center',
+                        borderWidth: 0,
+                        title: {
+                            text: 'Choose Teams:'
+                        }
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            var output = '<b>' + this.series.name + '</b>';
+                            output += '<br/>';
+                            if(this.point.projected) {
+                                output += 'Week ' + this.x + ' Projected Points: ' + this.y;
+                            } else {
+                                output += 'Week ' + this.x + ' Points: ' + this.y;
+                            }
+                            return output;
+                        }
+                    },
+                    plotOptions: {
+                        series: {
+                            animation: false,
+                            events: {
+                                legendItemClick: function () {
+                                    $('#overall-' + this.options.teamId).trigger(
+                                                'click');
+                                }
+                            }
+                        }
+                    },           
+                    series: [
+                        {{range $index, $teamData := .LeaguePowerData.OverallRankings}}
+                            {
+                                name: '{{$teamData.Team.Name}}',
+                                color: colors[{{$index}}],
+                                visible: selectedTeamsById[{{$teamData.Team.TeamID}}] == true,
+                                teamId: {{$teamData.Team.TeamID}},
+                                data: [
+                                    {{range $j, $score := $teamData.AllScores}}
+                                        {
+                                            marker: {
+                                                radius: '5',
+                                            {{if $score.Projected}}
+                                                fillColor: '#FFFFFF',
+                                                lineColor: colors[{{$index}}],
+                                                lineWidth: '2',
+                                            {{end}}
+                                            },
+                                            projected: {{$score.Projected}},
+                                            y: {{$score.Score}},        
+                                        },
+                                    {{end}}
+                                ]
+                            },
+                        {{end}}
+                    ]
+                })
+            };
+
+            $('.graph-modal').on("show.bs.modal", function () { 
+                $('.graph-modal .chart').hide();
+            });
+            var showActiveChart = showRankingsChart;
+            $('.graph-modal').on("shown.bs.modal", function () { 
+                showActiveChart();
+            });
+            $('.show-power-rank-graph').click(function() {
+                $('.graph-modal .chart').hide();
+                showRankingsChart();
+                showActiveChart = showRankingsChart;
+            });
+            $('.show-fantasy-points-graph').click(function() {
+                $('.graph-modal .chart').hide();
+                showFantasyPointsChart();
+                showActiveChart = showFantasyPointsChart;
             });
         </script>
         {{end}}

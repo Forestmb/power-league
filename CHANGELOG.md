@@ -4,7 +4,7 @@
 
 - Lower required number of API calls (disabled by default)
 - Made cache size configurable and lowered default to 10000
-- Added graph to rankings page showing the each team's ranking over the course
+- Added graphs to show weekly power rank and fantasy points over the course
   of the season.
 
 ## 0.3.0 (2015-01-09) ##
