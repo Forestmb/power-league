@@ -2,10 +2,11 @@
 
 ## 0.4.0 (TBD) ##
 
-- Lower required number of API calls (disabled by default)
-- Made cache size configurable and lowered default to 10000
+- Lower required number of API calls (disabled by default).
+- Made cache size configurable and lowered default to 10000.
 - Added graphs to show weekly power rank and fantasy points over the course
   of the season.
+- Improved mobile authorization flow.
 
 ## 0.3.0 (2015-01-09) ##
 

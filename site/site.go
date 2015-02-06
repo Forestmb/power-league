@@ -5,6 +5,7 @@ package site
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"time"
 
@@ -139,6 +140,8 @@ func handleLogout(s *Site, w http.ResponseWriter, r *http.Request) {
 func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 	glog.V(5).Infoln("in handleLogin")
 
+	mobileLogin := r.URL.Query().Get("mobile") == "true"
+
 	authContext := s.handlers["auth"].Context
 	loginURL := fmt.Sprintf("http://%s%s", r.Host, authContext)
 	requestURL, err := s.sessionManager.Login(w, r, loginURL)
@@ -151,6 +154,10 @@ func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 				"Please try again later.",
 			false)
 		return
+	}
+
+	if mobileLogin {
+		requestURL = "https://login.yahoo.com/m?_done=" + url.QueryEscape(requestURL)
 	}
 	http.Redirect(w, r, requestURL, http.StatusTemporaryRedirect)
 }
