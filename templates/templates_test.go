@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
 	"github.com/Forestmb/power-league/rankings"
 )
 

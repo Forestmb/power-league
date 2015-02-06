@@ -7,6 +7,7 @@
 - Added graphs to show weekly power rank and fantasy points over the course
   of the season.
 - Improved mobile authorization flow.
+- Vendoring dependencies with godep.
 
 ## 0.3.0 (2015-01-09) ##
 

@@ -85,3 +85,9 @@ library.
 
     * LICENSE: CC BY-NC 3.0
     * HOMEPAGE: http://www.highcharts.com/products/highcharts
+
+This product contains a dependency on godep, a Go tool to help build packages
+reproducibly by fixing their dependencies.
+
+    * LICENSE: New BSD
+    * HOMEPAGE: https://github.com/tools/godep

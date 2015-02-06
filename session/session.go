@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
-	"github.com/Forestmb/goff"
-	"github.com/golang/glog"
-	"github.com/gorilla/sessions"
-	"github.com/mrjones/oauth"
-	lru "github.com/youtube/vitess/go/cache"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/golang/glog"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/gorilla/sessions"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/mrjones/oauth"
+	lru "github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/youtube/vitess/go/cache"
 )
 
 const (

@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/golang/glog"
 	"github.com/Forestmb/power-league/rankings"
-	"github.com/golang/glog"
 )
 
 const (
