@@ -137,7 +137,10 @@ func main() {
 
 	site := site.NewSite(
 		baseContext, *staticFilesLocation, "templates/html/", *trackingID, sessionManager)
-	http.ListenAndServe(*addr, handlers.LoggingHandler(logWriter{}, site.ServeMux))
+	err := http.ListenAndServe(*addr, handlers.LoggingHandler(logWriter{}, site.ServeMux))
+	if err != nil {
+		glog.Exit("ListenAndServe: ", err)
+	}
 }
 
 // logWriter implements io.Writer to write to the correct logging

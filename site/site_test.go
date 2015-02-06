@@ -125,6 +125,41 @@ func TestHandleLogout(t *testing.T) {
 	}
 }
 
+func TestHandleLogoutError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/logout", nil)
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		LogoutError:   errors.New("error"),
+	}
+	mockTemplates := &MockTemplates{}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: "/base",
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleLogout(site, recorder, request)
+
+	if mockSessionManager.LogoutWriter != recorder {
+		t.Fatalf("Unexpected writer passed into session.Manager.Logout\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*recorder,
+			mockSessionManager.LogoutWriter)
+	}
+
+	if mockSessionManager.LogoutRequest != request {
+		t.Fatalf("Unexpected request passed into session.Manager.Logout\n\t"+
+			"Expected: %+v\n\tActual: %+v",
+			*request,
+			*(mockSessionManager.LogoutRequest))
+	}
+
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
+}
+
 func TestHandleLogin(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "http://example.com:8080/login", nil)

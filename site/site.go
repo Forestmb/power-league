@@ -132,7 +132,15 @@ func handleAbout(s *Site, w http.ResponseWriter, r *http.Request) {
 
 func handleLogout(s *Site, w http.ResponseWriter, r *http.Request) {
 	glog.V(5).Infoln("in handleLogout")
-	s.sessionManager.Logout(w, r)
+	err := s.sessionManager.Logout(w, r)
+	if err != nil {
+		writeErrorPage(
+			s,
+			w,
+			"There was a problem logging you out.",
+			s.sessionManager.IsLoggedIn(r))
+		return
+	}
 	leaguesURL := fmt.Sprintf("http://%s%s", r.Host, s.config.BaseContext)
 	http.Redirect(w, r, leaguesURL, http.StatusTemporaryRedirect)
 }
@@ -319,7 +327,7 @@ func writeErrorPage(
 	s *Site,
 	w http.ResponseWriter,
 	message string,
-	loggedIn bool) error {
+	loggedIn bool) {
 
 	err := s.templates.WriteErrorTemplate(
 		w,
@@ -332,7 +340,6 @@ func writeErrorPage(
 	if err != nil {
 		http.Error(w, message, http.StatusInternalServerError)
 	}
-	return err
 }
 
 //
