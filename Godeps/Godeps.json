@@ -37,11 +37,11 @@
 		},
 		{
 			"ImportPath": "github.com/mrjones/oauth",
-			"Rev": "3f16dcc42f866917f38646e7448993412f3a7be7"
+			"Rev": "88b8bebdf9952359da71031ef9ab7d27aece46d4"
 		},
 		{
 			"ImportPath": "github.com/youtube/vitess/go/cache",
-			"Rev": "0499e460525b98876a47873641c14a7e1bdb18fd"
+			"Rev": "af31226d0492d0d8f4e61fe918fba634d3112c62"
 		}
 	]
 }
