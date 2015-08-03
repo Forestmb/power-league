@@ -998,6 +998,8 @@ type MockGoffClient struct {
 	PlayersStatsError error
 	Matchups          map[int][]goff.Matchup
 	MatchupsError     error
+	StandingsLeague   *goff.League
+	StandingsError    error
 }
 
 func (m *MockGoffClient) GetAllTeamStats(leagueKey string, week int) ([]goff.Team, error) {
@@ -1014,6 +1016,10 @@ func (m *MockGoffClient) GetPlayersStats(leagueKey string, week int, players []g
 
 func (m *MockGoffClient) GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error) {
 	return m.Matchups, m.MatchupsError
+}
+
+func (m *MockGoffClient) GetLeagueStandings(leagueKey string) (*goff.League, error) {
+	return m.StandingsLeague, m.StandingsError
 }
 
 type MockSessionManager struct {

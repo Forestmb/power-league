@@ -22,7 +22,8 @@ func TestGetWeeklyRankingPowerScoreOrder(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, false)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, false, schemes)
 	weeklyRanking := <-results
 	for i, teamData := range weeklyRanking.Rankings {
 		if i > 0 && teamData.PowerScore > weeklyRanking.Rankings[i-1].PowerScore {
@@ -63,7 +64,8 @@ func TestGetWeeklyProjectedRankingPowerScoreOrder(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, true)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, true, schemes)
 	weeklyRanking := <-results
 	for i, teamData := range weeklyRanking.Rankings {
 		if i > 0 && teamData.PowerScore > weeklyRanking.Rankings[i-1].PowerScore {
@@ -92,17 +94,18 @@ func TestGetWeeklyRankingCorrectPowerScores(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, false)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, false, schemes)
 	weeklyRanking := <-results
 	for i, teamData := range weeklyRanking.Rankings {
-		if i > 0 && teamData.Score > weeklyRanking.Rankings[i-1].Score {
+		if i > 0 && teamData.PowerScore > weeklyRanking.Rankings[i-1].PowerScore {
 			t.Fatalf(
 				"Assertion error. Weekly ranking not sorted in descending order."+
 					"\n\t%d: %f > %d. %f",
 				i,
-				teamData.Score,
+				teamData.PowerScore,
 				i-1,
-				weeklyRanking.Rankings[i-1].Score)
+				weeklyRanking.Rankings[i-1].PowerScore)
 		}
 	}
 }
@@ -133,17 +136,18 @@ func TestGetWeeklyProjectedRankingCorrectPowerScores(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, true)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, true, schemes)
 	weeklyRanking := <-results
 	for i, teamData := range weeklyRanking.Rankings {
-		if i > 0 && teamData.Score > weeklyRanking.Rankings[i-1].Score {
+		if i > 0 && teamData.PowerScore > weeklyRanking.Rankings[i-1].PowerScore {
 			t.Fatalf(
 				"Assertion error. Weekly ranking not sorted in descending order."+
 					"\n\t%d: %f > %d. %f",
 				i,
-				teamData.Score,
+				teamData.PowerScore,
 				i-1,
-				weeklyRanking.Rankings[i-1].Score)
+				weeklyRanking.Rankings[i-1].PowerScore)
 		}
 	}
 }
@@ -163,7 +167,8 @@ func TestGetWeeklyRankingCorrectWeek(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", week, results, errorsChan, false)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", week, results, errorsChan, false, schemes)
 	weeklyRanking := <-results
 	if weeklyRanking.Week != week {
 		t.Fatalf(
@@ -189,22 +194,23 @@ func TestGetWeeklyRankingTieSamePowerScore(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, false)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, false, schemes)
 	weeklyRanking := <-results
 
 	team1 := weeklyRanking.Rankings[1]
 	team2 := weeklyRanking.Rankings[2]
 
-	if team1.Score != 4.0 && team2.Score != 4.0 {
+	if team1.Record.Wins != 1 && team2.Record.Wins != 1 {
 		t.Fatalf("Assertion error. Incorrect rankings returned when tie is given")
 	}
 
-	if team1.PowerScore != team2.PowerScore {
+	if team1.Rank != team2.Rank {
 		t.Fatalf(
-			"Assertion error. Tied teams should have same power score."+
-				"\n\tTeam 1: %f\n\tTeam 2: %f",
-			team1.PowerScore,
-			team2.PowerScore)
+			"Assertion error. Tied teams should have same rank."+
+				"\n\tTeam 1: %d\n\tTeam 2: %d",
+			team1.Rank,
+			team2.Rank)
 	}
 }
 
@@ -239,22 +245,23 @@ func TestGetWeeklyProjectedRankingTieSameProjectedPowerScore(t *testing.T) {
 	}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, true)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, true, schemes)
 	weeklyRanking := <-results
 
 	team1 := weeklyRanking.Rankings[1]
 	team2 := weeklyRanking.Rankings[2]
 
-	if team1.Score != 8.0 && team2.Score != 8.0 {
+	if team1.Record.Wins != 1 && team2.Record.Wins != 1 {
 		t.Fatalf("Assertion error. Incorrect rankings returned when tie is given")
 	}
 
-	if team1.PowerScore != team2.PowerScore {
+	if team1.Rank != team2.Rank {
 		t.Fatalf(
-			"Assertion error. Tied teams should have same projected power score."+
-				"\n\tTeam 1: %f\n\tTeam 2: %f",
-			team1.PowerScore,
-			team2.PowerScore)
+			"Assertion error. Tied teams should have same rank."+
+				"\n\tTeam 1: %d\n\tTeam 2: %d",
+			team1.Rank,
+			team2.Rank)
 	}
 }
 
@@ -262,7 +269,8 @@ func TestGetWeeklyRankingError(t *testing.T) {
 	m := mockFailureClient{err: errors.New("error")}
 	results := make(chan *WeeklyRanking)
 	errorsChan := make(chan error)
-	go GetWeeklyRanking(m, "", 1, results, errorsChan, false)
+	schemes := []Scheme{allPlayRecord{}}
+	go GetWeeklyRanking(m, "", 1, results, errorsChan, false, schemes)
 	err := <-errorsChan
 	if err == nil {
 		t.Fatal("no error returned")
@@ -270,6 +278,10 @@ func TestGetWeeklyRankingError(t *testing.T) {
 }
 
 func TestGetPowerDataOverallRankings(t *testing.T) {
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+	}
 	m := mockClient{
 		Matchups: map[int][]goff.Matchup{
 			// Week 1
@@ -316,11 +328,8 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 				},
 			},
 		},
-		WeekErrors: map[int]error{},
-	}
-	league := &goff.League{
-		LeagueKey: "leagueID",
-		EndWeek:   3,
+		WeekErrors:      map[int]error{},
+		StandingsLeague: league,
 	}
 	data, err := GetPowerData(m, league, 3)
 
@@ -328,7 +337,8 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)
 	}
 
-	rankings := data.OverallRankings
+	allPlayData := data[0]
+	rankings := allPlayData.OverallRankings
 	if rankings[0].Team.TeamKey != "a" ||
 		rankings[1].Team.TeamKey != "b" ||
 		rankings[2].Team.TeamKey != "c" ||
@@ -338,10 +348,10 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 			rankings)
 	}
 
-	if rankings[0].TotalPowerScore != 9.0 ||
-		rankings[1].TotalPowerScore != 6.0 ||
-		rankings[2].TotalPowerScore != 3.0 ||
-		rankings[3].TotalPowerScore != 0.0 {
+	if rankings[0].OverallRecord.Wins != 9 ||
+		rankings[1].OverallRecord.Wins != 6 ||
+		rankings[2].OverallRecord.Wins != 3 ||
+		rankings[3].OverallRecord.Wins != 0 {
 		t.Fatalf("GetPowerData returned incorrect scores.\n"+
 			"\trankings: %+v",
 			rankings)
@@ -358,6 +368,51 @@ func TestGetPowerDataOverallRankings(t *testing.T) {
 }
 
 func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+		Standings: []goff.Team{
+			goff.Team{
+				TeamKey: "a",
+				TeamStandings: goff.TeamStandings{
+					Rank: 1,
+					Record: goff.Record{
+						Wins:   5,
+						Losses: 2,
+						Ties:   0,
+					},
+					PointsFor:     12345.0,
+					PointsAgainst: 54321.0,
+				},
+			},
+			goff.Team{
+				TeamKey: "b",
+				TeamStandings: goff.TeamStandings{
+					Rank: 2,
+					Record: goff.Record{
+						Wins:   3,
+						Losses: 3,
+						Ties:   1,
+					},
+					PointsFor:     1234.0,
+					PointsAgainst: 4321.0,
+				},
+			},
+			goff.Team{
+				TeamKey: "c",
+				TeamStandings: goff.TeamStandings{
+					Rank: 3,
+					Record: goff.Record{
+						Wins:   0,
+						Losses: 6,
+						Ties:   1,
+					},
+					PointsFor:     234.0,
+					PointsAgainst: 321.0,
+				},
+			},
+		},
+	}
 	m := mockClient{
 		Matchups: map[int][]goff.Matchup{
 			1: []goff.Matchup{
@@ -437,52 +492,8 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 				},
 			},
 		},
-		WeekErrors: map[int]error{},
-	}
-	league := &goff.League{
-		LeagueKey: "leagueID",
-		EndWeek:   3,
-		Standings: []goff.Team{
-			goff.Team{
-				TeamKey: "a",
-				TeamStandings: goff.TeamStandings{
-					Rank: 1,
-					Record: goff.Record{
-						Wins:   5,
-						Losses: 2,
-						Ties:   0,
-					},
-					PointsFor:     12345.0,
-					PointsAgainst: 54321.0,
-				},
-			},
-			goff.Team{
-				TeamKey: "b",
-				TeamStandings: goff.TeamStandings{
-					Rank: 2,
-					Record: goff.Record{
-						Wins:   3,
-						Losses: 3,
-						Ties:   1,
-					},
-					PointsFor:     1234.0,
-					PointsAgainst: 4321.0,
-				},
-			},
-			goff.Team{
-				TeamKey: "c",
-				TeamStandings: goff.TeamStandings{
-					Rank: 3,
-					Record: goff.Record{
-						Wins:   0,
-						Losses: 6,
-						Ties:   1,
-					},
-					PointsFor:     234.0,
-					PointsAgainst: 321.0,
-				},
-			},
-		},
+		WeekErrors:      map[int]error{},
+		StandingsLeague: league,
 	}
 	data, err := GetPowerData(m, league, 1)
 
@@ -490,7 +501,8 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)
 	}
 
-	rankings := data.ProjectedRankings
+	allPlayData := data[0]
+	rankings := allPlayData.ProjectedRankings
 	if rankings[0].Team.TeamKey != "d" ||
 		rankings[1].Team.TeamKey != "c" ||
 		rankings[2].Team.TeamKey != "b" ||
@@ -500,10 +512,10 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 			rankings)
 	}
 
-	if rankings[0].ProjectedPowerScore != 6.0 ||
-		rankings[1].ProjectedPowerScore != 5.0 ||
-		rankings[2].ProjectedPowerScore != 4.0 ||
-		rankings[3].ProjectedPowerScore != 3.0 {
+	if rankings[0].ProjectedOverallRecord.Wins != 6 ||
+		rankings[1].ProjectedOverallRecord.Wins != 5 ||
+		rankings[2].ProjectedOverallRecord.Wins != 4 ||
+		rankings[3].ProjectedOverallRecord.Wins != 3 {
 		t.Fatalf("GetPowerData returned incorrect scores.\n"+
 			"\trankings: %+v\n",
 			rankings)
@@ -523,6 +535,10 @@ func TestGetProjectedPowerDataOverallRankings(t *testing.T) {
 }
 
 func TestGetPowerDataClientError(t *testing.T) {
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   3,
+	}
 	m := mockClient{
 		MatchupsError: errors.New("error"),
 		WeekStats: map[int][]goff.Team{
@@ -543,10 +559,7 @@ func TestGetPowerDataClientError(t *testing.T) {
 		WeekErrors: map[int]error{
 			2: errors.New("error"),
 		},
-	}
-	league := &goff.League{
-		LeagueKey: "leagueID",
-		EndWeek:   3,
+		StandingsLeague: league,
 	}
 	data, err := GetPowerData(m, league, 3)
 	if err == nil {
@@ -555,6 +568,14 @@ func TestGetPowerDataClientError(t *testing.T) {
 }
 
 func TestGetPowerDataTies(t *testing.T) {
+	league := &goff.League{
+		LeagueKey: "leagueID",
+		EndWeek:   4,
+		Settings: goff.Settings{
+			UsesPlayoff:      true,
+			PlayoffStartWeek: 1,
+		},
+	}
 	m := mockClient{
 		// Teams a/b will be tied after 4 weeks
 		WeekStats: map[int][]goff.Team{
@@ -584,15 +605,8 @@ func TestGetPowerDataTies(t *testing.T) {
 				goff.Team{TeamKey: "d", TeamPoints: goff.Points{Total: 1.0}},
 			},
 		},
-		WeekErrors: map[int]error{},
-	}
-	league := &goff.League{
-		LeagueKey: "leagueID",
-		EndWeek:   4,
-		Settings: goff.Settings{
-			UsesPlayoff:      true,
-			PlayoffStartWeek: 1,
-		},
+		WeekErrors:      map[int]error{},
+		StandingsLeague: league,
 	}
 	data, err := GetPowerData(m, league, 4)
 
@@ -600,7 +614,8 @@ func TestGetPowerDataTies(t *testing.T) {
 		t.Fatalf("GetPowerData returned unexpected error: %s\n", err)
 	}
 
-	rankings := data.OverallRankings
+	allPlayData := data[0]
+	rankings := allPlayData.OverallRankings
 	if rankings[0].Rank != 1 ||
 		rankings[1].Rank != 1 ||
 		rankings[2].Rank != 3 ||
@@ -613,23 +628,23 @@ func TestGetPowerDataTies(t *testing.T) {
 
 func TestPowerRankingsSort(t *testing.T) {
 	var teamData = []*TeamPowerData{
-		&TeamPowerData{TotalPowerScore: 3.0},
-		&TeamPowerData{TotalPowerScore: 2.0},
-		&TeamPowerData{TotalPowerScore: 4.0, Team: &goff.Team{Name: "Name"}},
-		&TeamPowerData{TotalPowerScore: 4.0, Team: &goff.Team{Name: "Name2"}},
-		&TeamPowerData{TotalPowerScore: 1.0},
-		&TeamPowerData{TotalPowerScore: 5.0},
+		&TeamPowerData{TotalScore: 3.0},
+		&TeamPowerData{TotalScore: 2.0},
+		&TeamPowerData{TotalScore: 4.0, Team: &goff.Team{Name: "Name"}},
+		&TeamPowerData{TotalScore: 4.0, Team: &goff.Team{Name: "Name2"}},
+		&TeamPowerData{TotalScore: 1.0},
+		&TeamPowerData{TotalScore: 5.0},
 	}
 	sort.Sort(PowerRankings(teamData))
 	for i, team := range teamData {
-		if i > 0 && team.TotalPowerScore > teamData[i-1].TotalPowerScore {
+		if i > 0 && team.TotalScore > teamData[i-1].TotalScore {
 			t.Fatalf(
 				"Assertion error. Team points not sorted in descending order."+
 					"\n\t%d: %f > %d. %f\n",
 				i,
-				team.TotalPowerScore,
+				team.TotalScore,
 				i-1,
-				teamData[i-1].TotalPowerScore)
+				teamData[i-1].TotalScore)
 		}
 	}
 }
@@ -668,12 +683,19 @@ func (m mockFailureClient) GetMatchupsForWeekRange(leagueKey string, startWeek, 
 	return nil, m.err
 }
 
+func (m mockFailureClient) GetLeagueStandings(leagueKey string) (*goff.League, error) {
+	return nil, m.err
+}
+
 type mockClient struct {
 	WeekStats  map[int][]goff.Team
 	WeekErrors map[int]error
 
 	Matchups      map[int][]goff.Matchup
 	MatchupsError error
+
+	StandingsLeague *goff.League
+	StandingsError  error
 }
 
 func (m mockClient) GetAllTeamStats(leagueKey string, week int, projected bool) ([]goff.Team, error) {
@@ -682,4 +704,8 @@ func (m mockClient) GetAllTeamStats(leagueKey string, week int, projected bool) 
 
 func (m mockClient) GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error) {
 	return m.Matchups, m.MatchupsError
+}
+
+func (m mockClient) GetLeagueStandings(leagueKey string) (*goff.League, error) {
+	return m.StandingsLeague, m.StandingsError
 }

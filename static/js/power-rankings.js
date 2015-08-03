@@ -26,6 +26,17 @@ $(document).ready(function(){
         }
     });
 
+    $('.view-scheme').click(function() {
+        var schemeId = $(this).attr('data-scheme-id');
+        $('.scheme-based').addClass('hidden');
+        $('.scheme-' + schemeId).removeClass('hidden');
+
+        $('.scheme-item').removeClass('active');
+        $('.scheme-item-' + schemeId).addClass('active');
+
+        document.cookie='PowerPreference=' + schemeId;
+    });
+
     // Add the ability to sort the overall standings table
     $('.overall-table table').tablesorter({
         sortList: [[2,1]],
@@ -71,37 +82,4 @@ $(document).ready(function(){
         $('.newsletter-container').toggleClass('hidden');
         $('.newsletter-export').toggleClass('selected');
     });
-});
-
-// Toggles all-play/power points and stores the last user preference in a cookie
-$(document).ready(function(){
-    $('.toggle-display').click(function() {
-        if($(this).hasClass('showing-power')) {
-            $(this).removeClass('showing-power');
-            $(this).addClass('showing-record');
-            
-            document.cookie="PowerPreference=record";
-        } else {
-            $(this).removeClass('showing-record');
-            $(this).addClass('showing-power');
-
-            document.cookie="PowerPreference=power";
-        }
-        $('.record-visible').toggleClass('hidden');
-        $('.power-visible').toggleClass('hidden');
-    });
-
-    var preference = document.cookie.replace(/(?:(?:^|.*;\s*)PowerPreference\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-    if(preference === 'power') {
-        $('.record-visible').addClass('hidden')
-        $('.power-visible').removeClass('hidden')
-        $('.toggle-display').addClass('showing-power')
-        $('.toggle-display').removeClass('showing-record')
-    } else if(preference === 'record') {
-        $('.power-visible').addClass('hidden')
-        $('.record-visible').removeClass('hidden')
-        $('.toggle-display').addClass('showing-record')
-        $('.toggle-display').removeClass('showing-power')
-    }
-
 });

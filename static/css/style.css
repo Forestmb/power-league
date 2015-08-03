@@ -43,6 +43,23 @@ a:hover, a:focus {
     opacity: 1.0
 }
 
+.league-link,
+.league-link:hover,
+.league-link:focus,
+.league-link:active {
+    color: #333;
+    text-decoration: none;
+}
+
+.league-link .glyphicon {
+    font-size: 17px;
+    color: #ACC6D4;
+}
+
+.league-link:hover .glyphicon {
+    color: #1E75A2;
+}
+
 .overview-jumbotron {
     background: #2489BD;
     background-image: url("../images/power-podium.png"); /* fallback */
@@ -105,17 +122,45 @@ a:hover, a:focus {
     }
 }
 
-.toggle-display {
+.scheme-choice {
     margin-top: 5px;
     width: 100%;
     float: right;
 }
 
+.scheme-choice .dropdown-toggle {
+    width: 100%;
+}
+
+.scheme-choice .dropdown-menu {
+    width: 100%;
+}
+
+.scheme-choice .dropdown-menu>li>a {
+    padding: 7px 20px;
+}
+
+.scheme-choice .dropdown-menu>li.active {
+    background: #2489BD;
+}
+
 @media (min-width: 768px) {
-    .toggle-display {
+    .scheme-choice {
         margin-top: 0px;
         width: 175px;
     }
+
+    .scheme-choice .dropdown-toggle {
+        width: 175px;
+    }
+
+    .scheme-choice .dropdown-menu {
+        width: 175px;
+    }
+}
+
+.view-scheme {
+    cursor: pointer;
 }
 
 .weekly {

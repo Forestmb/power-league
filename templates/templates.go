@@ -64,13 +64,14 @@ func NewTemplatesFromDir(dir string) Templates {
 // RankingsPageContent is used to show an given league's power rankings up
 // to a certain week in the season.
 type RankingsPageContent struct {
-	Weeks                 int
-	League                *goff.League
-	LeagueStarted         bool
-	LeaguePowerData       *rankings.LeaguePowerData
-	DisplayAllPlayRecords bool
-	LoggedIn              bool
-	SiteConfig            *SiteConfig
+	Weeks           int
+	League          *goff.League
+	LeagueStarted   bool
+	SchemeIDToShow  string
+	Schemes         []rankings.Scheme
+	LeaguePowerData []*rankings.LeaguePowerData
+	LoggedIn        bool
+	SiteConfig      *SiteConfig
 }
 
 // YearlyLeagues describes the leagues for a user for a given year.
@@ -247,11 +248,11 @@ func templateGetPlacingTeams(powerData []*rankings.TeamPowerData) []*rankings.Te
 }
 
 func templateGetRecord(week int, teamPowerData *rankings.TeamPowerData) *goff.Record {
-	return teamPowerData.AllRankings[week-1].OverallRecord
+	return teamPowerData.AllRankings[week-1].Record
 }
 
 func templateGetPowerScore(week int, teamPowerData *rankings.TeamPowerData) string {
-	return fmt.Sprintf("%.0f", teamPowerData.AllRankings[week-1].PowerScore)
+	return fmt.Sprintf("%.2f", teamPowerData.AllRankings[week-1].Score)
 }
 
 func templateGetRankings(powerData rankings.LeaguePowerData, finished bool) []*rankings.TeamPowerData {
@@ -307,16 +308,26 @@ func templateGetExportFilename(l *goff.League) string {
 }
 
 func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
+	scheme := leagueData.RankingScheme
 	var buffer bytes.Buffer
 	separator := ","
 	buffer.WriteString("Rank,")
 	buffer.WriteString("Projected Rank,")
 	buffer.WriteString("Team,")
 	buffer.WriteString("Manager,")
-	buffer.WriteString("Power Points,")
-	buffer.WriteString("Projected Power Points,")
-	buffer.WriteString("All-Play Record,")
-	buffer.WriteString("Projected All-Play Record,")
+	if scheme.Type() == rankings.RECORD {
+		buffer.WriteString(scheme.DisplayName())
+		buffer.WriteString(" Record,")
+		buffer.WriteString("Projected ")
+		buffer.WriteString(scheme.DisplayName())
+		buffer.WriteString(" Record,")
+	} else {
+		buffer.WriteString(scheme.DisplayName())
+		buffer.WriteString(",")
+		buffer.WriteString("Projected ")
+		buffer.WriteString(scheme.DisplayName())
+		buffer.WriteString(",")
+	}
 	buffer.WriteString("League Rank,")
 	buffer.WriteString("League Rank Offset,")
 	buffer.WriteString("League Record")
@@ -334,9 +345,11 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		buffer.WriteString(weekStr)
 		buffer.WriteString("Overall Rank")
 		buffer.WriteString(weekStr)
-		buffer.WriteString("Overall Power Points")
-		buffer.WriteString(weekStr)
-		buffer.WriteString("Overall All-Play Record")
+		buffer.WriteString("Overall ")
+		buffer.WriteString(scheme.DisplayName())
+		if scheme.Type() == rankings.RECORD {
+			buffer.WriteString(" Record")
+		}
 	}
 	buffer.WriteString("\n")
 	for _, teamData := range leagueData.OverallRankings {
@@ -348,15 +361,17 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		buffer.WriteString(separator)
 		buffer.WriteString(teamData.Team.Managers[0].Nickname)
 		buffer.WriteString(separator)
-		buffer.WriteString(
-			strconv.FormatFloat(teamData.TotalPowerScore, 'f', 2, 64))
-		buffer.WriteString(separator)
-		buffer.WriteString(
-			strconv.FormatFloat(teamData.ProjectedPowerScore, 'f', 2, 64))
-		buffer.WriteString(separator)
-		writeRecordToBuffer(&buffer, teamData.OverallRecord)
-		buffer.WriteString(separator)
-		writeRecordToBuffer(&buffer, teamData.OverallProjectedRecord)
+		if scheme.Type() == rankings.RECORD {
+			writeRecordToBuffer(&buffer, teamData.OverallRecord)
+			buffer.WriteString(separator)
+			writeRecordToBuffer(&buffer, teamData.ProjectedOverallRecord)
+		} else {
+			buffer.WriteString(
+				strconv.FormatFloat(teamData.TotalScore, 'f', 2, 64))
+			buffer.WriteString(separator)
+			buffer.WriteString(
+				strconv.FormatFloat(teamData.ProjectedTotalScore, 'f', 2, 64))
+		}
 		buffer.WriteString(separator)
 		buffer.WriteString(strconv.Itoa(teamData.Team.TeamStandings.Rank))
 		buffer.WriteString(separator)
@@ -368,18 +383,20 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		writeRecordToBuffer(&buffer, &teamData.Team.TeamStandings.Record)
 		for index, weeklyScore := range teamData.AllScores {
 			buffer.WriteString(separator)
-			buffer.WriteString(strconv.FormatFloat(weeklyScore.Score, 'f', 2, 64))
+			buffer.WriteString(strconv.FormatFloat(weeklyScore.FantasyScore, 'f', 2, 64))
 			buffer.WriteString(separator)
 			buffer.WriteString(strconv.Itoa(weeklyScore.Rank))
 			buffer.WriteString(separator)
 			buffer.WriteString(strconv.Itoa(teamData.AllRankings[index].Rank))
 			buffer.WriteString(separator)
-			buffer.WriteString(
-				strconv.FormatFloat(
-					teamData.AllRankings[index].PowerScore, 'f', 2, 64))
-			buffer.WriteString(separator)
-			writeRecordToBuffer(
-				&buffer, teamData.AllRankings[index].OverallRecord)
+			if scheme.Type() == rankings.RECORD {
+				writeRecordToBuffer(
+					&buffer, teamData.AllRankings[index].Record)
+			} else {
+				buffer.WriteString(
+					strconv.FormatFloat(
+						teamData.AllRankings[index].Score, 'f', 2, 64))
+			}
 		}
 		buffer.WriteString("\n")
 	}

@@ -8,6 +8,7 @@
   of the season.
 - Improved mobile authorization flow.
 - Vendoring dependencies with godep.
+- Added 'Victory Points' and 'Total Points' ranking schemes.
 
 ## 0.3.0 (2015-01-09) ##
 

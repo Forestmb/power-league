@@ -47,7 +47,7 @@ func TestWriteRankingsTemplate(t *testing.T) {
 	content := &RankingsPageContent{
 		Weeks:           12,
 		League:          &(mockLeagues()[0]),
-		LeaguePowerData: mockLeaguePowerData(),
+		LeaguePowerData: []*rankings.LeaguePowerData{mockLeaguePowerData()},
 		SiteConfig:      mockSiteConfig(),
 	}
 
@@ -77,7 +77,7 @@ func TestWriteRankingsTemplateError(t *testing.T) {
 	content := &RankingsPageContent{
 		Weeks:           12,
 		League:          &(mockLeagues()[0]),
-		LeaguePowerData: mockLeaguePowerData(),
+		LeaguePowerData: []*rankings.LeaguePowerData{mockLeaguePowerData()},
 		SiteConfig:      mockSiteConfig(),
 	}
 
@@ -209,19 +209,19 @@ func TestTemplateGetPowerScore(t *testing.T) {
 	teamPowerData := &rankings.TeamPowerData{
 		AllRankings: []*rankings.TeamRankingData{
 			&rankings.TeamRankingData{
-				PowerScore: 3.0,
+				Score: 3.0,
 			},
 			&rankings.TeamRankingData{
-				PowerScore: 7.0,
+				Score: 7.0,
 			},
 			&rankings.TeamRankingData{
-				PowerScore: 17.0,
+				Score: 17.0,
 			},
 		},
 	}
 	for i, rankingData := range teamPowerData.AllRankings {
 		scoreStr := templateGetPowerScore(i+1, teamPowerData)
-		expectedScoreStr := fmt.Sprintf("%.0f", rankingData.PowerScore)
+		expectedScoreStr := fmt.Sprintf("%.2f", rankingData.Score)
 		if scoreStr != expectedScoreStr {
 			t.Fatalf("Assertion error. Incorrect power score calculated for given week."+
 				"\n\tExpected: %s\n\tActual: %s",
@@ -579,7 +579,7 @@ func TestTemplateGetExportFilename(t *testing.T) {
 	}
 }
 
-func TestTemplateGetCSVContent(t *testing.T) {
+func TestTemplateGetCSVContentRecordScheme(t *testing.T) {
 	leagueData := mockLeaguePowerData()
 	csvBase64 := templateGetCSVContent(leagueData)
 	csv, err := base64.StdEncoding.DecodeString(csvBase64)
@@ -595,10 +595,8 @@ func TestTemplateGetCSVContent(t *testing.T) {
 			"Projected Rank," +
 			"Team," +
 			"Manager," +
-			"Power Points," +
-			"Projected Power Points," +
-			"All-Play Record," +
-			"Projected All-Play Record," +
+			"Mock Scheme Record," +
+			"Projected Mock Scheme Record," +
 			"League Rank," +
 			"League Rank Offset," +
 			"League Record"
@@ -613,8 +611,103 @@ func TestTemplateGetCSVContent(t *testing.T) {
 		expectedTitle += weekStr + "Fantasy Points"
 		expectedTitle += weekStr + "Weekly Rank"
 		expectedTitle += weekStr + "Overall Rank"
-		expectedTitle += weekStr + "Overall Power Points"
-		expectedTitle += weekStr + "Overall All-Play Record"
+		expectedTitle += weekStr + "Overall Mock Scheme Record"
+	}
+
+	if titleLine != expectedTitle {
+		t.Fatalf("Unexpected title line in CSV content:\n\tExpected: %s"+
+			"\n\tActual: %s",
+			expectedTitle,
+			titleLine)
+	}
+
+	for _, teamData := range leagueData.OverallRankings {
+		csvScanner.Scan()
+		teamContent := csvScanner.Text()
+		expectedContent :=
+			fmt.Sprintf(
+				"%d,"+
+					"%d,"+
+					"%s,"+
+					"%s,"+
+					"%d-%d-%d,"+
+					"%d-%d-%d,"+
+					"%d,"+
+					"%s,"+
+					"%d-%d-%d",
+				teamData.Rank,
+				teamData.ProjectedRank,
+				teamData.Team.Name,
+				teamData.Team.Managers[0].Nickname,
+				teamData.OverallRecord.Wins,
+				teamData.OverallRecord.Losses,
+				teamData.OverallRecord.Ties,
+				teamData.ProjectedOverallRecord.Wins,
+				teamData.ProjectedOverallRecord.Losses,
+				teamData.ProjectedOverallRecord.Ties,
+				teamData.Team.TeamStandings.Rank,
+				templateGetRankOffset(teamData.Rank, teamData.Team.TeamStandings.Rank),
+				teamData.Team.TeamStandings.Record.Wins,
+				teamData.Team.TeamStandings.Record.Losses,
+				teamData.Team.TeamStandings.Record.Ties)
+		for i, teamScoreData := range teamData.AllScores {
+			ranking := teamData.AllRankings[i]
+			expectedContent +=
+				fmt.Sprintf(
+					",%.2f"+
+						",%d"+
+						",%d"+
+						",%d-%d-%d",
+					teamScoreData.FantasyScore,
+					teamScoreData.Rank,
+					ranking.Rank,
+					ranking.Record.Wins,
+					ranking.Record.Losses,
+					ranking.Record.Ties)
+		}
+
+		if teamContent != expectedContent {
+			t.Fatalf("Unexpected content returned for team:\n\tExpected: %s\n\tActual: %s\n",
+				expectedContent,
+				teamContent)
+		}
+	}
+}
+
+func TestTemplateGetCSVContentScoreScheme(t *testing.T) {
+	leagueData := mockLeaguePowerData()
+	leagueData.RankingScheme = mockScoreScheme{}
+	csvBase64 := templateGetCSVContent(leagueData)
+	csv, err := base64.StdEncoding.DecodeString(csvBase64)
+	if err != nil {
+		t.Fatalf("Error decoding content from Base64: %s", err)
+	}
+	csvScanner := bufio.NewScanner(bytes.NewReader(csv))
+
+	csvScanner.Scan()
+	titleLine := csvScanner.Text()
+	expectedTitle :=
+		"Rank," +
+			"Projected Rank," +
+			"Team," +
+			"Manager," +
+			"Mock Scheme Points," +
+			"Projected Mock Scheme Points," +
+			"League Rank," +
+			"League Rank Offset," +
+			"League Record"
+
+	for _, weeklyRanking := range leagueData.ByWeek {
+		var weekStr string
+		if weeklyRanking.Projected {
+			weekStr = fmt.Sprintf(",[Projected] Week %d ", weeklyRanking.Week)
+		} else {
+			weekStr = fmt.Sprintf(",Week %d ", weeklyRanking.Week)
+		}
+		expectedTitle += weekStr + "Fantasy Points"
+		expectedTitle += weekStr + "Weekly Rank"
+		expectedTitle += weekStr + "Overall Rank"
+		expectedTitle += weekStr + "Overall Mock Scheme Points"
 	}
 
 	if titleLine != expectedTitle {
@@ -635,8 +728,6 @@ func TestTemplateGetCSVContent(t *testing.T) {
 					"%s,"+
 					"%.2f,"+
 					"%.2f,"+
-					"%d-%d-%d,"+
-					"%d-%d-%d,"+
 					"%d,"+
 					"%s,"+
 					"%d-%d-%d",
@@ -644,14 +735,8 @@ func TestTemplateGetCSVContent(t *testing.T) {
 				teamData.ProjectedRank,
 				teamData.Team.Name,
 				teamData.Team.Managers[0].Nickname,
-				teamData.TotalPowerScore,
-				teamData.ProjectedPowerScore,
-				teamData.OverallRecord.Wins,
-				teamData.OverallRecord.Losses,
-				teamData.OverallRecord.Ties,
-				teamData.OverallProjectedRecord.Wins,
-				teamData.OverallProjectedRecord.Losses,
-				teamData.OverallProjectedRecord.Ties,
+				teamData.TotalScore,
+				teamData.ProjectedTotalScore,
 				teamData.Team.TeamStandings.Rank,
 				templateGetRankOffset(teamData.Rank, teamData.Team.TeamStandings.Rank),
 				teamData.Team.TeamStandings.Record.Wins,
@@ -664,15 +749,11 @@ func TestTemplateGetCSVContent(t *testing.T) {
 					",%.2f"+
 						",%d"+
 						",%d"+
-						",%.2f"+
-						",%d-%d-%d",
-					teamScoreData.Score,
+						",%.2f",
+					teamScoreData.FantasyScore,
 					teamScoreData.Rank,
 					ranking.Rank,
-					ranking.PowerScore,
-					ranking.OverallRecord.Wins,
-					ranking.OverallRecord.Losses,
-					ranking.OverallRecord.Ties)
+					ranking.Score)
 		}
 
 		if teamContent != expectedContent {
@@ -687,21 +768,21 @@ func TestTemplateGetRecord(t *testing.T) {
 	teamPowerData := &rankings.TeamPowerData{
 		AllRankings: []*rankings.TeamRankingData{
 			&rankings.TeamRankingData{
-				OverallRecord: &goff.Record{
+				Record: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
 			},
 			&rankings.TeamRankingData{
-				OverallRecord: &goff.Record{
+				Record: &goff.Record{
 					Wins:   3,
 					Losses: 4,
 					Ties:   5,
 				},
 			},
 			&rankings.TeamRankingData{
-				OverallRecord: &goff.Record{
+				Record: &goff.Record{
 					Wins:   6,
 					Losses: 10,
 					Ties:   14,
@@ -775,39 +856,82 @@ func mockWriter() *MockResponseWriter {
 	return &MockResponseWriter{content: ""}
 }
 
+type mockRecordScheme struct{}
+
+func (m mockRecordScheme) ID() string {
+	return "id"
+}
+
+func (m mockRecordScheme) DisplayName() string {
+	return "Mock Scheme"
+}
+
+func (m mockRecordScheme) Type() string {
+	return rankings.RECORD
+}
+
+func (m mockRecordScheme) CalculateWeeklyRankings(
+	week int,
+	teams []goff.Team,
+	projected bool,
+	results chan *rankings.WeeklyRanking) {
+}
+
+type mockScoreScheme struct{}
+
+func (m mockScoreScheme) ID() string {
+	return "id"
+}
+
+func (m mockScoreScheme) DisplayName() string {
+	return "Mock Scheme Points"
+}
+
+func (m mockScoreScheme) Type() string {
+	return rankings.SCORE
+}
+
+func (m mockScoreScheme) CalculateWeeklyRankings(
+	week int,
+	teams []goff.Team,
+	projected bool,
+	results chan *rankings.WeeklyRanking) {
+}
+
 func mockLeaguePowerData() *rankings.LeaguePowerData {
 	return &rankings.LeaguePowerData{
+		RankingScheme: mockRecordScheme{},
 		OverallRankings: rankings.PowerRankings{
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      22.0,
-						Rank:       3,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 22.0,
+						Rank:         3,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      32.0,
-						Rank:       2,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 32.0,
+						Rank:         2,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 13.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 13.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -816,10 +940,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 3,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       1,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  1,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -827,10 +951,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       1,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  1,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -838,10 +962,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       3,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  3,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -853,33 +977,33 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      22.0,
-						Rank:       3,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 22.0,
+						Rank:         3,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      32.0,
-						Rank:       2,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 32.0,
+						Rank:         2,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 14.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 14.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -888,10 +1012,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 2,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       2,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  2,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -899,10 +1023,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       3,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  3,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -910,10 +1034,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       2,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  2,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -925,33 +1049,33 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      22.0,
-						Rank:       3,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 22.0,
+						Rank:         3,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      32.0,
-						Rank:       2,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 32.0,
+						Rank:         2,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 15.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 15.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -960,10 +1084,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 1,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       3,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  3,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -971,10 +1095,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       1,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  1,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -982,10 +1106,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       1,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  1,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -999,21 +1123,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 15.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 15.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -1022,10 +1146,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 1,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       1,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  1,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -1033,10 +1157,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       2,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  2,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -1044,10 +1168,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       3,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  3,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -1059,21 +1183,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 14.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 14.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -1082,10 +1206,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 2,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       2,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  2,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -1093,10 +1217,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       3,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  3,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -1104,10 +1228,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       2,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  2,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -1119,21 +1243,21 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 				},
 				Team:                mockTeam(),
-				TotalPowerScore:     12.0,
-				ProjectedPowerScore: 13.0,
+				TotalScore:          12.0,
+				ProjectedTotalScore: 13.0,
 				OverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
 				},
-				OverallProjectedRecord: &goff.Record{
+				ProjectedOverallRecord: &goff.Record{
 					Wins:   1,
 					Losses: 2,
 					Ties:   3,
@@ -1142,10 +1266,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				ProjectedRank: 3,
 				AllRankings: []*rankings.TeamRankingData{
 					&rankings.TeamRankingData{
-						Week:       1,
-						Rank:       3,
-						PowerScore: 12.0,
-						OverallRecord: &goff.Record{
+						Week:  1,
+						Rank:  3,
+						Score: 12.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 3,
 							Ties:   0,
@@ -1153,10 +1277,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       2,
-						Rank:       1,
-						PowerScore: 22.0,
-						OverallRecord: &goff.Record{
+						Week:  2,
+						Rank:  1,
+						Score: 22.0,
+						Record: &goff.Record{
 							Wins:   3,
 							Losses: 7,
 							Ties:   1,
@@ -1164,10 +1288,10 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 						Projected: false,
 					},
 					&rankings.TeamRankingData{
-						Week:       3,
-						Rank:       1,
-						PowerScore: 32.0,
-						OverallRecord: &goff.Record{
+						Week:  3,
+						Rank:  1,
+						Score: 32.0,
+						Record: &goff.Record{
 							Wins:   7,
 							Losses: 9,
 							Ties:   2,
@@ -1183,22 +1307,22 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				Projected: false,
 				Rankings: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      34.0,
-						Rank:       2,
-						PowerScore: 23.0,
+						Team:         mockTeam(),
+						FantasyScore: 34.0,
+						Rank:         2,
+						PowerScore:   23.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      38.0,
-						Rank:       3,
-						PowerScore: 21.0,
+						Team:         mockTeam(),
+						FantasyScore: 38.0,
+						Rank:         3,
+						PowerScore:   21.0,
 					},
 				},
 			},
@@ -1207,22 +1331,22 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				Projected: false,
 				Rankings: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      34.0,
-						Rank:       2,
-						PowerScore: 23.0,
+						Team:         mockTeam(),
+						FantasyScore: 34.0,
+						Rank:         2,
+						PowerScore:   23.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      38.0,
-						Rank:       3,
-						PowerScore: 21.0,
+						Team:         mockTeam(),
+						FantasyScore: 38.0,
+						Rank:         3,
+						PowerScore:   21.0,
 					},
 				},
 			},
@@ -1231,22 +1355,22 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 				Projected: true,
 				Rankings: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      12.0,
-						Rank:       1,
-						PowerScore: 36.0,
+						Team:         mockTeam(),
+						FantasyScore: 12.0,
+						Rank:         1,
+						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      34.0,
-						Rank:       2,
-						PowerScore: 23.0,
+						Team:         mockTeam(),
+						FantasyScore: 34.0,
+						Rank:         2,
+						PowerScore:   23.0,
 					},
 					&rankings.TeamScoreData{
-						Team:       mockTeam(),
-						Score:      38.0,
-						Rank:       3,
-						PowerScore: 21.0,
+						Team:         mockTeam(),
+						FantasyScore: 38.0,
+						Rank:         3,
+						PowerScore:   21.0,
 					},
 				},
 			},

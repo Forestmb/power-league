@@ -8,17 +8,37 @@
         {{template "nav" .}}
         <div class="container">
         {{if .}}
-        {{$showRecords := .DisplayAllPlayRecords}}
-            <h2>{{.League.Name}}
+            {{$chosenSchemeId := .SchemeIDToShow}}
+            <h2>
+                <a class="league-link" href="{{.League.URL}}">
+                    {{.League.Name}}
+                    <span class="glyphicon glyphicon-link" aria-hidden="true">
+                    </span>
+                </a>
                 {{if .LeagueStarted}}
-                    <button type="button" class="btn btn-primary toggle-display">
-                        <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                            Show All-Play Records
-                        </span>
-                        <span class="record-visible {{if not $showRecords}} hidden {{end}}">
-                            Show Power Points
-                        </span>
-                    </button>
+                    <div class="dropdown scheme-choice">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            {{range .Schemes}}
+                                {{if eq .ID $chosenSchemeId}}
+                                    <span class="scheme-based scheme-{{.ID}}">{{.DisplayName}}</span>
+                                {{else}}
+                                    <span class="scheme-based scheme-{{.ID}} hidden">{{.DisplayName}}</span>
+                                {{end}}
+                            {{end}}
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            {{range .Schemes}}
+                                {{if eq .ID $chosenSchemeId}}
+                                <li class="scheme-item-{{.ID}} scheme-item active">
+                                {{else}}
+                                <li class="scheme-item-{{.ID}} scheme-item">
+                                {{end}}
+                                    <a class="view-scheme" data-scheme-id="{{.ID}}" id="view-scheme-{{.ID}}">{{.DisplayName}}</a>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </div>
                 {{end}}
             </h2>
             {{if .LeagueStarted}}
@@ -34,7 +54,7 @@
                            <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
                         </a>
                         <a class="export-data-link rankings-action"
-                           title="Export Power Rankings"
+                           title="Export Rankings"
                            data-toggle="modal"
                            data-target=".export-modal">
                            <span class="export-data-label rankings-action-label">Export</span>
@@ -52,19 +72,30 @@
                                 <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                                     <div class="btn-group" data-toggle="buttons">
-                                        <label class="btn btn-default active show-power-rank-graph">
-                                            <input type="radio" autocomplete="off" checked>
-                                            Power Rank
-                                        </label>
-                                        <label class="btn btn-default show-fantasy-points-graph" >
+                                        {{range .Schemes}}
+                                            {{if eq .ID $chosenSchemeId}}
+                                                <label class="btn btn-default active show-{{.ID}}-rank-graph show-graph" data-graph-id="{{.ID}}">
+                                                    <input type="radio" autocomplete="off" checked>
+                                                    {{.DisplayName}} Rank
+                                                </label>
+                                            {{else}}
+                                                <label class="btn btn-default show-{{.ID}}-rank-graph show-graph" data-graph-id="{{.ID}}">
+                                                    <input type="radio" autocomplete="off">
+                                                    {{.DisplayName}} Rank
+                                                </label>
+                                            {{end}}
+                                        {{end}}
+                                        <label class="btn btn-default show-fantasy-points-graph show-graph" data-graph-id="fantasy-points" >
                                             <input type="radio" autocomplete="off">
                                             Fantasy Points
                                         </label>
                                     </div>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="rankings-chart chart">
-                                    </div>
+                                    {{range .Schemes}}
+                                        <div class="rankings-chart-{{.ID}} chart">
+                                        </div>
+                                    {{end}}
                                     <div class="fantasy-points-chart chart">
                                     </div>
                                 </div>
@@ -82,14 +113,22 @@
                                 </div>
                                 <div class="modal-body">
                                     <div class="export-option export-option-1">
-                                        <a class="btn btn-primary"
-                                           href="data:text/csv;base64,{{getCSVContent .LeaguePowerData}}"
-                                           download="{{getExportFilename .League}}.csv">
-                                           <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
-                                           <br/>
-                                           <br/>
-                                           Download as CSV
-                                        </a>
+                                        {{$league := .League}}
+                                        {{range .LeaguePowerData}}
+                                            <a
+                                            {{if eq .RankingScheme.ID $chosenSchemeId}}
+                                                class="btn btn-primary scheme-based scheme-{{.RankingScheme.ID}}"
+                                            {{else}}
+                                                class="btn btn-primary scheme-based scheme-{{.RankingScheme.ID}} hidden"
+                                            {{end}}
+                                                href="data:text/csv;base64,{{getCSVContent .}}"
+                                                download="{{getExportFilename $league}}.csv">
+                                               <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+                                               <br/>
+                                               <br/>
+                                               Download as CSV
+                                            </a>
+                                        {{end}}
                                     </div>
                                     <div class="export-option export-option-2">
                                         <a class="btn btn-primary newsletter-export">
@@ -107,29 +146,39 @@
                                     {{else}}
                                     <h4>{{.League.Name}} Power Rankings Week {{$currentWeek}}</h4>
                                     {{end}}
-                                    {{with .LeaguePowerData}}
+                                    {{range .LeaguePowerData}}
+                                        {{$scheme := .RankingScheme}}
+                                        {{if eq .RankingScheme.ID $chosenSchemeId}}
+                                            <div class="scheme-based scheme-{{.RankingScheme.ID}}">
+                                        {{else}}
+                                            <div class="scheme-based scheme-{{.RankingScheme.ID}} hidden">
+                                        {{end}}
                                         {{with .OverallRankings}}
                                             {{$overall := .}}
                                             {{range $index, $teamRanking := .}}
-                                            {{$previous := getRankForPreviousWeek . $currentWeek}}
-                                            <h5>{{.Rank}}.
-                                                    {{if $previous}}
-                                                        {{if lt $previous.Offset 0}}
-                                                        <span class="rank-decrease">
-                                                            (▾ {{getAbsoluteValue $previous.Offset}})
-                                                        </span>
-                                                        {{else if gt $previous.Offset 0}}
-                                                        <span class="rank-increase">
-                                                            (▴ {{$previous.Offset}})
-                                                        </span>
+                                                {{$previous := getRankForPreviousWeek . $currentWeek}}
+                                                <h5>{{.Rank}}.
+                                                        {{if $previous}}
+                                                            {{if lt $previous.Offset 0}}
+                                                            <span class="rank-decrease">
+                                                                (▾ {{getAbsoluteValue $previous.Offset}})
+                                                            </span>
+                                                            {{else if gt $previous.Offset 0}}
+                                                            <span class="rank-increase">
+                                                                (▴ {{$previous.Offset}})
+                                                            </span>
+                                                            {{end}}
                                                         {{end}}
-                                                    {{end}}
-                                                    {{.Team.Name}} -
-                                                    {{printf "%.0f" .TotalPowerScore}} Power Points -
-                                                    {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall
-                                            </h5>
+                                                        {{.Team.Name}} -
+                                                        {{if eq $scheme.Type "record"}}
+                                                            {{.OverallRecord.Wins}}-{{.OverallRecord.Losses}}-{{.OverallRecord.Ties}} Overall
+                                                        {{else}}
+                                                            {{printf "%.2f" .TotalScore}} {{$scheme.DisplayName}}
+                                                        {{end}}
+                                                </h5>
                                             {{end}}
                                         {{end}}
+                                            </div>
                                     {{end}}
                                 </div>
                             </div>
@@ -137,91 +186,99 @@
                     </div>
                     <div class="scrollable">
                         <div class="overall-table-container">
-                            <table class="sortable table table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th class="rank sorter-false"></th>
-                                        <th class="overall-header-team">Team</th>
-                                        <th class="tablesorter-headerDesc overall-header-actual">
-                                            <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                Power Points
-                                            </span>
-                                            <span class="record-visible {{if not $showRecords}} hidden {{end}}">
-                                                Record
-                                            </span>
-                                        </th>
-                                        {{if not $finished}} 
-                                            <th class="overall-header-projected">
-                                                <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                    Projected Power Points
-                                                </span>
-                                                <span class="record-visible {{if not $showRecords}} hidden {{end}}">
-                                                    Projected Record
-                                                </span>
-                                            </th>
-                                        {{end}}
-                                        <th class="overall-header-league-rank">
-                                            League Rank (+/-)
-                                        </th>
-                                        <th class="overall-header-league-record">
-                                            League Record
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                {{with .LeaguePowerData}}
-                                    {{with .OverallRankings}}
-                                        {{$overall := .}}
-                                        {{range $index, $teamRanking := .}}
-                                            {{if .Team.IsOwnedByCurrentLogin}}
-                                            <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}} team-selected">
-                                            {{else}}
-                                            <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}}">
-                                            {{end}}
-                                                <td class="rank">{{.Rank}}</td>
-                                                <td>{{.Team.Name}}</td>
-                                                <td>
-                                                    <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                        {{printf "%.0f" .TotalPowerScore}}
-                                                    </span>
-                                                    <span class="record-visible {{if not $showRecords}} hidden {{end}}">
-                                                        {{.OverallRecord.Wins}} -
-                                                        {{.OverallRecord.Losses}} -
-                                                        {{.OverallRecord.Ties}}
-                                                    </span>
-                                                </td>
-                                                {{if not $finished}} 
-                                                    <td>
-                                                        <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                            {{printf "%.0f" .ProjectedPowerScore}}
-                                                        </span>
-                                                        <span class="record-visible {{if not $showRecords}} hidden {{end}}">
-                                                            {{.OverallProjectedRecord.Wins}} -
-                                                            {{.OverallProjectedRecord.Losses}} -
-                                                            {{.OverallProjectedRecord.Ties}}
-                                                        </span>
-                                                    </td>
-                                                {{end}}
-                                                <td>{{.Team.TeamStandings.Rank}}
-                                                    ({{getRankOffset .Rank .Team.TeamStandings.Rank}})</td>
-                                                <td>
-                                                    {{.Team.TeamStandings.Record.Wins}} -
-                                                    {{.Team.TeamStandings.Record.Losses}} -
-                                                    {{.Team.TeamStandings.Record.Ties}}
-                                                </td>
-                                            </tr>
-                                        {{end}}
-                                    {{end}}
+                            {{range .LeaguePowerData}}
+                                {{if eq .RankingScheme.ID $chosenSchemeId}}
+                                    <div class="scheme-based scheme-{{.RankingScheme.ID}}">
+                                {{else}}
+                                    <div class="scheme-based scheme-{{.RankingScheme.ID}} hidden">
                                 {{end}}
-                                </tbody>
-                            </table>
+                                    <table class="sortable table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th class="rank sorter-false"></th>
+                                                <th class="overall-header-team">Team</th>
+                                                <th class="tablesorter-headerDesc overall-header-actual">
+                                                    {{if eq .RankingScheme.Type "record"}}
+                                                        Record
+                                                    {{else if eq .RankingScheme.Type "score"}}
+                                                        Points
+                                                    {{end}}
+                                                </th>
+                                                {{if not $finished}} 
+                                                    <th class="overall-header-projected">
+                                                        {{if eq .RankingScheme.Type "record"}}
+                                                            Projected Record
+                                                        {{else if eq .RankingScheme.Type "score"}}
+                                                            Projected Power Points
+                                                        {{end}}
+                                                    </th>
+                                                {{end}}
+                                                <th class="overall-header-league-rank">
+                                                    League Rank (+/-)
+                                                </th>
+                                                <th class="overall-header-league-record">
+                                                    League Record
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{$scheme := .RankingScheme}}
+                                            {{with .OverallRankings}}
+                                                {{$overall := .}}
+                                                {{range $index, $teamRanking := .}}
+                                                    {{if .Team.IsOwnedByCurrentLogin}}
+                                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}} team-selected">
+                                                    {{else}}
+                                                    <tr id="overall-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $overall}}">
+                                                    {{end}}
+                                                        <td class="rank">{{.Rank}}</td>
+                                                        <td>{{.Team.Name}}</td>
+                                                        <td>
+                                                            {{if eq $scheme.Type "record"}}
+                                                                {{.OverallRecord.Wins}} -
+                                                                {{.OverallRecord.Losses}} -
+                                                                {{.OverallRecord.Ties}}
+                                                            {{else if eq $scheme.Type "score"}}
+                                                                {{printf "%.2f" .TotalScore}}
+                                                            {{end}}
+                                                        </td>
+                                                        {{if not $finished}} 
+                                                            <td>
+                                                                {{if eq $scheme.Type "record"}}
+                                                                    {{.ProjectedOverallRecord.Wins}} -
+                                                                    {{.ProjectedOverallRecord.Losses}} -
+                                                                    {{.ProjectedOverallRecord.Ties}}
+                                                                {{else if eq $scheme.Type "score"}}
+                                                                    {{printf "%.2f" .ProjectedTotalScore}}
+                                                                {{end}}
+                                                            </td>
+                                                        {{end}}
+                                                        <td>{{.Team.TeamStandings.Rank}}
+                                                            ({{getRankOffset .Rank .Team.TeamStandings.Rank}})</td>
+                                                        <td>
+                                                            {{.Team.TeamStandings.Record.Wins}} -
+                                                            {{.Team.TeamStandings.Record.Losses}} -
+                                                            {{.Team.TeamStandings.Record.Ties}}
+                                                        </td>
+                                                    </tr>
+                                                {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {{end}}
                         </div>
                     </div>
                 </div>
                         {{if .LeaguePowerData}}
-                            <div class="standings">
-                                {{$rankings := getRankings .LeaguePowerData .League.IsFinished}}
-                                {{if .League.IsFinished}}
+                            {{range .LeaguePowerData}}
+                                {{if eq .RankingScheme.ID $chosenSchemeId}}
+                                    <div class="standings scheme-based scheme-{{.RankingScheme.ID}}">
+                                {{else}}
+                                    <div class="standings scheme-based scheme-{{.RankingScheme.ID}} hidden">
+                                {{end}}
+                                {{$rankings := getRankings . $league.IsFinished}}
+                                {{if $league.IsFinished}}
                                     <h3>Final Standings</h3>
                                 {{else}}
                                     <h3>Projected Final Standings</h3>
@@ -229,11 +286,17 @@
                                 {{range $i, $teamData := getPlacingTeams $rankings}}
                                     {{template "final_standing" $teamData}}
                                 {{end}}
-                            </div>
+                                </div>
+                            {{end}}
                         {{end}}
                     <div style="clear:both;"></div>
-                {{with .LeaguePowerData}}
-                    {{$allPowerData := .}}
+                {{range $blah, $allPowerData := .LeaguePowerData}}
+                    {{$scheme := .RankingScheme}}
+                    {{if eq .RankingScheme.ID $chosenSchemeId}}
+                        <div class="scheme-based scheme-{{.RankingScheme.ID}}">
+                    {{else}}
+                        <div class="scheme-based scheme-{{.RankingScheme.ID}} hidden">
+                    {{end}}
                     {{with .ByWeek}}
                         {{range $index, $ranking := .}}
                             {{$week := .Week}}
@@ -250,12 +313,11 @@
                                             <th>Team</th>
                                             <th class="tablesorter-headerDesc">Fantasy</th>
                                             <th>
-                                                <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                    Points
-                                                </span>
-                                                <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                {{if eq $scheme.Type "record"}}
                                                     Record
-                                                </span>
+                                                {{else if eq $scheme.Type "score"}}
+                                                    Points
+                                                {{end}}
                                             </th>
                                         </tr>
                                     </thead>
@@ -265,22 +327,23 @@
                                         {{range $index, $score := .}}
                                             {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
                                             {{if .Team.IsOwnedByCurrentLogin}}
-                                            <tr id="week-{{$week}}-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
+                                            <tr id="week-{{$week}}-{{.Team.TeamID}}"
+                                                class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
                                             {{else}}
-                                            <tr id="week-{{$week}}-{{.Team.TeamID}}" class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
+                                            <tr id="week-{{$week}}-{{.Team.TeamID}}"
+                                                class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
                                             {{end}}
                                                 <td>{{.Team.Name}}</td>
-                                                <td>{{printf "%.2f" .Score}}</td>
+                                                <td>{{printf "%.2f" .FantasyScore}}</td>
                                                 {{$record := getRecord $week $teamPowerData}}
                                                 <td>
-                                                    <span class="power-visible {{if $showRecords}} hidden {{end}}">
-                                                        {{getPowerScore $week $teamPowerData}}
-                                                    </span>
-                                                    <span class="record-visible {{if not $showRecords}} hidden {{end}}">
+                                                    {{if eq $scheme.Type "record"}}
                                                         {{$record.Wins}} -
                                                         {{$record.Losses}} -
                                                         {{$record.Ties}}
-                                                    </span>
+                                                    {{else if eq $scheme.Type "score"}}
+                                                        {{getPowerScore $week $teamPowerData}}
+                                                    {{end}}
                                                 </td>
                                             </tr>
                                         {{end}}     
@@ -290,6 +353,7 @@
                             </div>
                         {{end}}
                     {{end}}
+                </div>
                 {{end}}
                 {{if not $finished}}
                     <div class="projection-note projection">
@@ -306,7 +370,7 @@
         {{template "footer" .}}
         <script src="{{.SiteConfig.StaticContext}}js/power-rankings.js"></script>
         <script src="//code.highcharts.com/highcharts.js"></script>
-        {{if and . .LeaguePowerData}}
+        {{if .LeaguePowerData}}
         <script>
             var colors = [
                 'hsl(100, 58%, 75%)',
@@ -331,7 +395,8 @@
                 'hsl(310, 48%, 55%)'
             ];
             var selectedTeamsById = {};
-            {{range .LeaguePowerData.OverallRankings}}
+            {{$defaultPowerData := index .LeaguePowerData 0}}
+            {{range $defaultPowerData.OverallRankings}}
                 {{if .Team.IsOwnedByCurrentLogin}}
                     selectedTeamsById[{{.Team.TeamID}}] = true;
                 {{end}}
@@ -341,9 +406,12 @@
                 selectedTeamsById[teamId] = !selectedTeamsById[teamId];
             });
 
-            var showRankingsChart = function() {
-                $('.rankings-chart').show();
-                $('.rankings-chart').highcharts({
+            var showGraphFunctions = {};
+
+            {{range .LeaguePowerData}}
+            showGraphFunctions['{{.RankingScheme.ID}}'] = function() {
+                $('.rankings-chart-{{.RankingScheme.ID}}').show();
+                $('.rankings-chart-{{.RankingScheme.ID}}').highcharts({
                     chart: {
                         type: 'spline',
                         spacingRight: 40,
@@ -357,14 +425,12 @@
                             text: 'Week'
                         },
                         categories: [
-                        {{with .LeaguePowerData}}
                             {{$allPowerData := .}}
                             {{with .ByWeek}}
                                 {{range $index, $ranking := .}}
                                     '{{.Week}}',
                                 {{end}}
                             {{end}}
-                        {{end}}
                         ]
                     },
                     yAxis: {
@@ -372,7 +438,7 @@
                             text: 'Rank'
                         },
                         min: 1,
-                        max: {{len .LeaguePowerData.OverallRankings}},
+                        max: {{len .OverallRankings}},
                         tickInterval: 1,
                         reversed: true,
                         plotLines: [{
@@ -412,7 +478,7 @@
                         }
                     },           
                     series: [
-                        {{range $index, $teamData := .LeaguePowerData.OverallRankings}}
+                        {{range $index, $teamData := .OverallRankings}}
                             {
                                 name: '{{$teamData.Team.Name}}',
                                 color: colors[{{$index}}],
@@ -439,8 +505,9 @@
                     ]
                 })
             };
+            {{end}}
 
-            var showFantasyPointsChart = function() {
+            showGraphFunctions['fantasy-points'] = function() {
                 $('.fantasy-points-chart').show();
                 $('.fantasy-points-chart').highcharts({
                     chart: {
@@ -456,7 +523,7 @@
                             text: 'Week'
                         },
                         categories: [
-                        {{with .LeaguePowerData}}
+                        {{with $defaultPowerData}}
                             {{$allPowerData := .}}
                             {{with .ByWeek}}
                                 {{range $index, $ranking := .}}
@@ -507,7 +574,7 @@
                         }
                     },           
                     series: [
-                        {{range $index, $teamData := .LeaguePowerData.OverallRankings}}
+                        {{range $index, $teamData := $defaultPowerData.OverallRankings}}
                             {
                                 name: '{{$teamData.Team.Name}}',
                                 color: colors[{{$index}}],
@@ -525,7 +592,7 @@
                                             {{end}}
                                             },
                                             projected: {{$score.Projected}},
-                                            y: {{$score.Score}},        
+                                            y: {{$score.FantasyScore}},        
                                         },
                                     {{end}}
                                 ]
@@ -538,19 +605,16 @@
             $('.graph-modal').on("show.bs.modal", function () { 
                 $('.graph-modal .chart').hide();
             });
-            var showActiveChart = showRankingsChart;
+            var showActiveChart = showGraphFunctions['{{.SchemeIDToShow}}'];
             $('.graph-modal').on("shown.bs.modal", function () { 
                 showActiveChart();
             });
-            $('.show-power-rank-graph').click(function() {
+            $('.show-graph').click(function() {
                 $('.graph-modal .chart').hide();
-                showRankingsChart();
-                showActiveChart = showRankingsChart;
-            });
-            $('.show-fantasy-points-graph').click(function() {
-                $('.graph-modal .chart').hide();
-                showFantasyPointsChart();
-                showActiveChart = showFantasyPointsChart;
+                var graphId = $(this).attr('data-graph-id');
+                var showGraph = showGraphFunctions[graphId];
+                showGraph();
+                showActiveChart = showGraph;
             });
         </script>
         {{end}}

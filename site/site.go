@@ -250,7 +250,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	client, err := s.sessionManager.GetClient(w, req)
 	if err == nil {
 		glog.V(3).Infof("getting metadata -- league=%s", leagueKey)
-		league, err = client.GetLeagueStandings(leagueKey)
+		league, err = client.GetLeagueMetadata(leagueKey)
 		if err == nil {
 			if league.IsFinished {
 				glog.V(3).Infoln("league is finished")
@@ -270,29 +270,40 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	var rankingsContent *templates.RankingsPageContent
 	if err == nil {
 		glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
-		var leaguePowerData *rankings.LeaguePowerData
+		var leaguePowerData []*rankings.LeaguePowerData
+		var schemes []rankings.Scheme
+		var chosenSchemeID string
 		if leagueStarted {
 			leaguePowerData, err = rankings.GetPowerData(
 				&YahooClient{Client: client},
 				league,
 				currentWeek)
+			for _, powerData := range leaguePowerData {
+				schemes = append(schemes, powerData.RankingScheme)
+			}
+
+			chosenSchemeID = schemes[0].ID()
+			powerPreferenceCookie, cookieErr := req.Cookie("PowerPreference")
+			if cookieErr == nil {
+				for _, scheme := range schemes {
+					if powerPreferenceCookie.Value == scheme.ID() {
+						chosenSchemeID = powerPreferenceCookie.Value
+						break
+					}
+				}
+			}
 		}
 
 		if err == nil {
-			displayAllPlayRecords := false
-			var powerPreferenceCookie *http.Cookie
-			powerPreferenceCookie, err = req.Cookie("PowerPreference")
-			if err == nil {
-				displayAllPlayRecords = powerPreferenceCookie.Value == "record"
-			}
 			rankingsContent = &templates.RankingsPageContent{
-				Weeks:                 currentWeek,
-				League:                league,
-				LeagueStarted:         leagueStarted,
-				LeaguePowerData:       leaguePowerData,
-				DisplayAllPlayRecords: displayAllPlayRecords,
-				LoggedIn:              loggedIn,
-				SiteConfig:            s.config,
+				Weeks:           currentWeek,
+				League:          league,
+				LeagueStarted:   leagueStarted,
+				SchemeIDToShow:  chosenSchemeID,
+				Schemes:         schemes,
+				LeaguePowerData: leaguePowerData,
+				LoggedIn:        loggedIn,
+				SiteConfig:      s.config,
 			}
 
 			err = s.templates.WriteRankingsTemplate(w, rankingsContent)
@@ -396,9 +407,15 @@ type YahooClient struct {
 // Methods needed to circumvent Yahoo's handling of playoff teams on bye weeks
 type yahooGoffClient interface {
 	GetAllTeamStats(leagueKey string, week int) ([]goff.Team, error)
+	GetLeagueStandings(leagueKey string) (*goff.League, error)
 	GetTeamRoster(teamKey string, week int) ([]goff.Player, error)
 	GetPlayersStats(leagueKey string, week int, players []goff.Player) ([]goff.Player, error)
 	GetMatchupsForWeekRange(leagueKey string, startWeek, endWeek int) (map[int][]goff.Matchup, error)
+}
+
+// GetLeagueStandings gets a league containing the current standings.
+func (y *YahooClient) GetLeagueStandings(leagueKey string) (*goff.League, error) {
+	return y.Client.GetLeagueStandings(leagueKey)
 }
 
 // GetMatchupsForWeekRange returns a list of matchups for each week in the
