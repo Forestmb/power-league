@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/Forestmb/power-league",
-	"GoVersion": "go1.4.1",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "devel +cc8f544 Fri Jul 17 03:34:11 2015 +0000",
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go-uuid/uuid",
@@ -12,8 +9,8 @@
 		},
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-15-g07d1c44",
-			"Rev": "07d1c44850dcd02e19df0eaf267f9f921fd41f6d"
+			"Comment": "v0.3.0-16-gc195e5d",
+			"Rev": "c195e5d12101b7191897c92e9bd18e4399c3a371"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",

@@ -65,6 +65,7 @@ var ErrAccessDenied = errors.New(
 // fantasy football game for that year.
 var YearKeys = map[string]string{
 	"nfl":  NflGameKey,
+	"2015": "348",
 	"2014": "331",
 	"2013": "314",
 	"2012": "273",
@@ -190,6 +191,7 @@ type League struct {
 	LeagueKey   string     `xml:"league_key"`
 	LeagueID    uint64     `xml:"league_id"`
 	Name        string     `xml:"name"`
+	URL         string     `xml:"url"`
 	Players     []Player   `xml:"players>player"`
 	Teams       []Team     `xml:"teams>team"`
 	DraftStatus string     `xml:"draft_status"`
