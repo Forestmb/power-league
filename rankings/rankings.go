@@ -354,7 +354,7 @@ func GetPowerData(client PowerRankingsClient, l *goff.League, currentWeek int) (
 					powerDataByTeamKey[teamScoreData.Team.TeamKey] = powerData
 				}
 				powerData.AllScores[weekIndex] = teamScoreData
-				if scheme.Type() == RECORD {
+				if scheme.Type() == Types.RECORD {
 					addRecord(powerData.ProjectedOverallRecord, teamScoreData.Record)
 				} else {
 					powerData.ProjectedTotalScore += teamScoreData.PowerScore
@@ -362,7 +362,7 @@ func GetPowerData(client PowerRankingsClient, l *goff.League, currentWeek int) (
 				if weeklyRanking.Projected {
 					powerData.HasProjections = true
 				} else {
-					if scheme.Type() == RECORD {
+					if scheme.Type() == Types.RECORD {
 						addRecord(powerData.OverallRecord, teamScoreData.Record)
 					} else {
 						powerData.TotalScore += teamScoreData.PowerScore
@@ -388,7 +388,7 @@ func GetPowerData(client PowerRankingsClient, l *goff.League, currentWeek int) (
 			index++
 		}
 
-		if scheme.Type() == RECORD {
+		if scheme.Type() == Types.RECORD {
 			sort.Sort(RecordRankings(sortedPowerData))
 			for i, powerData := range sortedPowerData {
 				// Handle ties
@@ -435,7 +435,7 @@ func GetPowerData(client PowerRankingsClient, l *goff.League, currentWeek int) (
 			sortedProjectionData[index] = powerData
 			index++
 		}
-		if scheme.Type() == RECORD {
+		if scheme.Type() == Types.RECORD {
 			sort.Sort(ProjectedRecordRankings(sortedProjectionData))
 			for i, powerData := range sortedProjectionData {
 				// Handle ties
@@ -534,7 +534,7 @@ func createWeeklyTeamRankings(
 		}
 
 		// Sort by the cumulative power scores and assign ranks for this week
-		if scheme.Type() == RECORD {
+		if scheme.Type() == Types.RECORD {
 			sort.Sort(RecordSortedTeamRankingsData(weeklyTeamRankings[i]))
 			for j, rankingsData := range weeklyTeamRankings[i] {
 				if j > 0 &&

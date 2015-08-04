@@ -129,7 +129,23 @@ a:hover, a:focus {
 }
 
 .scheme-choice .dropdown-toggle {
-    width: 100%;
+    padding: 7px 20px;
+    text-align: left;
+    background: #F8F8F8;
+    border-color: #DDD;
+}
+
+.scheme-choice .dropdown-toggle:hover {
+    border-color: #CCC;
+    background: #EEE;
+}
+
+.scheme-choice .dropdown-toggle .caret {
+    color: #AAA;
+}
+
+.scheme-choice .dropdown-toggle:hover .caret {
+    color: #888;
 }
 
 .scheme-choice .dropdown-menu {
@@ -138,24 +154,47 @@ a:hover, a:focus {
 
 .scheme-choice .dropdown-menu>li>a {
     padding: 7px 20px;
+    white-space: normal;
 }
 
 .scheme-choice .dropdown-menu>li.active {
     background: #2489BD;
 }
 
+.scheme-choice .dropdown-menu .badge {
+    float: right;
+    width: 40px;
+    background: #808080;
+}
+
+.scheme-choice .dropdown-menu .badge sup {
+    top: -.25em;
+    font-size: 75%;
+}
+
+.scheme-choice .dropdown-menu li.active .badge {
+    background: #FFF;
+    color: #337ab7;
+}
+
+@media (max-width: 768px) {
+    .scheme-choice .dropdown-toggle {
+        width: 100%;
+    }
+}
+
 @media (min-width: 768px) {
     .scheme-choice {
         margin-top: 0px;
-        width: 175px;
+        width: 200px;
     }
 
     .scheme-choice .dropdown-toggle {
-        width: 175px;
+        float: right;
     }
 
     .scheme-choice .dropdown-menu {
-        width: 175px;
+        width: 200px;
     }
 }
 

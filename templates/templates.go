@@ -5,6 +5,7 @@ package templates
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -67,7 +68,7 @@ type RankingsPageContent struct {
 	Weeks           int
 	League          *goff.League
 	LeagueStarted   bool
-	SchemeIDToShow  string
+	SchemeToShow    rankings.Scheme
 	Schemes         []rankings.Scheme
 	LeaguePowerData []*rankings.LeaguePowerData
 	LoggedIn        bool
@@ -131,6 +132,7 @@ func (t *defaultTemplates) WriteRankingsTemplate(w io.Writer, content *RankingsP
 		"getTeamPosition":        templateGetTeamPosition,
 		"getRankOffset":          templateGetRankOffset,
 		"getRankForPreviousWeek": templateGetRankForPreviousWeek,
+		"getRankForScheme":       templateGetRankForScheme,
 		"getAbsoluteValue":       templateGetAbsoluteValue,
 		"getCSVContent":          templateGetCSVContent,
 		"getExportFilename":      templateGetExportFilename,
@@ -234,6 +236,9 @@ func templateGetActualRank(teamData *rankings.TeamPowerData) int {
 }
 
 func templateGetPlaceFromRank(rank int, places ...string) string {
+	if rank-1 >= len(places) {
+		return places[len(places)-1]
+	}
 	return places[rank-1]
 }
 
@@ -296,6 +301,25 @@ func templateGetRankForPreviousWeek(teamPowerData *rankings.TeamPowerData, curre
 	return nil
 }
 
+func templateGetRankForScheme(schemeID string, l []*rankings.LeaguePowerData) (int, error) {
+	foundScheme := false
+	for _, powerData := range l {
+		if powerData.RankingScheme.ID() == schemeID {
+			foundScheme = true
+			for _, teamPowerData := range powerData.OverallRankings {
+				if teamPowerData.Team.IsOwnedByCurrentLogin {
+					return teamPowerData.Rank, nil
+				}
+			}
+		}
+	}
+
+	if foundScheme {
+		return 0, errors.New("no team owned by current user")
+	}
+	return 0, errors.New("no scheme with ID '" + schemeID + "' found in league")
+}
+
 // templateGetExportFilename creates a filename for a file containing the
 // power rankings data for that league
 func templateGetExportFilename(l *goff.League) string {
@@ -315,7 +339,7 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 	buffer.WriteString("Projected Rank,")
 	buffer.WriteString("Team,")
 	buffer.WriteString("Manager,")
-	if scheme.Type() == rankings.RECORD {
+	if scheme.Type() == rankings.Types.RECORD {
 		buffer.WriteString(scheme.DisplayName())
 		buffer.WriteString(" Record,")
 		buffer.WriteString("Projected ")
@@ -347,7 +371,7 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		buffer.WriteString(weekStr)
 		buffer.WriteString("Overall ")
 		buffer.WriteString(scheme.DisplayName())
-		if scheme.Type() == rankings.RECORD {
+		if scheme.Type() == rankings.Types.RECORD {
 			buffer.WriteString(" Record")
 		}
 	}
@@ -361,7 +385,7 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 		buffer.WriteString(separator)
 		buffer.WriteString(teamData.Team.Managers[0].Nickname)
 		buffer.WriteString(separator)
-		if scheme.Type() == rankings.RECORD {
+		if scheme.Type() == rankings.Types.RECORD {
 			writeRecordToBuffer(&buffer, teamData.OverallRecord)
 			buffer.WriteString(separator)
 			writeRecordToBuffer(&buffer, teamData.ProjectedOverallRecord)
@@ -389,7 +413,7 @@ func templateGetCSVContent(leagueData *rankings.LeaguePowerData) string {
 			buffer.WriteString(separator)
 			buffer.WriteString(strconv.Itoa(teamData.AllRankings[index].Rank))
 			buffer.WriteString(separator)
-			if scheme.Type() == rankings.RECORD {
+			if scheme.Type() == rankings.Types.RECORD {
 				writeRecordToBuffer(
 					&buffer, teamData.AllRankings[index].Record)
 			} else {

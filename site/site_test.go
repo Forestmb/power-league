@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
+	"github.com/Forestmb/power-league/rankings"
 	"github.com/Forestmb/power-league/templates"
 )
 
@@ -674,6 +675,89 @@ func TestHandlePowerRankingsWriteErrorTemplateError(t *testing.T) {
 	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
+func TestChooseSchemeFromRequestURLParameter(t *testing.T) {
+	unexpected := mockRecordScheme{}
+	expected := mockScoreScheme{}
+	request, _ := http.NewRequest(
+		"GET",
+		"http://example.com:8080/context?scheme="+expected.ID(),
+		nil)
+	actual := chooseSchemeFromRequest(request, []rankings.Scheme{unexpected, expected})
+
+	if expected.ID() != actual.ID() {
+		t.Fatalf("Unexpected scheme chosen from request using URL "+
+			"parameter:\n\tExpected: %s\n\tActual: %s",
+			expected.ID(),
+			actual.ID())
+	}
+
+	request, _ = http.NewRequest(
+		"GET",
+		"http://example.com:8080/context?scheme=invalid-"+expected.ID(),
+		nil)
+	actual = chooseSchemeFromRequest(request, []rankings.Scheme{expected, unexpected})
+
+	if expected.ID() != actual.ID() {
+		t.Fatalf("Unexpected scheme chosen from request using URL "+
+			"parameter:\n\tExpected: %s\n\tActual: %s",
+			expected.ID(),
+			actual.ID())
+	}
+}
+
+func TestChooseSchemeFromRequestCookie(t *testing.T) {
+	unexpected := mockRecordScheme{}
+	expected := mockScoreScheme{}
+	request, _ := http.NewRequest("GET", "http://example.com:8080/context", nil)
+	request.AddCookie(&http.Cookie{
+		Name:   "PowerPreference",
+		Value:  expected.ID(),
+		Path:   "/",
+		Domain: "example.com",
+	})
+	actual := chooseSchemeFromRequest(request, []rankings.Scheme{unexpected, expected})
+
+	if expected.ID() != actual.ID() {
+		t.Fatalf("Unexpected scheme chosen from request using URL "+
+			"parameter:\n\tExpected: %s\n\tActual: %s",
+			expected.ID(),
+			actual.ID())
+	}
+
+	request, _ = http.NewRequest("GET", "http://example.com:8080/context", nil)
+	request.AddCookie(&http.Cookie{
+		Name:   "PowerPreference",
+		Value:  "invalid-id",
+		Path:   "/",
+		Domain: "example.com",
+	})
+	actual = chooseSchemeFromRequest(request, []rankings.Scheme{expected, unexpected})
+	if expected.ID() != actual.ID() {
+		t.Fatalf("Unexpected scheme chosen from request using URL "+
+			"parameter:\n\tExpected: %s\n\tActual: %s",
+			expected.ID(),
+			actual.ID())
+	}
+
+	request, _ = http.NewRequest(
+		"GET",
+		"http://example.com:8080/context?scheme="+expected.ID(),
+		nil)
+	request.AddCookie(&http.Cookie{
+		Name:   "PowerPreference",
+		Value:  unexpected.ID(),
+		Path:   "/",
+		Domain: "example.com",
+	})
+	actual = chooseSchemeFromRequest(request, []rankings.Scheme{unexpected, expected})
+	if expected.ID() != actual.ID() {
+		t.Fatalf("Unexpected scheme chosen from request using URL "+
+			"parameter:\n\tExpected: %s\n\tActual: %s",
+			expected.ID(),
+			actual.ID())
+	}
+}
+
 func TestGetUserLeagues(t *testing.T) {
 	year := "2012"
 	client := &MockUserLeaguesClient{
@@ -1122,6 +1206,48 @@ func (m *MockedContentProvider) Get(url string) (*goff.FantasyContent, error) {
 
 func (m *MockedContentProvider) RequestCount() int {
 	return m.count
+}
+
+type mockScoreScheme struct{}
+
+func (m mockScoreScheme) ID() string {
+	return "score-id"
+}
+
+func (m mockScoreScheme) DisplayName() string {
+	return "Mock Scheme Points"
+}
+
+func (m mockScoreScheme) Type() string {
+	return rankings.Types.SCORE
+}
+
+func (m mockScoreScheme) CalculateWeeklyRankings(
+	week int,
+	teams []goff.Team,
+	projected bool,
+	results chan *rankings.WeeklyRanking) {
+}
+
+type mockRecordScheme struct{}
+
+func (m mockRecordScheme) ID() string {
+	return "record-id"
+}
+
+func (m mockRecordScheme) DisplayName() string {
+	return "Mock Scheme"
+}
+
+func (m mockRecordScheme) Type() string {
+	return rankings.Types.RECORD
+}
+
+func (m mockRecordScheme) CalculateWeeklyRankings(
+	week int,
+	teams []goff.Team,
+	projected bool,
+	results chan *rankings.WeeklyRanking) {
 }
 
 func assertLeaguesEqual(t *testing.T, actualLeagues, expectedLeagues []goff.League) {

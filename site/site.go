@@ -272,7 +272,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 		glog.V(3).Infof("calculating rankings -- week=%d", currentWeek)
 		var leaguePowerData []*rankings.LeaguePowerData
 		var schemes []rankings.Scheme
-		var chosenSchemeID string
+		var chosenScheme rankings.Scheme
 		if leagueStarted {
 			leaguePowerData, err = rankings.GetPowerData(
 				&YahooClient{Client: client},
@@ -282,16 +282,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 				schemes = append(schemes, powerData.RankingScheme)
 			}
 
-			chosenSchemeID = schemes[0].ID()
-			powerPreferenceCookie, cookieErr := req.Cookie("PowerPreference")
-			if cookieErr == nil {
-				for _, scheme := range schemes {
-					if powerPreferenceCookie.Value == scheme.ID() {
-						chosenSchemeID = powerPreferenceCookie.Value
-						break
-					}
-				}
-			}
+			chosenScheme = chooseSchemeFromRequest(req, schemes)
 		}
 
 		if err == nil {
@@ -299,7 +290,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 				Weeks:           currentWeek,
 				League:          league,
 				LeagueStarted:   leagueStarted,
-				SchemeIDToShow:  chosenSchemeID,
+				SchemeToShow:    chosenScheme,
 				Schemes:         schemes,
 				LeaguePowerData: leaguePowerData,
 				LoggedIn:        loggedIn,
@@ -499,4 +490,33 @@ func calculateTeamScore(y *YahooClient, leagueKey string, week int, team *goff.T
 			err)
 	}
 	errors <- err
+}
+
+func chooseSchemeFromRequest(
+	req *http.Request,
+	schemes []rankings.Scheme) rankings.Scheme {
+
+	// Always use URL parameter if given
+	values := req.URL.Query()
+	schemeID := values.Get("scheme")
+	if schemeID != "" {
+		for _, scheme := range schemes {
+			if schemeID == scheme.ID() {
+				return scheme
+			}
+		}
+	}
+
+	// Fallback to user preference (saved in cookie)
+	powerPreferenceCookie, err := req.Cookie("PowerPreference")
+	if err == nil {
+		for _, scheme := range schemes {
+			if powerPreferenceCookie.Value == scheme.ID() {
+				return scheme
+			}
+		}
+	}
+
+	// Default to the first scheme
+	return schemes[0]
 }

@@ -46,6 +46,8 @@ func TestWriteLeaguesTemplateError(t *testing.T) {
 func TestWriteRankingsTemplate(t *testing.T) {
 	content := &RankingsPageContent{
 		Weeks:           12,
+		SchemeToShow:    mockScoreScheme{},
+		Schemes:         []rankings.Scheme{mockScoreScheme{}, mockRecordScheme{}},
 		League:          &(mockLeagues()[0]),
 		LeaguePowerData: []*rankings.LeaguePowerData{mockLeaguePowerData()},
 		SiteConfig:      mockSiteConfig(),
@@ -62,6 +64,8 @@ func TestWriteRankingsTemplateNilLeaguePowerData(t *testing.T) {
 	content := &RankingsPageContent{
 		Weeks:           12,
 		League:          &(mockLeagues()[0]),
+		SchemeToShow:    mockScoreScheme{},
+		Schemes:         []rankings.Scheme{mockScoreScheme{}, mockRecordScheme{}},
 		LeaguePowerData: nil,
 		SiteConfig:      mockSiteConfig(),
 	}
@@ -77,6 +81,8 @@ func TestWriteRankingsTemplateError(t *testing.T) {
 	content := &RankingsPageContent{
 		Weeks:           12,
 		League:          &(mockLeagues()[0]),
+		SchemeToShow:    mockScoreScheme{},
+		Schemes:         []rankings.Scheme{mockScoreScheme{}, mockRecordScheme{}},
 		LeaguePowerData: []*rankings.LeaguePowerData{mockLeaguePowerData()},
 		SiteConfig:      mockSiteConfig(),
 	}
@@ -408,6 +414,14 @@ func TestGetPlaceFromRank(t *testing.T) {
 			expected,
 			actual)
 	}
+
+	actual = templateGetPlaceFromRank(4, "other", "another", expected)
+	if expected != actual {
+		t.Fatalf("Unexpected place returned from rank.\n\tExpected: %s"+
+			"\n\tActual: %s",
+			expected,
+			actual)
+	}
 }
 
 func TestTemplateGetRankingsProjected(t *testing.T) {
@@ -550,6 +564,47 @@ func TestTemplateGetRankForPreviousWeek(t *testing.T) {
 			"Expected: %d\n\tActual: %d",
 			expectedOffset,
 			previousWeek.Offset)
+	}
+}
+
+func TestTemplateGetRankForScheme(t *testing.T) {
+	scheme := mockScoreScheme{}
+	powerData := mockLeaguePowerData()
+	powerData.RankingScheme = scheme
+
+	otherScheme := mockRecordScheme{}
+	otherPowerData := mockLeaguePowerData()
+	otherPowerData.RankingScheme = otherScheme
+
+	actual, err := templateGetRankForScheme(
+		scheme.ID(),
+		[]*rankings.LeaguePowerData{otherPowerData, powerData})
+
+	expected := -1
+	for _, teamData := range powerData.OverallRankings {
+		if teamData.Team.IsOwnedByCurrentLogin {
+			expected = teamData.Rank
+		}
+	}
+
+	if expected == -1 {
+		t.Fatalf("Invalid test input, no team owned by current login: %+v",
+			powerData)
+	} else if err != nil {
+		t.Fatalf("Unexpected error getting rank for scheme: %s", err)
+	} else if expected != actual {
+		t.Fatalf("Unexpected rank returned for scheme:\n\t"+
+			"Expected: %d\n\tActual: %d",
+			expected,
+			actual)
+	}
+
+	_, err = templateGetRankForScheme(
+		scheme.ID(),
+		[]*rankings.LeaguePowerData{otherPowerData})
+	if err == nil {
+		t.Fatal("No error returned when getting rank for a scheme that " +
+			"does not exist")
 	}
 }
 
@@ -859,7 +914,7 @@ func mockWriter() *MockResponseWriter {
 type mockRecordScheme struct{}
 
 func (m mockRecordScheme) ID() string {
-	return "id"
+	return "record-id"
 }
 
 func (m mockRecordScheme) DisplayName() string {
@@ -867,7 +922,7 @@ func (m mockRecordScheme) DisplayName() string {
 }
 
 func (m mockRecordScheme) Type() string {
-	return rankings.RECORD
+	return rankings.Types.RECORD
 }
 
 func (m mockRecordScheme) CalculateWeeklyRankings(
@@ -880,7 +935,7 @@ func (m mockRecordScheme) CalculateWeeklyRankings(
 type mockScoreScheme struct{}
 
 func (m mockScoreScheme) ID() string {
-	return "id"
+	return "score-id"
 }
 
 func (m mockScoreScheme) DisplayName() string {
@@ -888,7 +943,7 @@ func (m mockScoreScheme) DisplayName() string {
 }
 
 func (m mockScoreScheme) Type() string {
-	return rankings.SCORE
+	return rankings.Types.SCORE
 }
 
 func (m mockScoreScheme) CalculateWeeklyRankings(
@@ -899,6 +954,8 @@ func (m mockScoreScheme) CalculateWeeklyRankings(
 }
 
 func mockLeaguePowerData() *rankings.LeaguePowerData {
+	ownerTeam := mockTeam()
+	ownerTeam.IsOwnedByCurrentLogin = true
 	return &rankings.LeaguePowerData{
 		RankingScheme: mockRecordScheme{},
 		OverallRankings: rankings.PowerRankings{
@@ -977,25 +1034,25 @@ func mockLeaguePowerData() *rankings.LeaguePowerData {
 			&rankings.TeamPowerData{
 				AllScores: []*rankings.TeamScoreData{
 					&rankings.TeamScoreData{
-						Team:         mockTeam(),
+						Team:         ownerTeam,
 						FantasyScore: 12.0,
 						Rank:         1,
 						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:         mockTeam(),
+						Team:         ownerTeam,
 						FantasyScore: 22.0,
 						Rank:         3,
 						PowerScore:   36.0,
 					},
 					&rankings.TeamScoreData{
-						Team:         mockTeam(),
+						Team:         ownerTeam,
 						FantasyScore: 32.0,
 						Rank:         2,
 						PowerScore:   36.0,
 					},
 				},
-				Team:                mockTeam(),
+				Team:                ownerTeam,
 				TotalScore:          12.0,
 				ProjectedTotalScore: 14.0,
 				OverallRecord: &goff.Record{

@@ -6,14 +6,18 @@ import (
 	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
 )
 
-const (
+// Types contains the various types of ranking schemes offered by this package.
+var Types = struct {
 	// SCORE represents a rankings scheme that uses points to compare teams
-	SCORE = "score"
+	SCORE string
 
 	// RECORD represents a rankings scheme that uses a win/loss/tie record to
 	// compare teams
-	RECORD = "record"
-)
+	RECORD string
+}{
+	"score",
+	"record",
+}
 
 //
 // Interface
@@ -97,7 +101,7 @@ func (v victoryPoints) ID() string {
 }
 
 func (v victoryPoints) Type() string {
-	return SCORE
+	return Types.SCORE
 }
 
 // CalculateWeeklyRankings for a 'Victory Points' scheme gives each team a
@@ -169,7 +173,7 @@ func (a allPlayRecord) DisplayName() string {
 }
 
 func (a allPlayRecord) Type() string {
-	return RECORD
+	return Types.RECORD
 }
 
 // CalculateWeeklyRankings for a 'All-Play' ranking scheme ranks teams based
@@ -254,7 +258,7 @@ func (a totalPoints) DisplayName() string {
 }
 
 func (a totalPoints) Type() string {
-	return SCORE
+	return Types.SCORE
 }
 
 // CalculateWeeklyRankings for a 'Total Points' ranking scheme gives each team

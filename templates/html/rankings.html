@@ -8,7 +8,6 @@
         {{template "nav" .}}
         <div class="container">
         {{if .}}
-            {{$chosenSchemeId := .SchemeIDToShow}}
             <h2>
                 <a class="league-link" href="{{.League.URL}}">
                     {{.League.Name}}
@@ -16,13 +15,19 @@
                     </span>
                 </a>
                 {{if .LeagueStarted}}
+                    {{$allPowerData := .LeaguePowerData}}
+                    {{$chosenSchemeId := .SchemeToShow.ID}}
                     <div class="dropdown scheme-choice">
                         <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                             {{range .Schemes}}
                                 {{if eq .ID $chosenSchemeId}}
-                                    <span class="scheme-based scheme-{{.ID}}">{{.DisplayName}}</span>
+                                    <span class="scheme-based scheme-{{.ID}}">
+                                        {{.DisplayName}}
+                                    </span>
                                 {{else}}
-                                    <span class="scheme-based scheme-{{.ID}} hidden">{{.DisplayName}}</span>
+                                    <span class="scheme-based scheme-{{.ID}} hidden">
+                                        {{.DisplayName}}
+                                    </span>
                                 {{end}}
                             {{end}}
                             <span class="caret"></span>
@@ -34,7 +39,12 @@
                                 {{else}}
                                 <li class="scheme-item-{{.ID}} scheme-item">
                                 {{end}}
-                                    <a class="view-scheme" data-scheme-id="{{.ID}}" id="view-scheme-{{.ID}}">{{.DisplayName}}</a>
+                                    {{$rank := getRankForScheme .ID $allPowerData}}
+                                    {{$sup := getPlaceFromRank $rank "st" "nd" "rd" "th"}}
+                                    <a class="view-scheme" data-scheme-id="{{.ID}}" id="view-scheme-{{.ID}}">
+                                        {{.DisplayName}}
+                                        <span class="badge">{{$rank}}<sup>{{$sup}}</sup></span>
+                                    </a>
                                 </li>
                             {{end}}
                         </ul>
@@ -42,6 +52,7 @@
                 {{end}}
             </h2>
             {{if .LeagueStarted}}
+                {{$chosenSchemeId := .SchemeToShow.ID}}
                 {{$finished := .League.IsFinished}}
                 {{$currentWeek := .Weeks}}
                 <div class="overall overall-table">
@@ -605,7 +616,7 @@
             $('.graph-modal').on("show.bs.modal", function () { 
                 $('.graph-modal .chart').hide();
             });
-            var showActiveChart = showGraphFunctions['{{.SchemeIDToShow}}'];
+            var showActiveChart = showGraphFunctions['{{.SchemeToShow.ID}}'];
             $('.graph-modal').on("shown.bs.modal", function () { 
                 showActiveChart();
             });
