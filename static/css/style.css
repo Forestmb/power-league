@@ -131,7 +131,7 @@ a:hover, a:focus {
 .scheme-choice .dropdown-toggle {
     padding: 7px 20px;
     text-align: left;
-    background: #F8F8F8;
+    background: #F4F4F4;
     border-color: #DDD;
 }
 
@@ -202,10 +202,15 @@ a:hover, a:focus {
     cursor: pointer;
 }
 
+.weekly-container {
+    margin-top: 10px;
+}
+
 .weekly {
     display: inline-block;
     width: 100%;
     padding: 5px;
+    margin-bottom: 10px;
 }
 
 @media (min-width: 768px) {
@@ -226,8 +231,8 @@ a:hover, a:focus {
     }
 }
 
-.weekly h2 {
-    font-size: 25px;
+.weekly h3 {
+    margin-top: 10px;
 }
 
 .projection {
@@ -374,6 +379,19 @@ table.sortable th.tablesorter-headerDesc {
     background-position: center right;
 }
 
+.table-bordered>thead>tr {
+    background: #F4F4F4;
+}
+
+.table-bordered>thead>tr>th {
+    border-bottom-color: #C3C3C3;
+    border-bottom-width: 1px;
+}
+
+.panel {
+    margin-bottom: 0px;
+}
+
 .table>thead>tr>th {
     padding-right: 15px;
 }
@@ -491,14 +509,28 @@ table.sortable th.tablesorter-headerDesc {
     }
 }
 
-.league-list h3 {
-    margin: 0.25em 0;
-    border-bottom: 1px solid #DDD;
+.league-list .year-item {
+    background: #F4F4F4;
+}
+
+.league-list h4 {
+    margin: 0px;
+    padding: 10px 15px;
 }
 
 .league-list ul {
     padding-left: 0px;
+    margin-bottom: 5px;
     list-style: none;
+}
+
+.league-list li {
+    padding: 0px;
+}
+
+.league-list a {
+    display: block;
+    padding: 10px 15px;
 }
 
 .error-container .alert {

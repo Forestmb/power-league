@@ -18,10 +18,12 @@
                     {{range $index, $leagues := .}}
                     {{if .Leagues}}
                     <div class="league-list league-list-{{.Year}}">
-                        <h3>{{getTitleFromYear .Year}}</h3>
-                        <ul>
+                        <ul class="list-group">
+                            <li class="list-group-item year-item">
+                                <h4>{{getTitleFromYear .Year}}</h4>
+                            </li>
                         {{range $index, $league := .Leagues}}
-                            <li>
+                            <li class="list-group-item">
                                 <a href="{{$config.BaseContext}}/league?key={{.LeagueKey}}">{{.Name}}</a>
                             </li>
                         {{end}}

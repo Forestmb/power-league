@@ -304,9 +304,9 @@
                 {{range $blah, $allPowerData := .LeaguePowerData}}
                     {{$scheme := .RankingScheme}}
                     {{if eq .RankingScheme.ID $chosenSchemeId}}
-                        <div class="scheme-based scheme-{{.RankingScheme.ID}}">
+                        <div class="scheme-based scheme-{{.RankingScheme.ID}} weekly-container">
                     {{else}}
-                        <div class="scheme-based scheme-{{.RankingScheme.ID}} hidden">
+                        <div class="scheme-based scheme-{{.RankingScheme.ID}} weekly-container hidden">
                     {{end}}
                     {{with .ByWeek}}
                         {{range $index, $ranking := .}}
@@ -318,49 +318,51 @@
                                 <div class="weekly week-{{$week}}">
                                 <h3>Week {{$week}}</h3>
                             {{end}}
-                                <table class="sortable table table-bordered table-striped table-condensed">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th class="tablesorter-headerDesc">Fantasy</th>
-                                            <th>
-                                                {{if eq $scheme.Type "record"}}
-                                                    Record
-                                                {{else if eq $scheme.Type "score"}}
-                                                    Points
-                                                {{end}}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {{with .Rankings}}
-                                        {{$rankings := .}}
-                                        {{range $index, $score := .}}
-                                            {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
-                                            {{if .Team.IsOwnedByCurrentLogin}}
-                                            <tr id="week-{{$week}}-{{.Team.TeamID}}"
-                                                class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
-                                            {{else}}
-                                            <tr id="week-{{$week}}-{{.Team.TeamID}}"
-                                                class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
-                                            {{end}}
-                                                <td>{{.Team.Name}}</td>
-                                                <td>{{printf "%.2f" .FantasyScore}}</td>
-                                                {{$record := getRecord $week $teamPowerData}}
-                                                <td>
+                                <div class="panel panel-default">
+                                    <table class="sortable table table-bordered table-striped table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th class="tablesorter-headerDesc">Fantasy</th>
+                                                <th>
                                                     {{if eq $scheme.Type "record"}}
-                                                        {{$record.Wins}} -
-                                                        {{$record.Losses}} -
-                                                        {{$record.Ties}}
+                                                        Record
                                                     {{else if eq $scheme.Type "score"}}
-                                                        {{getPowerScore $week $teamPowerData}}
+                                                        Points
                                                     {{end}}
-                                                </td>
+                                                </th>
                                             </tr>
-                                        {{end}}     
-                                    {{end}} 
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                        {{with .Rankings}}
+                                            {{$rankings := .}}
+                                            {{range $index, $score := .}}
+                                                {{$teamPowerData := index $allPowerData.ByTeam .Team.TeamKey}}
+                                                {{if .Team.IsOwnedByCurrentLogin}}
+                                                <tr id="week-{{$week}}-{{.Team.TeamID}}"
+                                                    class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}} team-selected">
+                                                {{else}}
+                                                <tr id="week-{{$week}}-{{.Team.TeamID}}"
+                                                    class="team-row team-{{.Team.TeamID}} team-pos-{{getTeamPosition .Team.TeamID $allPowerData.OverallRankings}}">
+                                                {{end}}
+                                                    <td>{{.Team.Name}}</td>
+                                                    <td>{{printf "%.2f" .FantasyScore}}</td>
+                                                    {{$record := getRecord $week $teamPowerData}}
+                                                    <td>
+                                                        {{if eq $scheme.Type "record"}}
+                                                            {{$record.Wins}} -
+                                                            {{$record.Losses}} -
+                                                            {{$record.Ties}}
+                                                        {{else if eq $scheme.Type "score"}}
+                                                            {{getPowerScore $week $teamPowerData}}
+                                                        {{end}}
+                                                    </td>
+                                                </tr>
+                                            {{end}}     
+                                        {{end}} 
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         {{end}}
                     {{end}}
