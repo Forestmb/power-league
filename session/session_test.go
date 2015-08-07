@@ -416,11 +416,31 @@ func TestGetClientAccessStoreSaveError(t *testing.T) {
 	}
 }
 
+func TestGetClientOAuthMakeHttpClientErr(t *testing.T) {
+	consumer := &MockConsumer{
+		AccessToken:       &oauth.AccessToken{},
+		MakeHTTPClientErr: errors.New("error"),
+	}
+	store := mockStore()
+	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[SessionIDKey] = "123"
+	currentTime := time.Now()
+	store.Values[LastRefreshTime] = &currentTime
+
+	manager := NewManager(consumer, store)
+	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
+
+	if err == nil {
+		t.Fatalf("no error returned, creating the HTTP client should have failed")
+	}
+}
+
 type MockConsumer struct {
-	AccessToken  *oauth.AccessToken
-	RequestToken *oauth.RequestToken
-	LoginURL     string
-	Err          error
+	AccessToken       *oauth.AccessToken
+	RequestToken      *oauth.RequestToken
+	LoginURL          string
+	Err               error
+	MakeHTTPClientErr error
 }
 
 func (m *MockConsumer) GetRequestTokenAndUrl(url string) (*oauth.RequestToken, string, error) {
@@ -435,8 +455,8 @@ func (m *MockConsumer) RefreshToken(a *oauth.AccessToken) (*oauth.AccessToken, e
 	return m.AccessToken, m.Err
 }
 
-func (m *MockConsumer) Get(url string, data map[string]string, token *oauth.AccessToken) (*http.Response, error) {
-	return &http.Response{}, nil
+func (m *MockConsumer) MakeHttpClient(a *oauth.AccessToken) (*http.Client, error) {
+	return &http.Client{}, m.MakeHTTPClientErr
 }
 
 type MockResponseWriter struct {

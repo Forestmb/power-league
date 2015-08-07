@@ -11,8 +11,10 @@ export PATH="${GOPATH}/bin:${PATH}"
 # List known golint warnings that are being suppressed
 #
 #   1. Consistent with OAuth 1.0 Consumer type
+#   2. Consistent with OAuth 1.0 Consumer type
 lint_exclusions=(
     "func GetRequestTokenAndUrl should be GetRequestTokenAndURL" 
+    "func MakeHttpClient should be MakeHTTPClient"
 )
 
 echo "Running go get..."

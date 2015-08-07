@@ -100,7 +100,7 @@ type Consumer interface {
 	GetRequestTokenAndUrl(url string) (r *oauth.RequestToken, requestURL string, err error)
 	AuthorizeToken(r *oauth.RequestToken, verificationCode string) (*oauth.AccessToken, error)
 	RefreshToken(accessToken *oauth.AccessToken) (*oauth.AccessToken, error)
-	Get(url string, data map[string]string, token *oauth.AccessToken) (*http.Response, error)
+	MakeHttpClient(token *oauth.AccessToken) (*http.Client, error)
 }
 
 //
@@ -282,13 +282,18 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 		return nil, err
 	}
 
-	client := goff.NewCachedOAuthClient(
+	oauthClient, err := d.consumer.MakeHttpClient(accessToken)
+	if err != nil {
+		glog.Warningf("error creating oauth client: %s", err)
+		return nil, err
+	}
+
+	client := goff.NewCachedClient(
 		goff.NewLRUCache(
 			id,
 			time.Duration(d.userCacheDurationSeconds)*time.Second,
 			d.cache),
-		d.consumer,
-		accessToken)
+		oauthClient)
 	glog.V(3).Infoln("client created successfully")
 	return client, nil
 }

@@ -9,8 +9,8 @@
 		},
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-16-gc195e5d",
-			"Rev": "c195e5d12101b7191897c92e9bd18e4399c3a371"
+			"Comment": "v0.3.0-17-g476f55c",
+			"Rev": "476f55c25ec666c0c5d21cf4a61ee3352975b44f"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -34,7 +34,7 @@
 		},
 		{
 			"ImportPath": "github.com/mrjones/oauth",
-			"Rev": "88b8bebdf9952359da71031ef9ab7d27aece46d4"
+			"Rev": "5700d1218c107a09632bd64cbb00315f2c723292"
 		},
 		{
 			"ImportPath": "github.com/youtube/vitess/go/cache",
