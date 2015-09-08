@@ -278,11 +278,12 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 				&YahooClient{Client: client},
 				league,
 				currentWeek)
-			for _, powerData := range leaguePowerData {
-				schemes = append(schemes, powerData.RankingScheme)
+			if err == nil {
+				for _, powerData := range leaguePowerData {
+					schemes = append(schemes, powerData.RankingScheme)
+				}
+				chosenScheme = chooseSchemeFromRequest(req, schemes)
 			}
-
-			chosenScheme = chooseSchemeFromRequest(req, schemes)
 		}
 
 		if err == nil {
