@@ -1,9 +1,8 @@
 language: go
 go:
-  - 1.5
+  - 1.7
 before_install:
   - go get golang.org/x/tools/cmd/cover
-  - go get golang.org/x/tools/cmd/vet
   - go get github.com/mattn/goveralls
   - openssl aes-256-cbc -k "$conf_pass" -in encrypted/conf.enc -out ./server.conf.$server -d
   - openssl aes-256-cbc -k "$deploy_pass" -in encrypted/deploy.enc -out ~/.ssh/id_rsa -d
