@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/gorilla/sessions"
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/mrjones/oauth"
+	"github.com/gorilla/sessions"
+	"github.com/mrjones/oauth"
 )
 
 func TestNewManager(t *testing.T) {

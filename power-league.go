@@ -19,14 +19,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/golang/glog"
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/gorilla/handlers"
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/gorilla/securecookie"
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/gorilla/sessions"
+	"github.com/Forestmb/goff"
 	"github.com/Forestmb/power-league/rankings"
 	"github.com/Forestmb/power-league/session"
 	"github.com/Forestmb/power-league/site"
+	"github.com/golang/glog"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 func main() {

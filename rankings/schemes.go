@@ -3,7 +3,7 @@ package rankings
 import (
 	"sort"
 
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
+	"github.com/Forestmb/goff"
 )
 
 // Types contains the various types of ranking schemes offered by this package.

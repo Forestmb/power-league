@@ -1,47 +1,52 @@
 {
 	"ImportPath": "github.com/Forestmb/power-league",
-	"GoVersion": "devel +abab21b Wed Aug 26 01:19:55 2015 +0000",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/go-uuid/uuid",
-			"Comment": "null-12",
-			"Rev": "7dda39b2e7d5e265014674c5af696ba4186679e9"
-		},
-		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-19-gd39f58d",
-			"Rev": "d39f58d6dba51d7953c1f9902eeac0e79dbb96f8"
+			"Comment": "v0.3.0-22-g4337e06",
+			"Rev": "4337e065be2ae8e6a8e4464fc44fe0348b3cab5a"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
-			"Rev": "44145f04b68cf362d9c4df2182967c2275eaefed"
+			"Rev": "fca8c8854093a154ff1eb580aae10276ad6b1b5f"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
-			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+			"Comment": "v1.1-7-g08b5f42",
+			"Rev": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
 		},
 		{
 			"ImportPath": "github.com/gorilla/handlers",
-			"Rev": "0e84b7d810c16aed432217e330206be156bafae0"
+			"Comment": "v1.1-11-ga577578",
+			"Rev": "a5775781a543af3c6b9f5baf10995e4d14168950"
 		},
 		{
 			"ImportPath": "github.com/gorilla/securecookie",
-			"Rev": "1b0c7f6e9ab3d7f500fd7d50c7ad835ff428139b"
+			"Comment": "v1.1-4-gc13558c",
+			"Rev": "c13558c2b1c44da35e0eb043053609a5ba3a1f19"
 		},
 		{
 			"ImportPath": "github.com/gorilla/sessions",
-			"Rev": "aa5e036e6c44aec69a32eb41097001978b29ad31"
+			"Rev": "7ab2742f1e374be6675e9a4eca54fe529221ae3a"
 		},
 		{
 			"ImportPath": "github.com/mrjones/oauth",
-			"Rev": "5700d1218c107a09632bd64cbb00315f2c723292"
+			"Rev": "31f1e8e5addda51bc50ebfc8bb930d4642372654"
+		},
+		{
+			"ImportPath": "github.com/pborman/uuid",
+			"Comment": "v1.0-15-gb984ec7",
+			"Rev": "b984ec7fa9ff9e428bd0cf0abf429384dfbe3e37"
 		},
 		{
 			"ImportPath": "github.com/youtube/vitess/go/cache",
-			"Rev": "af31226d0492d0d8f4e61fe918fba634d3112c62"
+			"Comment": "v2.0.0-rc.2-735-g3fa8270",
+			"Rev": "3fa827017d4f76390c5a4afe5b4ab847ff3c3d4a"
 		}
 	]
 }

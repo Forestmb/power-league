@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/Forestmb/power-league/Godeps/_workspace/src/github.com/Forestmb/goff"
+	"github.com/Forestmb/goff"
 )
 
 func TestGetWeeklyRankingPowerScoreOrder(t *testing.T) {
