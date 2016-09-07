@@ -123,13 +123,25 @@ func (p RecordRankings) Len() int {
 }
 
 func (p RecordRankings) Less(i, j int) bool {
-	if p[i].OverallRecord.Wins == p[j].OverallRecord.Wins {
-		if p[i].OverallRecord.Ties == p[j].OverallRecord.Ties {
-			return p[i].Team.Name < p[j].Team.Name
+	iRecord := p[i].OverallRecord
+	jRecord := p[j].OverallRecord
+
+	iProjected := p[i].ProjectedOverallRecord
+	jProjected := p[j].ProjectedOverallRecord
+
+	if iRecord.Wins == jRecord.Wins {
+		if iRecord.Ties == jRecord.Ties {
+			if iProjected.Wins == jProjected.Wins {
+				if iProjected.Ties == jProjected.Ties {
+					return p[i].Team.Name < p[j].Team.Name
+				}
+				return iProjected.Ties > jProjected.Ties
+			}
+			return iProjected.Wins > jProjected.Wins
 		}
-		return p[i].OverallRecord.Ties > p[j].OverallRecord.Ties
+		return iRecord.Ties > jRecord.Ties
 	}
-	return p[i].OverallRecord.Wins > p[j].OverallRecord.Wins
+	return iRecord.Wins > jRecord.Wins
 }
 
 func (p RecordRankings) Swap(i, j int) {
