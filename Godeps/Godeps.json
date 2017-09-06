@@ -1,19 +1,19 @@
 {
 	"ImportPath": "github.com/Forestmb/power-league",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-22-g4337e06",
-			"Rev": "4337e065be2ae8e6a8e4464fc44fe0348b3cab5a"
+			"Comment": "v0.3.0-24-gd93d83f",
+			"Rev": "d93d83f18f1ddc538acc45f2489b11f2cd3adc14"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
-			"Rev": "fca8c8854093a154ff1eb580aae10276ad6b1b5f"
+			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
