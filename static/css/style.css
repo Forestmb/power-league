@@ -104,14 +104,6 @@ a:hover, a:focus {
     border-color: #0A0A0A;
 }
 
-.login-link-mobile {
-    display: inline;
-}
-
-.login-link {
-    display: none;
-}
-
 @media (min-width: 768px) {
     .login-link-mobile {
         display: none;
