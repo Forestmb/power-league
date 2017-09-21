@@ -49,7 +49,7 @@ go fmt ./...
 echo "Running tests..."
 # Snippet taken from https://gist.github.com/hailiang/0f22736320abe6be71ce
 echo "mode: count" > profile.cov
-for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path '*/_*' -type d);
+for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path '*/_*' -not -path './vendor*' -type d);
 do
 if ls "${dir}/"*.go &> /dev/null; then
     go test -v -covermode=count -coverprofile="${dir}/profile.tmp" "${dir}"

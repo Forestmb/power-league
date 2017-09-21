@@ -3,6 +3,7 @@
 package site
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -195,7 +196,17 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 				loggedIn)
 			return
 		}
-		allYearlyLeagues = getAllYearlyLeagues(client)
+
+		allYearlyLeagues, err = getAllYearlyLeagues(client)
+		if err != nil {
+			writeErrorPage(
+				s,
+				w,
+				"There was a problem delivering you your power rankings. "+
+					"Please try again later.",
+				loggedIn)
+			return
+		}
 		glog.V(2).Infof("API Request Count: %d", client.RequestCount())
 	} else {
 		glog.V(2).Infoln("user not logged in, can't show leagues")
@@ -349,7 +360,7 @@ type userLeaguesClient interface {
 	GetUserLeagues(year string) ([]goff.League, error)
 }
 
-func getAllYearlyLeagues(client userLeaguesClient) templates.AllYearlyLeagues {
+func getAllYearlyLeagues(client userLeaguesClient) (templates.AllYearlyLeagues, error) {
 	currentYear := time.Now().Year()
 	numberOfYears := (currentYear - EarliestSupportedYear) + 1
 	results := make(chan *templates.YearlyLeagues)
@@ -359,10 +370,14 @@ func getAllYearlyLeagues(client userLeaguesClient) templates.AllYearlyLeagues {
 
 	allYearlyLeagues := make([]*templates.YearlyLeagues, numberOfYears)
 	for i := 0; i < numberOfYears; i++ {
-		allYearlyLeagues[i] = <-results
+		result := <-results
+		if result.Leagues == nil {
+			return nil, errors.New("Error occurred while obtaining user leagues")
+		}
+		allYearlyLeagues[i] = result
 	}
 	sort.Sort(templates.AllYearlyLeagues(allYearlyLeagues))
-	return allYearlyLeagues
+	return allYearlyLeagues, nil
 }
 
 func getUserLeauges(client userLeaguesClient, year int, results chan *templates.YearlyLeagues) {

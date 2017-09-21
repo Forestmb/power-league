@@ -465,6 +465,32 @@ func TestHandleShowLeaguesGetClientError(t *testing.T) {
 	assertErrorHandledCorrectly(t, site, mockTemplates, true)
 }
 
+func TestHandleShowLeaguesGetUserLeaguesError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
+	baseContext := "/base"
+	mockTemplates := &MockTemplates{}
+	mockSessionManager := &MockSessionManager{
+		IsLoggedInRet: true,
+		Client: &goff.Client{
+			Provider: &MockedContentProvider{
+				err: errors.New("failure"),
+			},
+		},
+	}
+	site := &Site{
+		config: &templates.SiteConfig{
+			BaseContext: baseContext,
+		},
+		sessionManager: mockSessionManager,
+		templates:      mockTemplates,
+	}
+
+	handleShowLeagues(site, recorder, request)
+
+	assertErrorHandledCorrectly(t, site, mockTemplates, true)
+}
+
 func TestHandleShowLeaguesWriteTemplateError(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "http://example.com:8080/base/leagues", nil)
@@ -860,7 +886,7 @@ func TestGetAllYearlyLeagues(t *testing.T) {
 			},
 		},
 	}
-	allYearlyLeagues := getAllYearlyLeagues(client)
+	allYearlyLeagues, _ := getAllYearlyLeagues(client)
 
 	for _, yearlyLeagues := range allYearlyLeagues {
 		assertLeaguesEqual(t, yearlyLeagues.Leagues, client.Leagues[yearlyLeagues.Year])
