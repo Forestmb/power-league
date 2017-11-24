@@ -9,6 +9,7 @@
 - Improved mobile authorization flow.
 - Vendoring dependencies with godep.
 - Added 'Victory Points' and 'Total Points' ranking schemes.
+- OAuth 2.0 for authentication.
 
 ## 0.3.0 (2015-01-09) ##
 

@@ -3,6 +3,7 @@
 package session
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -12,9 +13,9 @@ import (
 	"github.com/Forestmb/goff"
 	"github.com/golang/glog"
 	"github.com/gorilla/sessions"
-	"github.com/mrjones/oauth"
 	"github.com/pborman/uuid"
 	lru "github.com/youtube/vitess/go/cache"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -26,17 +27,10 @@ const (
 
 	// SessionIDKey sets the ID for each session
 	SessionIDKey = "session-id"
-
-	// LastRefreshTime updates the last time the access token was refreshed
-	LastRefreshTime = "last-refresh-time"
-
-	// RequestTokenKey updates the request token for the current session
-	RequestTokenKey = "request-token"
-
-	// oauthVerifierKey acceses the verification code after oauth
-	// authentication
-	oauthVerifierKey = "oauth_verifier"
 )
+
+// oauthState ensures the login response matches the request
+var oauthState = uuid.New()
 
 //
 // Manager interface
@@ -44,7 +38,7 @@ const (
 
 // Manager provides an interface to managing sessions for power rankings users
 type Manager interface {
-	Login(w http.ResponseWriter, r *http.Request, redirectURL string) (loginURL string, err error)
+	Login(w http.ResponseWriter, r *http.Request) (loginURL string)
 	Authenticate(w http.ResponseWriter, r *http.Request) error
 	Logout(w http.ResponseWriter, r *http.Request) error
 	IsLoggedIn(r *http.Request) bool
@@ -53,7 +47,7 @@ type Manager interface {
 
 // defaultManager is the default implementation of Manager
 type defaultManager struct {
-	consumer                 Consumer
+	consumerProvider         ConsumerProvider
 	store                    sessions.Store
 	cache                    *lru.LRUCache
 	userCacheDurationSeconds int
@@ -65,28 +59,27 @@ type defaultManager struct {
 // to 6 hours.
 //
 // See NewManagerWithCache
-func NewManager(c Consumer, s sessions.Store) Manager {
-	return NewManagerWithCache(c, s, 6*60*60, 10000)
+func NewManager(cp ConsumerProvider, s sessions.Store) Manager {
+	return NewManagerWithCache(cp, s, 6*60*60, 10000)
 }
 
-// NewManagerWithCache creates a new Manager that uses the given consumer for
-// OAuth authentication and store to persist the sessions across requests.
-// Each session client returned by `Manager.GetClient` will cache responses
-// for up to `userCacheDurationSeconds` seconds.
+// NewManagerWithCache creates a new Manager that uses the given consumer
+// provider for OAuth authentication and store to persist the sessions across
+// requests. Each session client returned by `Manager.GetClient` will cache
+// responses for up to `userCacheDurationSeconds` seconds.
 func NewManagerWithCache(
-	c Consumer,
+	cp ConsumerProvider,
 	s sessions.Store,
 	userCacheDurationSeconds int,
 	cacheSize int64) Manager {
 
-	gob.Register(&oauth.RequestToken{})
-	gob.Register(&oauth.AccessToken{})
+	gob.Register(&oauth2.Token{})
 	gob.Register(&time.Time{})
 	cache := lru.NewLRUCache(cacheSize)
 	return &defaultManager{
-		consumer: c,
-		store:    s,
-		cache:    cache,
+		consumerProvider: cp,
+		store:            s,
+		cache:            cache,
 		userCacheDurationSeconds: userCacheDurationSeconds,
 	}
 }
@@ -95,12 +88,17 @@ func NewManagerWithCache(
 // Consumer interface
 //
 
-// Consumer is the interface to an OAuth consumer
+// ConsumerProvider creates Consumers to handle authentication on behalf of a
+// given request
+type ConsumerProvider interface {
+	Get(r *http.Request) Consumer
+}
+
+// Consumer is the interface to an OAuth2 consumer
 type Consumer interface {
-	GetRequestTokenAndUrl(url string) (r *oauth.RequestToken, requestURL string, err error)
-	AuthorizeToken(r *oauth.RequestToken, verificationCode string) (*oauth.AccessToken, error)
-	RefreshToken(accessToken *oauth.AccessToken) (*oauth.AccessToken, error)
-	MakeHttpClient(token *oauth.AccessToken) (*http.Client, error)
+	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+	Exchange(ctx context.Context, verificationCode string) (*oauth2.Token, error)
+	Client(ctx context.Context, token *oauth2.Token) *http.Client
 }
 
 //
@@ -108,31 +106,10 @@ type Consumer interface {
 //
 
 // Login starts a new user session within the given request and returns the URL
-// that must be access by the user to grant authentication
-func (d *defaultManager) Login(
-	w http.ResponseWriter,
-	r *http.Request,
-	redirectURL string) (loginURL string, err error) {
-
-	token, loginURL, err := d.consumer.GetRequestTokenAndUrl(redirectURL)
-	if err != nil {
-		glog.Warningf("error getting request token: %s", err)
-		return "", err
-	}
-
-	session, _ := d.store.Get(r, SessionName)
-	session.Values = map[interface{}]interface{}{
-		RequestTokenKey: token,
-	}
-	err = session.Save(r, w)
-
-	if err != nil {
-		glog.Warningf("error saving client login in session: %s", err)
-		return "", err
-	}
-
-	glog.V(3).Infoln("client login saved in session")
-	return loginURL, nil
+// that must be accessed by the user to grant authentication
+func (d *defaultManager) Login(w http.ResponseWriter, r *http.Request) (loginURL string) {
+	config := d.consumerProvider.Get(r)
+	return config.AuthCodeURL(oauthState)
 }
 
 // Logout ends a user session
@@ -154,7 +131,7 @@ func (d *defaultManager) Logout(w http.ResponseWriter, r *http.Request) error {
 // is logged in.
 func (d *defaultManager) IsLoggedIn(req *http.Request) bool {
 	session, _ := d.store.Get(req, SessionName)
-	_, ok := session.Values[AccessTokenKey].(*oauth.AccessToken)
+	_, ok := session.Values[AccessTokenKey].(*oauth2.Token)
 	return ok
 }
 
@@ -167,43 +144,34 @@ func (d *defaultManager) Authenticate(w http.ResponseWriter, req *http.Request) 
 		// continue since a new one should have been created
 	}
 
-	values := req.URL.Query()
-	verificationCode := values.Get(oauthVerifierKey)
+	state := req.FormValue("state")
+	if state != oauthState {
+		return fmt.Errorf("invalid state returned for authorization, expecing '%s' got '%s'",
+			oauthState,
+			state)
+	}
+
+	verificationCode := req.FormValue("code")
 	if verificationCode == "" {
 		glog.V(2).Infoln("client not authenticated")
 		return fmt.Errorf("unable to create goff client for request, "+
-			"no verification code in URL: %s", req.URL.String())
+			"no verification code in request: %+v", req.Form)
 	}
 	glog.V(2).Infof("authenticating client with verification code: %s",
 		verificationCode)
 
-	rtoken, ok := session.Values[RequestTokenKey].(*oauth.RequestToken)
-	if !ok {
-		glog.Warningf("error authenticating user, "+
-			"no request token in session: %s",
-			err)
-		return errors.New("unable to create goff client for request, " +
-			"no request token in session")
-	}
+	consumer := d.consumerProvider.Get(req)
 
-	accessToken, err := d.consumer.AuthorizeToken(rtoken, verificationCode)
+	accessToken, err := consumer.Exchange(req.Context(), verificationCode)
 	if err != nil {
 		glog.Warningf("error authorizing token: %s", err)
 		return errors.New("unable to create goff client for request, " +
 			"failure when authorizing request token")
 	}
 
-	// Only save SESSION_HANDLE_PARAM to reduce cookie size
-	sessionParam := accessToken.AdditionalData[oauth.SESSION_HANDLE_PARAM]
-	accessToken.AdditionalData = map[string]string{
-		oauth.SESSION_HANDLE_PARAM: sessionParam,
-	}
-
-	currentTime := time.Now()
 	session.Values = map[interface{}]interface{}{
-		AccessTokenKey:  accessToken,
-		SessionIDKey:    uuid.New(),
-		LastRefreshTime: &currentTime,
+		AccessTokenKey: accessToken,
+		SessionIDKey:   uuid.New(),
 	}
 	err = session.Save(req, w)
 	if err != nil {
@@ -224,7 +192,7 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 		// continue since a new one should have been created
 	}
 
-	accessToken, ok := session.Values[AccessTokenKey].(*oauth.AccessToken)
+	accessToken, ok := session.Values[AccessTokenKey].(*oauth2.Token)
 	// No access token, try creating one if being verified by request
 	if !ok {
 		glog.V(2).Infoln("client not authenticated")
@@ -239,42 +207,9 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 			id)
 	}
 
-	refreshToken := false
-	currentTime := time.Now()
-	lastRefresh, ok := session.Values[LastRefreshTime].(*time.Time)
-	if !ok {
-		glog.Warningf("refreshing token, no '%s' in session", LastRefreshTime)
-		refreshToken = true
-	} else {
-		timeSinceLastRefresh := currentTime.Sub(*lastRefresh)
-		refreshToken = timeSinceLastRefresh >= 30*time.Minute
-		glog.V(2).Infof("determining if token should be refreshed -- "+
-			"timeSinceLastRefresh=%+v, refreshToken=%t",
-			timeSinceLastRefresh,
-			refreshToken)
-	}
-
-	if refreshToken {
-		accessToken, err = d.consumer.RefreshToken(accessToken)
-		if err != nil {
-			glog.Warningf("error refreshing token: %s", err)
-			return nil, errors.New("unable to create goff client for request, " +
-				"failure when refreshing acces token")
-		}
-		lastRefresh = &currentTime
-		glog.V(2).Infoln("client token refreshed")
-	}
-
-	// Only save SESSION_HANDLE_PARAM to reduce cookie size
-	sessionParam := accessToken.AdditionalData[oauth.SESSION_HANDLE_PARAM]
-	accessToken.AdditionalData = map[string]string{
-		oauth.SESSION_HANDLE_PARAM: sessionParam,
-	}
-
 	session.Values = map[interface{}]interface{}{
-		AccessTokenKey:  accessToken,
-		SessionIDKey:    id,
-		LastRefreshTime: lastRefresh,
+		AccessTokenKey: accessToken,
+		SessionIDKey:   id,
 	}
 	err = session.Save(req, w)
 	if err != nil {
@@ -282,11 +217,8 @@ func (d *defaultManager) GetClient(w http.ResponseWriter, req *http.Request) (*g
 		return nil, err
 	}
 
-	oauthClient, err := d.consumer.MakeHttpClient(accessToken)
-	if err != nil {
-		glog.Warningf("error creating oauth client: %s", err)
-		return nil, err
-	}
+	consumer := d.consumerProvider.Get(req)
+	oauthClient := consumer.Client(req.Context(), accessToken)
 
 	client := goff.NewCachedClient(
 		goff.NewLRUCache(

@@ -129,8 +129,13 @@ func main() {
 		cookieStoreEncryptionKey = []byte(*cookieEncryptionKey)
 	}
 
+	authContext := fmt.Sprintf("%s/auth", baseContext)
 	sessionManager := session.NewManagerWithCache(
-		goff.GetConsumer(*clientKey, *clientSecret),
+		oauth2ConsumerProvider{
+			clientKey:    *clientKey,
+			clientSecret: *clientSecret,
+			authContext:  authContext,
+		},
 		sessions.NewCookieStore(cookieStoreAuthKey, cookieStoreEncryptionKey),
 		*userCacheDurationSeconds,
 		*totalCacheSize)
@@ -151,4 +156,17 @@ type logWriter struct{}
 func (l logWriter) Write(p []byte) (int, error) {
 	glog.Infof(string(p))
 	return len(p), nil
+}
+
+// oauth2ConsumerProvider implements session.Consumer to provide the OAuth 2
+// config for this application
+type oauth2ConsumerProvider struct {
+	clientKey    string
+	clientSecret string
+	authContext  string
+}
+
+func (o oauth2ConsumerProvider) Get(r *http.Request) session.Consumer {
+	redirectURL := fmt.Sprintf("http://%s%s", r.Host, o.authContext)
+	return goff.GetOAuth2Config(o.clientKey, o.clientSecret, redirectURL)
 }

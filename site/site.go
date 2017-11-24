@@ -3,7 +3,6 @@
 package site
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -148,19 +147,7 @@ func handleLogout(s *Site, w http.ResponseWriter, r *http.Request) {
 func handleLogin(s *Site, w http.ResponseWriter, r *http.Request) {
 	glog.V(5).Infoln("in handleLogin")
 
-	authContext := s.handlers["auth"].Context
-	loginURL := fmt.Sprintf("http://%s%s", r.Host, authContext)
-	requestURL, err := s.sessionManager.Login(w, r, loginURL)
-	if err != nil {
-		glog.Warningf("error generating login page: %s", err)
-		writeErrorPage(
-			s,
-			w,
-			"There was a problem logging you in. "+
-				"Please try again later.",
-			false)
-		return
-	}
+	requestURL := s.sessionManager.Login(w, r)
 
 	http.Redirect(w, r, requestURL, http.StatusTemporaryRedirect)
 }
@@ -199,6 +186,7 @@ func handleShowLeagues(s *Site, w http.ResponseWriter, req *http.Request) {
 
 		allYearlyLeagues, err = getAllYearlyLeagues(client)
 		if err != nil {
+			glog.Warningf("error getting all yearly leagues: %s", err)
 			writeErrorPage(
 				s,
 				w,
@@ -372,7 +360,8 @@ func getAllYearlyLeagues(client userLeaguesClient) (templates.AllYearlyLeagues, 
 	for i := 0; i < numberOfYears; i++ {
 		result := <-results
 		if result.Leagues == nil {
-			return nil, errors.New("Error occurred while obtaining user leagues")
+			return nil, fmt.Errorf("Error occurred while obtaining user leagues for year %s",
+				result.Year)
 		}
 		allYearlyLeagues[i] = result
 	}

@@ -1,26 +1,25 @@
 package session
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/mrjones/oauth"
+	"golang.org/x/oauth2"
 )
 
 func TestNewManager(t *testing.T) {
-	manager := NewManager(&MockConsumer{}, mockStore())
+	manager := NewManager(&MockConsumerProvider{}, mockStore())
 	if manager == nil {
 		t.Fatal("no manager returned")
 	}
 }
 
 func TestNewManagerWithCache(t *testing.T) {
-	manager := NewManagerWithCache(&MockConsumer{}, mockStore(), 30, 10)
+	manager := NewManagerWithCache(&MockConsumerProvider{}, mockStore(), 30, 10)
 	if manager == nil {
 		t.Fatal("no manager returned")
 	}
@@ -29,7 +28,7 @@ func TestNewManagerWithCache(t *testing.T) {
 func TestIsLoggedIn(t *testing.T) {
 	store := &MockStore{
 		Values: map[interface{}]interface{}{
-			AccessTokenKey: &oauth.AccessToken{},
+			AccessTokenKey: &oauth2.Token{},
 		},
 	}
 	manager := NewManager(nil, store)
@@ -53,8 +52,7 @@ func TestIsLoggedOut(t *testing.T) {
 func TestLogout(t *testing.T) {
 	store := &MockStore{
 		Values: map[interface{}]interface{}{
-			AccessTokenKey:  &oauth.AccessToken{},
-			RequestTokenKey: &oauth.RequestToken{},
+			AccessTokenKey: &oauth2.Token{},
 		},
 	}
 	manager := NewManager(nil, store)
@@ -63,14 +61,9 @@ func TestLogout(t *testing.T) {
 		t.Fatalf("error logging out of session: %s", err)
 	}
 
-	_, ok := store.Values[AccessTokenKey].(*oauth.AccessToken)
+	_, ok := store.Values[AccessTokenKey].(*oauth2.Token)
 	if ok {
 		t.Fatal("session still contains a valid access token")
-	}
-
-	_, ok = store.Values[RequestTokenKey].(*oauth.RequestToken)
-	if ok {
-		t.Fatal("session still contains a valid request token")
 	}
 }
 
@@ -89,15 +82,11 @@ func TestLogoutSaveError(t *testing.T) {
 func TestLoginCorrectURL(t *testing.T) {
 	url := "http://example.com/login"
 	consumer := &MockConsumer{
-		RequestToken: &oauth.RequestToken{},
-		LoginURL:     url,
+		LoginURL: url,
 	}
-	manager := NewManager(consumer, mockStore())
+	manager := NewManager(mockProvider(consumer), mockStore())
 
-	loginURL, err := manager.Login(mockResponseWriter(), &http.Request{}, "http://url")
-	if err != nil {
-		t.Fatalf("error returned loggin in: %s", err)
-	}
+	loginURL := manager.Login(mockResponseWriter(), &http.Request{})
 
 	if loginURL != url {
 		t.Fatalf("login did not return the expected login URL\n"+
@@ -107,82 +96,47 @@ func TestLoginCorrectURL(t *testing.T) {
 	}
 }
 
-func TestLoginRequestTokenSaved(t *testing.T) {
-	url := "http://example.com/login"
-	consumer := &MockConsumer{
-		RequestToken: &oauth.RequestToken{},
-		LoginURL:     url,
-	}
-	store := mockStore()
-	manager := NewManager(consumer, store)
-
-	_, err := manager.Login(mockResponseWriter(), &http.Request{}, "http://url")
-	if err != nil {
-		t.Fatalf("error returned loggin in: %s", err)
-	}
-
-	token, ok := store.Values[RequestTokenKey].(*oauth.RequestToken)
-	if !ok || token == nil {
-		t.Fatal("no request token saved after login")
-	}
-}
-
-func TestLoginRequestTokenErr(t *testing.T) {
-	consumer := &MockConsumer{
-		Err: errors.New("error"),
-	}
-	manager := NewManager(consumer, mockStore())
-
-	_, err := manager.Login(mockResponseWriter(), &http.Request{}, "http://url")
-	if err == nil {
-		t.Fatal("login did not return error when consumer fails")
-	}
-}
-
-func TestLoginStoreSaveError(t *testing.T) {
-	consumer := &MockConsumer{
-		RequestToken: &oauth.RequestToken{},
-	}
-	store := mockStore()
-	store.SaveError = errors.New("error")
-	manager := NewManager(consumer, store)
-
-	_, err := manager.Login(mockResponseWriter(), &http.Request{}, "http://url")
-	if err == nil {
-		t.Fatal("login did not return error when store.Save fails")
-	}
-}
-
 func TestAuthenticateWithVerificationCode(t *testing.T) {
-	url, _ := url.Parse(
-		fmt.Sprintf("http://example.com/context?%s=%s",
-			oauthVerifierKey,
-			"abcd"))
-	request := &http.Request{URL: url}
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
-	err := manager.Authenticate(mockResponseWriter(), request)
+	manager := NewManager(mockProvider(consumer), store)
+	err := manager.Authenticate(mockResponseWriter(), defaultRequest())
 
 	if err != nil {
 		t.Fatalf("error when creating client with verification code")
 	}
 }
 
-func TestAuthenticateWithNoVerificationCode(t *testing.T) {
-	url, _ := url.Parse("http://example.com/context")
-	request := &http.Request{URL: url}
+func TestAuthenticateWithWrongState(t *testing.T) {
+	request := defaultRequest()
+	request.Form.Set("state", oauthState+"wrong-state")
+
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
+	manager := NewManager(mockProvider(consumer), store)
+	err := manager.Authenticate(mockResponseWriter(), request)
+
+	if err == nil {
+		t.Fatalf("no error when creating client with no state")
+	}
+}
+
+func TestAuthenticateWithNoVerificationCode(t *testing.T) {
+	request := defaultRequest()
+	request.Form.Del("code")
+
+	consumer := &MockConsumer{
+		Token: &oauth2.Token{},
+	}
+	store := mockStore()
+
+	manager := NewManager(mockProvider(consumer), store)
 	err := manager.Authenticate(mockResponseWriter(), request)
 
 	if err == nil {
@@ -190,41 +144,14 @@ func TestAuthenticateWithNoVerificationCode(t *testing.T) {
 	}
 }
 
-func TestAuthenticateWithVerificationCodeNoRequestToken(t *testing.T) {
-	url, _ := url.Parse(
-		fmt.Sprintf("http://example.com/context?%s=%s",
-			oauthVerifierKey,
-			"abcd"))
-	request := &http.Request{URL: url}
-	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
-	}
-
-	// No RequestToken
-	store := mockStore()
-
-	manager := NewManager(consumer, store)
-	err := manager.Authenticate(mockResponseWriter(), request)
-
-	if err == nil {
-		t.Fatalf("no error when creating client with no request token")
-	}
-}
-
 func TestAuthenticateWithVerificationCodeErrorAuthorizingToken(t *testing.T) {
-	url, _ := url.Parse(
-		fmt.Sprintf("http://example.com/context?%s=%s",
-			oauthVerifierKey,
-			"abcd"))
-	request := &http.Request{URL: url}
 	consumer := &MockConsumer{
 		Err: errors.New("error"),
 	}
 	store := mockStore()
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
-	err := manager.Authenticate(mockResponseWriter(), request)
+	manager := NewManager(mockProvider(consumer), store)
+	err := manager.Authenticate(mockResponseWriter(), defaultRequest())
 
 	if err == nil {
 		t.Fatalf("no error when creating client with no request token")
@@ -232,20 +159,14 @@ func TestAuthenticateWithVerificationCodeErrorAuthorizingToken(t *testing.T) {
 }
 
 func TestAuthenticateStoreGetError(t *testing.T) {
-	url, _ := url.Parse(
-		fmt.Sprintf("http://example.com/context?%s=%s",
-			oauthVerifierKey,
-			"abcd"))
-	request := &http.Request{URL: url}
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
 	store.GetError = errors.New("error")
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
-	err := manager.Authenticate(mockResponseWriter(), request)
+	manager := NewManager(mockProvider(consumer), store)
+	err := manager.Authenticate(mockResponseWriter(), defaultRequest())
 
 	if err != nil {
 		t.Fatalf("error when creating client when store Get throws error")
@@ -253,20 +174,14 @@ func TestAuthenticateStoreGetError(t *testing.T) {
 }
 
 func TestAuthenticateStoreSaveError(t *testing.T) {
-	url, _ := url.Parse(
-		fmt.Sprintf("http://example.com/context?%s=%s",
-			oauthVerifierKey,
-			"abcd"))
-	request := &http.Request{URL: url}
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
 	store.SaveError = errors.New("error")
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
-	err := manager.Authenticate(mockResponseWriter(), request)
+	manager := NewManager(mockProvider(consumer), store)
+	err := manager.Authenticate(mockResponseWriter(), defaultRequest())
 
 	if err == nil {
 		t.Fatalf("no error when creating client when store Save throws error")
@@ -274,16 +189,13 @@ func TestAuthenticateStoreSaveError(t *testing.T) {
 }
 
 func TestGetClientNoAuthenticatedSession(t *testing.T) {
-	url, _ := url.Parse("http://example.com/context")
-	request := &http.Request{URL: url}
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[RequestTokenKey] = &oauth.RequestToken{}
 
-	manager := NewManager(consumer, store)
-	_, err := manager.GetClient(mockResponseWriter(), request)
+	manager := NewManager(mockProvider(consumer), store)
+	_, err := manager.GetClient(mockResponseWriter(), defaultRequest())
 
 	if err == nil {
 		t.Fatalf("no error when creating client with no authenticated session")
@@ -292,16 +204,14 @@ func TestGetClientNoAuthenticatedSession(t *testing.T) {
 
 func TestGetClientStoreGetError(t *testing.T) {
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
 	store.GetError = errors.New("error")
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[AccessTokenKey] = &oauth2.Token{}
 	store.Values[SessionIDKey] = "123"
-	currentTime := time.Now()
-	store.Values[LastRefreshTime] = &currentTime
 
-	manager := NewManager(consumer, store)
+	manager := NewManager(mockProvider(consumer), store)
 	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
 
 	if err != nil {
@@ -315,15 +225,13 @@ func TestGetClientStoreGetError(t *testing.T) {
 
 func TestGetClientAccessTokenExists(t *testing.T) {
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[AccessTokenKey] = &oauth2.Token{}
 	store.Values[SessionIDKey] = "123"
-	currentTime := time.Now()
-	store.Values[LastRefreshTime] = &currentTime
 
-	manager := NewManager(consumer, store)
+	manager := NewManager(mockProvider(consumer), store)
 	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
 
 	if err != nil {
@@ -337,78 +245,35 @@ func TestGetClientAccessTokenExists(t *testing.T) {
 
 func TestGetClientAccessTokenExistsTokenSaved(t *testing.T) {
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[AccessTokenKey] = &oauth2.Token{}
 	store.Values[SessionIDKey] = "123"
-	currentTime := time.Now()
-	store.Values[LastRefreshTime] = &currentTime
 
-	manager := NewManager(consumer, store)
+	manager := NewManager(mockProvider(consumer), store)
 	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
 
 	if err != nil {
 		t.Fatalf("error creating client with existing access token: %s", err)
 	}
 
-	token, ok := store.Values[AccessTokenKey].(*oauth.AccessToken)
+	token, ok := store.Values[AccessTokenKey].(*oauth2.Token)
 	if !ok || token == nil {
 		t.Fatal("no token saved in session")
 	}
 }
 
-func TestGetClientLastRefreshTimeOldRefreshesToken(t *testing.T) {
-	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
-	}
-
-	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
-	store.Values[SessionIDKey] = "123"
-	refreshTime := time.Now().Add(-61 * time.Minute)
-	store.Values[LastRefreshTime] = &refreshTime
-
-	manager := NewManager(consumer, store)
-	client, err := manager.GetClient(mockResponseWriter(), &http.Request{})
-
-	if err != nil {
-		t.Fatalf("error creating client when access token needed to be"+
-			"refreshed: %s", err)
-	}
-
-	if client == nil {
-		t.Fatalf("no client created when access token needed to be refresehd")
-	}
-}
-
-func TestGetClientAccessTokenExistsRefreshFails(t *testing.T) {
-	consumer := &MockConsumer{
-		Err: errors.New("error"),
-	}
-	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
-
-	manager := NewManager(consumer, store)
-	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
-
-	if err == nil {
-		t.Fatalf("no error returned, refreshing token should have failed")
-	}
-}
-
 func TestGetClientAccessStoreSaveError(t *testing.T) {
 	consumer := &MockConsumer{
-		AccessToken: &oauth.AccessToken{},
+		Token: &oauth2.Token{},
 	}
 	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
+	store.Values[AccessTokenKey] = &oauth2.Token{}
 	store.Values[SessionIDKey] = "123"
-	currentTime := time.Now()
-	store.Values[LastRefreshTime] = &currentTime
 	store.SaveError = errors.New("error")
 
-	manager := NewManager(consumer, store)
+	manager := NewManager(mockProvider(consumer), store)
 	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
 
 	if err == nil {
@@ -416,47 +281,34 @@ func TestGetClientAccessStoreSaveError(t *testing.T) {
 	}
 }
 
-func TestGetClientOAuthMakeHttpClientErr(t *testing.T) {
-	consumer := &MockConsumer{
-		AccessToken:       &oauth.AccessToken{},
-		MakeHTTPClientErr: errors.New("error"),
-	}
-	store := mockStore()
-	store.Values[AccessTokenKey] = &oauth.AccessToken{}
-	store.Values[SessionIDKey] = "123"
-	currentTime := time.Now()
-	store.Values[LastRefreshTime] = &currentTime
+type MockConsumerProvider struct {
+	Consumer *MockConsumer
+}
 
-	manager := NewManager(consumer, store)
-	_, err := manager.GetClient(mockResponseWriter(), &http.Request{})
+func (p *MockConsumerProvider) Get(r *http.Request) Consumer {
+	return p.Consumer
+}
 
-	if err == nil {
-		t.Fatalf("no error returned, creating the HTTP client should have failed")
-	}
+func mockProvider(c *MockConsumer) *MockConsumerProvider {
+	return &MockConsumerProvider{Consumer: c}
 }
 
 type MockConsumer struct {
-	AccessToken       *oauth.AccessToken
-	RequestToken      *oauth.RequestToken
-	LoginURL          string
-	Err               error
-	MakeHTTPClientErr error
+	Token    *oauth2.Token
+	LoginURL string
+	Err      error
 }
 
-func (m *MockConsumer) GetRequestTokenAndUrl(url string) (*oauth.RequestToken, string, error) {
-	return m.RequestToken, m.LoginURL, m.Err
+func (m *MockConsumer) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	return m.LoginURL
 }
 
-func (m *MockConsumer) AuthorizeToken(r *oauth.RequestToken, code string) (*oauth.AccessToken, error) {
-	return m.AccessToken, m.Err
+func (m *MockConsumer) Exchange(ctx context.Context, verificationCode string) (*oauth2.Token, error) {
+	return m.Token, m.Err
 }
 
-func (m *MockConsumer) RefreshToken(a *oauth.AccessToken) (*oauth.AccessToken, error) {
-	return m.AccessToken, m.Err
-}
-
-func (m *MockConsumer) MakeHttpClient(a *oauth.AccessToken) (*http.Client, error) {
-	return &http.Client{}, m.MakeHTTPClientErr
+func (m *MockConsumer) Client(ctx context.Context, token *oauth2.Token) *http.Client {
+	return &http.Client{}
 }
 
 type MockResponseWriter struct {
@@ -511,4 +363,13 @@ func (m *MockStore) New(r *http.Request, name string) (*sessions.Session, error)
 func (m *MockStore) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
 	m.Values = s.Values
 	return m.SaveError
+}
+
+func defaultRequest() *http.Request {
+	values := url.Values{}
+	values.Add("state", oauthState)
+	values.Add("code", "abcd")
+	return &http.Request{
+		Form: values,
+	}
 }

@@ -8,8 +8,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-24-gd93d83f",
-			"Rev": "d93d83f18f1ddc538acc45f2489b11f2cd3adc14"
+			"Comment": "v0.3.0-25-g4fbe812",
+			"Rev": "4fbe8121d6d5139fbca925ad847db9c9493f3891"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -47,6 +47,22 @@
 			"ImportPath": "github.com/youtube/vitess/go/cache",
 			"Comment": "v2.0.0-rc.2-735-g3fa8270",
 			"Rev": "3fa827017d4f76390c5a4afe5b4ab847ff3c3d4a"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a337091b0525af65de94df2eb7e98bd9962dcbe2"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a337091b0525af65de94df2eb7e98bd9962dcbe2"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "9ff8ebcc8e241d46f52ecc5bff0e5a2f2dbef402"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "9ff8ebcc8e241d46f52ecc5bff0e5a2f2dbef402"
 		}
 	]
 }

@@ -164,18 +164,12 @@ func TestHandleLogoutError(t *testing.T) {
 func TestHandleLogin(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "http://example.com:8080/login", nil)
-	authContext := "/auth"
 	requestURL := "http://example.com:18080/request/url"
 	mockSessionManager := &MockSessionManager{
 		LoginURL: requestURL,
 	}
 	site := &Site{
-		config: &templates.SiteConfig{},
-		handlers: map[string]*ContextHandler{
-			"auth": &ContextHandler{
-				Context: authContext,
-			},
-		},
+		config:         &templates.SiteConfig{},
 		sessionManager: mockSessionManager,
 		templates:      &MockTemplates{},
 	}
@@ -196,14 +190,6 @@ func TestHandleLogin(t *testing.T) {
 			*(mockSessionManager.LoginRequest))
 	}
 
-	expectedAuthURL := "http://example.com:8080/auth"
-	if mockSessionManager.LoginAuthURL != expectedAuthURL {
-		t.Fatalf("Unexpected auth URL passed into session.Manager.Login\n\t"+
-			"Expected: %s\n\tActual: %s",
-			expectedAuthURL,
-			mockSessionManager.LoginAuthURL)
-	}
-
 	if recorder.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("Unexpected response code given when logging in\n\t"+
 			"Expected: %d\n\tActual: %d",
@@ -218,52 +204,6 @@ func TestHandleLogin(t *testing.T) {
 			requestURL,
 			redirectURL)
 	}
-}
-
-func TestHandleLoginError(t *testing.T) {
-	recorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "http://example.com:8080/login", nil)
-	authContext := "/auth"
-	mockSessionManager := &MockSessionManager{
-		LoginError: errors.New("error"),
-	}
-	mockTemplates := &MockTemplates{}
-	site := &Site{
-		config: &templates.SiteConfig{},
-		handlers: map[string]*ContextHandler{
-			"auth": &ContextHandler{
-				Context: authContext,
-			},
-		},
-		sessionManager: mockSessionManager,
-		templates:      mockTemplates,
-	}
-
-	handleLogin(site, recorder, request)
-
-	if mockSessionManager.LoginWriter != recorder {
-		t.Fatalf("Unexpected writer passed into session.Manager.Login\n\t"+
-			"Expected: %+v\n\tActual: %+v",
-			*recorder,
-			mockSessionManager.LoginWriter)
-	}
-
-	if mockSessionManager.LoginRequest != request {
-		t.Fatalf("Unexpected request passed into session.Manager.Login\n\t"+
-			"Expected: %+v\n\tActual: %+v",
-			*request,
-			*(mockSessionManager.LoginRequest))
-	}
-
-	expectedAuthURL := "http://example.com:8080/auth"
-	if mockSessionManager.LoginAuthURL != expectedAuthURL {
-		t.Fatalf("Unexpected auth URL passed into session.Manager.Login\n\t"+
-			"Expected: %s\n\tActual: %s",
-			expectedAuthURL,
-			mockSessionManager.LoginAuthURL)
-	}
-
-	assertErrorHandledCorrectly(t, site, mockTemplates, false)
 }
 
 func TestHandleAuthentication(t *testing.T) {
@@ -1135,12 +1075,10 @@ func (m *MockGoffClient) GetLeagueStandings(leagueKey string) (*goff.League, err
 type MockSessionManager struct {
 	LoginWriter   http.ResponseWriter
 	LoginRequest  *http.Request
-	LoginAuthURL  string
 	LogoutWriter  http.ResponseWriter
 	LogoutRequest *http.Request
 
 	LoginURL      string
-	LoginError    error
 	LogoutError   error
 	AuthError     error
 	IsLoggedInRet bool
@@ -1148,12 +1086,11 @@ type MockSessionManager struct {
 	ClientError   error
 }
 
-func (m *MockSessionManager) Login(w http.ResponseWriter, r *http.Request, redirectURL string) (loginURL string, err error) {
+func (m *MockSessionManager) Login(w http.ResponseWriter, r *http.Request) (loginURL string) {
 	m.LoginWriter = w
 	m.LoginRequest = r
-	m.LoginAuthURL = redirectURL
 
-	return m.LoginURL, m.LoginError
+	return m.LoginURL
 }
 
 func (m *MockSessionManager) Authenticate(w http.ResponseWriter, r *http.Request) error {
