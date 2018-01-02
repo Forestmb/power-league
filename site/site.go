@@ -18,6 +18,9 @@ import (
 const (
 	// EarliestSupportedYear that fantasy leagues will be displayed for
 	EarliestSupportedYear = 2001
+
+	// LatestSupportedYear that fantasy leagues will be displayed fo
+	LatestSupportedYear = 2017
 )
 
 // Site consists of the information needed to run a power rankings site
@@ -349,7 +352,7 @@ type userLeaguesClient interface {
 }
 
 func getAllYearlyLeagues(client userLeaguesClient) (templates.AllYearlyLeagues, error) {
-	currentYear := time.Now().Year()
+	currentYear := LatestSupportedYear
 	numberOfYears := (currentYear - EarliestSupportedYear) + 1
 	results := make(chan *templates.YearlyLeagues)
 	for ; currentYear >= EarliestSupportedYear; currentYear-- {
