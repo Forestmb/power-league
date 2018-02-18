@@ -19,7 +19,7 @@ const (
 	// EarliestSupportedYear that fantasy leagues will be displayed for
 	EarliestSupportedYear = 2001
 
-	// LatestSupportedYear that fantasy leagues will be displayed fo
+	// LatestSupportedYear that fantasy leagues will be displayed for
 	LatestSupportedYear = 2017
 )
 
