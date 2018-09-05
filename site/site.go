@@ -20,7 +20,7 @@ const (
 	EarliestSupportedYear = 2001
 
 	// LatestSupportedYear that fantasy leagues will be displayed for
-	LatestSupportedYear = 2017
+	LatestSupportedYear = 2018
 )
 
 // Site consists of the information needed to run a power rankings site
