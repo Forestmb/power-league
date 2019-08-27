@@ -32,7 +32,7 @@ for exclusion in "${lint_exclusions[@]}"; do
         ignore="${exclusion}|${ignore}"
     fi
 done
-go get -u github.com/golang/lint/golint
+go get -u golang.org/x/lint/golint
 if golint ./... | grep -v -E "${ignore}" | grep .
 then
     echo "golint: warnings detected " 1>&2

@@ -8,8 +8,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-28-g3bbb8ff",
-			"Rev": "3bbb8ff7688e0e06edcd89d35d2d72c9ddb1f660"
+			"Comment": "v0.3.0-30-g053f967",
+			"Rev": "053f9673b253ad1d1fbedef63dfd3a72ac6e932c"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",

@@ -77,9 +77,9 @@ func NewManagerWithCache(
 	gob.Register(&time.Time{})
 	cache := lru.NewLRUCache(cacheSize)
 	return &defaultManager{
-		consumerProvider: cp,
-		store:            s,
-		cache:            cache,
+		consumerProvider:         cp,
+		store:                    s,
+		cache:                    cache,
 		userCacheDurationSeconds: userCacheDurationSeconds,
 	}
 }

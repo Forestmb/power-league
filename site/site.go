@@ -20,7 +20,7 @@ const (
 	EarliestSupportedYear = 2001
 
 	// LatestSupportedYear that fantasy leagues will be displayed for
-	LatestSupportedYear = 2018
+	LatestSupportedYear = 2019
 )
 
 // Site consists of the information needed to run a power rankings site
@@ -470,7 +470,7 @@ func calculateTeamScore(y *YahooClient, leagueKey string, week int, team *goff.T
 			}
 		} else {
 			glog.Warningf("error getting players stats -- league=%s, team=%s, "+
-				"week=%s, error=%s",
+				"week=%d, error=%s",
 				leagueKey,
 				team.Name,
 				week,
@@ -485,7 +485,7 @@ func calculateTeamScore(y *YahooClient, leagueKey string, week int, team *goff.T
 			score)
 	} else {
 		glog.Warningf("error getting team roster -- league=%s, team=%s, "+
-			"week=%s, error=%s",
+			"week=%d, error=%s",
 			leagueKey,
 			team.Name,
 			week,
