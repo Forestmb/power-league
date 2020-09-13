@@ -8,8 +8,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Forestmb/goff",
-			"Comment": "v0.3.0-30-g053f967",
-			"Rev": "053f9673b253ad1d1fbedef63dfd3a72ac6e932c"
+			"Comment": "v0.3.0-31-g7a1f1da",
+			"Rev": "7a1f1dabac3a3eee5cae88b557676f6a0e156fd1"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -45,7 +45,7 @@
 		},
 		{
 			"ImportPath": "github.com/youtube/vitess/go/cache",
-			"Comment": "v2.0.0-rc.2-735-g3fa8270",
+			"Comment": "v2.0.0-rc.2-735-g3fa827017",
 			"Rev": "3fa827017d4f76390c5a4afe5b4ab847ff3c3d4a"
 		},
 		{
