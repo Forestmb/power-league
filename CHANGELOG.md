@@ -7,9 +7,10 @@
 - Added graphs to show weekly power rank and fantasy points over the course
   of the season.
 - Improved mobile authorization flow.
-- Vendoring dependencies with godep.
 - Added 'Victory Points' and 'Total Points' ranking schemes.
 - OAuth 2.0 for authentication.
+- Switched to containers as primary means of running/deploying.
+- Added go mod support.
 
 ## 0.3.0 (2015-01-09) ##
 

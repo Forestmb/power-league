@@ -70,8 +70,19 @@ func (s *Site) ContextHandler(id string, context string, f HandlerFunc) {
 	}
 }
 
+// GenerateURL creates a URL to a location on the site based on an existing
+// request
+func (s *Site) GenerateURL(r *http.Request, context string) string {
+	protocol := "https"
+	if !s.config.TLS {
+		protocol = "http"
+	}
+	return fmt.Sprintf("%s://%s%s", protocol, r.Host, context)
+}
+
 // NewSite creates a new site
 func NewSite(
+	tls bool,
 	baseContext string,
 	staticFiles string,
 	templatesDir string,
@@ -91,6 +102,7 @@ func NewSite(
 		handlers:       make(map[string]*ContextHandler),
 		sessionManager: s,
 		config: &templates.SiteConfig{
+			TLS:                 tls,
 			BaseContext:         baseContext,
 			StaticContext:       staticContext,
 			AnalyticsTrackingID: trackingID,
@@ -143,7 +155,7 @@ func handleLogout(s *Site, w http.ResponseWriter, r *http.Request) {
 			s.sessionManager.IsLoggedIn(r))
 		return
 	}
-	leaguesURL := fmt.Sprintf("http://%s%s", r.Host, s.config.BaseContext)
+	leaguesURL := s.GenerateURL(r, s.config.BaseContext)
 	http.Redirect(w, r, leaguesURL, http.StatusTemporaryRedirect)
 }
 
@@ -165,7 +177,7 @@ func handleAuthentication(s *Site, w http.ResponseWriter, r *http.Request) {
 		redirectContext = s.config.BaseContext
 	}
 
-	redirectURL := fmt.Sprintf("http://%s%s", r.Host, redirectContext)
+	redirectURL := s.GenerateURL(r, redirectContext)
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
@@ -225,7 +237,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 
 	loggedIn := s.sessionManager.IsLoggedIn(req)
 	if !loggedIn {
-		homePage := fmt.Sprintf("http://%s%s", req.Host, s.config.BaseContext)
+		homePage := s.GenerateURL(req, s.config.BaseContext)
 		http.Redirect(w, req, homePage, http.StatusTemporaryRedirect)
 		return
 	}
@@ -237,7 +249,7 @@ func handlePowerRankings(s *Site, w http.ResponseWriter, req *http.Request) {
 	leagueKey := values.Get("key")
 	if leagueKey == "" {
 		leaguesContext := s.handlers["showLeagues"].Context
-		leaguesURL := fmt.Sprintf("http://%s%s", req.Host, leaguesContext)
+		leaguesURL := s.GenerateURL(req, leaguesContext)
 		http.Redirect(w, req, leaguesURL, http.StatusTemporaryRedirect)
 		return
 	}

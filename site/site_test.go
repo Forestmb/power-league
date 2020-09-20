@@ -16,7 +16,7 @@ func TestNewSite(t *testing.T) {
 	baseContext := "base-context"
 	staticContext := "static-context"
 	trackingID := "tracking-id"
-	site := NewSite(baseContext, staticContext, "templates/", trackingID, &MockSessionManager{})
+	site := NewSite(false, baseContext, staticContext, "templates/", trackingID, &MockSessionManager{})
 
 	if site == nil {
 		t.Fatal("no site created")

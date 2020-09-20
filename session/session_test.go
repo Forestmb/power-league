@@ -303,7 +303,7 @@ func (m *MockConsumer) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	return m.LoginURL
 }
 
-func (m *MockConsumer) Exchange(ctx context.Context, verificationCode string) (*oauth2.Token, error) {
+func (m *MockConsumer) Exchange(ctx context.Context, verificationCode string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
 	return m.Token, m.Err
 }
 

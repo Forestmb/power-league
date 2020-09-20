@@ -97,7 +97,7 @@ type ConsumerProvider interface {
 // Consumer is the interface to an OAuth2 consumer
 type Consumer interface {
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	Exchange(ctx context.Context, verificationCode string) (*oauth2.Token, error)
+	Exchange(context.Context, string, ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, token *oauth2.Token) *http.Client
 }
 

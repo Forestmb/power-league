@@ -19,8 +19,8 @@ lint_exclusions=(
     "vendor/"
 )
 
-echo "Running go get..."
-go get
+echo "Running go mod download..."
+go mod download
 
 echo "Running golint..."
 ignore=
@@ -32,7 +32,7 @@ for exclusion in "${lint_exclusions[@]}"; do
         ignore="${exclusion}|${ignore}"
     fi
 done
-go get -u golang.org/x/lint/golint
+GO111MODULE=off go get -u golang.org/x/lint/golint
 if golint ./... | grep -v -E "${ignore}" | grep .
 then
     echo "golint: warnings detected " 1>&2
@@ -63,4 +63,4 @@ done
 go tool cover -func profile.cov
 
 echo "Building binary..."
-go build .
+CGO_ENABLED=0 GOOS=linux go build -ldflags '-w -s' -a -installsuffix cgo -o power-league

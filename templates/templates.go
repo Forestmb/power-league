@@ -108,6 +108,7 @@ type ErrorPageContent struct {
 // SiteConfig provides configuration info about the site that can be used on
 // all pages.
 type SiteConfig struct {
+	TLS                 bool
 	BaseContext         string
 	StaticContext       string
 	AnalyticsTrackingID string
