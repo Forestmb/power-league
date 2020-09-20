@@ -214,7 +214,7 @@ type oauth2ConsumerProvider struct {
 
 func (o oauth2ConsumerProvider) Get(r *http.Request) session.Consumer {
 	redirectURL := o.redirectURL
-	if redirectURL != "" {
+	if redirectURL == "" {
 		protocol := "https"
 		if !o.tls {
 			protocol = "http"
