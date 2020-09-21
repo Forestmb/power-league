@@ -16,7 +16,7 @@ can be run with any compatible container runtime.
 To run the server, first obtain a [Yahoo Fantasy Sports client key and secret](
 http://developer.yahoo.com/fantasysports/guide/GettingStarted.html). When
 registering you will be asked to enter in a redirect URL, which should be in the
-format `https://[hostname]/[base-context]/auth'. The `[hostname]` is the
+format `https://[hostname]/[base-context]/auth`. The `[hostname]` is the
 hostname or IP address of the machine where you are running the server, and
 `[base-context]` is the optional additional context the application is published
 to (defaults to none).
