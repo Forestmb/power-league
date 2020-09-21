@@ -7,12 +7,76 @@ This application is written using the Go programming language and is licensed
 under the [New BSD license](
 https://github.com/Forestmb/power-league/blob/master/LICENSE).
 
+## Rnning ##
+
+The `power-league` application is distributed as a [docker container](
+https://github.com/users/Forestmb/packages/container/package/power-league) and
+can be run with any compatible container runtime.
+
+To run the server, first obtain a [Yahoo Fantasy Sports client key and secret](
+http://developer.yahoo.com/fantasysports/guide/GettingStarted.html). When registering you
+will be asked to enter in a redirect URL, which should be in the format
+`https://<hostname>/<base-context>/auth'.
+
+For running on your local machine you will likely need to use a redirect URL of
+`https://127.0.0.1/auth`. As of September 2020 you cannot register an
+application with any of the following in the redirect URL:
+
+- An `http://` protocol
+- A `localhost` hostname
+- A non-default port (not 443)
+
+Once your application is registered you can pass the client key/secret into the
+application by setting the environment variables `OAUTH_CLIENT_KEY` and
+`OAUTH_CLIENT_SECRET` and passing them when running docker:
+
+    $ docker run --rm \
+             -p443:443 \
+             -e OAUTH_CLIENT_KEY \
+             -e OAUTH_CLIENT_SECRET \
+             ghcr.io/forestmb/power-league:latest
+
+After it has started, browse to `https://127.0.0.1/` to access the application..
+By default a self-signed test certificate will be used. To provide your own TLS
+certificates you can mount them using docker volumes and with additional
+command-line flags:
+
+    $ docker run --rm \
+             -p443:443 \
+             -e OAUTH_CLIENT_KEY \
+             -e OAUTH_CLIENT_SECRET \
+             -v /path/to/cert.pem:/app/certs/cert.pem \
+             -v /path/to/key.pem:/app/certs/key.pem \
+             ghcr.io/forestmb/power-league:latest \
+             -tlsCert /app/certs/cert.pem \
+             -tlsKey /app/certs/key.pem
+
+If you are running the application behind a reverse proxy like nginx or Apache
+and do not need or wish to run with HTTPS, you can opt out when running the
+server. However when registering your application you will still need to provide
+an HTTPS redirect URL, and you should pass in the publicly-accessible redirect
+URL when starting the container:
+
+    $ docker run --rm \
+             -p8080:8080 \
+             -e OAUTH_CLIENT_KEY \
+             -e OAUTH_CLIENT_SECRET \
+             ghcr.io/forestmb/power-league:latest \
+             -noTLS \
+             -address :8008 \
+             -redirectURL https://public.url.example.com/auth
+
+Once your server is running, visit it in the web browser and sign in. After
+granting access you can view the rankings for any of your current or past
+leagues:
+
+![Example Screenshot](https://raw.github.com/Forestmb/power-league/master/doc/screenshots/rankings.png)
+
 ## Building ##
 
 Building requires an installation of the [Go programming language tools](
-https://golang.org/doc/install). Once installed, you can follow [this guide](
-https://golang.org/doc/code.html) to become familiar with the structure of
-most Go projects.
+https://golang.org/doc/install) and/or a [Docker](https://www.docker.com/)
+compatible container build engine. To build:
 
     # Build using docker
     $ docker build -t power-league:latest .
@@ -23,41 +87,6 @@ most Go projects.
 To run the local build before every commit, use:
 
     $ ln -s "$(pwd)/build.sh" .git/hooks/pre-commit
-
-## Running ##
-
-To run a built instance locally, obtain a [Yahoo Fantasy Sports client key and secret](
-http://developer.yahoo.com/fantasysports/guide/GettingStarted.html). When registering you
-will be asked to enter in a redirect URL, which should be in the format
-`https://<hostname>/<base-context>/auth'.
-
-For testing locally you will likely need to use a redirect URL of
-`https://127.0.0.1/auth`. As of September 2020 there are issues using
-HTTP, a non-default port (443), and 'localhost' as the hostname.
-
-Once your application is registered you can pass the client key/secret into the
-application either by setting the environment variables `OAUTH_CLIENT_KEY` and
-`OAUTH_CLIENT_SECRET` or passing in the command line variables `-clientKey` and
-`-clientSecret`.
-
-To run the application using docker, build the image as described above. After setting
-the `OAUTH_CLIENT_KEY` and `OAUTH_CLIENT_SECRET` environment variables you can run
-the application using:
-
-    $ docker run --rm \
-             -p443:443 \
-             -e OAUTH_CLIENT_KEY \
-             -e OAUTH_CLIENT_SECRET \
-             power-league:latest
-
-Alternatively, you can run the application locally:
-
-    $ ./main
-
-The application can then be accessed at `https://127.0.0.1/`.
-Once signed in, you can view the rankings for any of your current or past leagues:
-
-![Example Screenshot](https://raw.github.com/Forestmb/power-league/master/doc/screenshots/rankings.png)
 
 ## Options ##
 
