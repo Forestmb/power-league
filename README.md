@@ -7,16 +7,19 @@ This application is written using the Go programming language and is licensed
 under the [New BSD license](
 https://github.com/Forestmb/power-league/blob/master/LICENSE).
 
-## Rnning ##
+## Running ##
 
 The `power-league` application is distributed as a [docker container](
 https://github.com/users/Forestmb/packages/container/package/power-league) and
 can be run with any compatible container runtime.
 
 To run the server, first obtain a [Yahoo Fantasy Sports client key and secret](
-http://developer.yahoo.com/fantasysports/guide/GettingStarted.html). When registering you
-will be asked to enter in a redirect URL, which should be in the format
-`https://<hostname>/<base-context>/auth'.
+http://developer.yahoo.com/fantasysports/guide/GettingStarted.html). When
+registering you will be asked to enter in a redirect URL, which should be in the
+format `https://[hostname]/[base-context]/auth'. The `[hostname]` is the
+hostname or IP address of the machine where you are running the server, and
+`[base-context]` is the optional additional context the application is published
+to (defaults to none).
 
 For running on your local machine you will likely need to use a redirect URL of
 `https://127.0.0.1/auth`. As of September 2020 you cannot register an
@@ -74,9 +77,9 @@ leagues:
 
 ## Building ##
 
-Building requires an installation of the [Go programming language tools](
-https://golang.org/doc/install) and/or a [Docker](https://www.docker.com/)
-compatible container build engine. To build:
+Building requires an either a [Docker](https://www.docker.com/) compatible
+container build engine or an installation of the [Go programming language tools](
+https://golang.org/doc/install). To build:
 
     # Build using docker
     $ docker build -t power-league:latest .
@@ -106,7 +109,8 @@ command arguments.
             for more information
       -clientSecret string
         	Required client OAuth secret. Defaults to the value of
-            OAUTH_CLIENT_SECRET. See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html
+            OAUTH_CLIENT_SECRET.
+            See http://developer.yahoo.com/fantasysports/guide/GettingStarted.html
             for more information
       -cookieAuthKey string
         	Authentication key for cookie store. Defaults to the value of
