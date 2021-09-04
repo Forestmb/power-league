@@ -3,7 +3,7 @@ module github.com/Forestmb/power-league
 go 1.13
 
 require (
-	github.com/Forestmb/goff v0.3.1-0.20200913005412-7a1f1dabac3a
+	github.com/Forestmb/goff v0.4.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/gorilla/handlers v1.5.1

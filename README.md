@@ -77,7 +77,7 @@ leagues:
 
 ## Building ##
 
-Building requires an either a [Docker](https://www.docker.com/) compatible
+Building requires either a [Docker](https://www.docker.com/) compatible
 container build engine or an installation of the [Go programming language tools](
 https://golang.org/doc/install). To build:
 
